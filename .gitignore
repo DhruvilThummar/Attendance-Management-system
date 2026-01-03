@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+.venv
+attendance_system/static/reports/*.pdf
+attendance_system/static/reports/backups/*

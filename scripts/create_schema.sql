@@ -1,0 +1,1 @@
+-- Placeholder SQL schema file. Fill with CREATE TABLE statements for users, students, subjects, divisions, timetable, lectures, attendance, attendance_audit, notifications, complaints.
