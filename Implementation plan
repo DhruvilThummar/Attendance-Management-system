@@ -1,0 +1,101 @@
+Full Implementation Plan: Smart Attendance Management System
+A robust, role-based system for automating attendance, explicitly designed to satisfy the SEM III Python-1 & FSD-1 syllabus.
+
+🚀 Tech Stack
+Backend: Flask (Python)
+Database: Pure PostgreSQL (using Raw SQL via psycopg2)
+Frontend: HTML5, CSS3 (Vanilla + Bootstrap 5), JS (ES6)
+Reporting: ReportLab / WeasyPrint
+Analytics: Matplotlib (Visualization), Custom BST (Data Structures)
+Frontend Responsibilities (FSD-1 Alignment)
+Responsive dashboards using Bootstrap 5.
+Dynamic attendance updates via JS (ES6 + AJAX/Fetch).
+Real-time filters and Matplotlib chart integration.
+Comprehensive client-side validation.
+
+📂 Project Structure
+attendance_system/
+├── app.py                     # Entry point (with RBAC decorators)
+├── db_manager.py              # Raw SQL execution helper
+├── models/                    # Data models (OOP depth)
+│   ├── base.py, student.py, etc.
+│   └── audit.py, timetable.py
+├── services/                  # Business logic
+│   ├── search_service.py      # BST [Unit 4/5]
+│   ├── calendar_service.py    # Auto-generation engine
+│   ├── rules_service.py       # Attendance Thresholds [NEW]
+│   ├── notification_service.py# In-app warnings [NEW]
+│   ├── report_service.py      # Detailed Report Suite [NEW]
+│   └── visualization_service.py, file_service.py
+├── static/
+│   ├── css/ js/ images/
+│   └── reports/               # Generated PDFs
+└── templates/                 # UI Components (FSD-1)
+    ├── auth/, admin/, hod/, faculty/, student/
+    └── base.html
+
+🧠 Syllabus Alignment (Unit 4-10)
+Unit	Topic	Implementation
+4 & 5	Data Structures	BST for Student lookup; Lists/Dicts/Sets for reports.
+6	File Handling	file_service: Attendance data persistence & PDF metadata.
+7	Modules & OS	system_service: Report directory auto-management & backups.
+8	Exceptions/OOP	Custom Exceptions (InvalidAttendanceError); Abstraction.
+9	OOP Advanced	Inheritance (User->Student/HOD) & Polymorphism.
+10	Visualization	Matplotlib: Attendance histograms & subject-wise charts.
+
+🛠️ Key Features
+1. Authentication & RBAC
+Secure login for Admin, HOD, Faculty, and Student.
+Protected routes using custom Flask decorators.
+2. Attendance Rules & Defaulter Engine [NEW]
+Enforces 75% minimum threshold.
+Auto-generates Defaulter Lists per subject and division.
+Flags maintenance for HOD/Admin review.
+3. Student Warning & Notification System [NEW]
+In-app notifications when attendance drops below threshold.
+Defaulter summaries for HOD/Admin dashboards.
+4. Report Generation Suite [NEW]
+Daily Attendance Report
+Weekly Summary Report
+Monthly Attendance Report
+Defaulter List Report
+Subject-wise Attendance Report
+5. Lecture Auto-Generation Engine
+Inputs: Timetable + Academic Calendar.
+Auto-creates Lecture records for valid working days.
+6. Student Search (BST Optimization)
+O(log n) enrollment-based search for real-time dashboard performance.
+The BST is initialized at application startup from the student database and updated on every student insert, update, and delete operation to ensure real-time consistency.
+7. Attendance Correction & Audit System
+Faculty modification of records with a full Audit Trail.
+8. Timetable Management [NEW]
+Admin defines weekly schedules mapping Subjects, Faculties, and Divisions to time slots, which feed the Lecture Auto-Generation Engine.
+9. Exception Handling [NEW]
+Implemented in calendar_service, attendance_service, and rules_service using custom exception classes and try–except blocks for validation and data integrity (Unit-8).
+10. Data Backup & Recovery
+Automated backups to /static/reports/backups/.
+11. Subject & Division Management [NEW]
+Admin can create, update, and assign Subjects and Divisions to students and faculties, forming the foundation of the timetable and attendance workflow.
+
+🗃️ Database Schema (Raw SQL + DBMS)
+Engine: PostgreSQL accessed via psycopg2.
+Logic: All queries written as raw SQL strings for explicit DBMS demonstration.
+Operations: CREATE, INSERT, UPDATE, DELETE, SELECT, JOIN, GROUP BY.
+users: id, email, password, role (Admin, HOD, Faculty, Student)
+hods: id, user_id, department_id
+students: id, user_id, enrollment_no, division_id
+subjects: id, code, name
+divisions: id, name, semester
+timetable: id, subject_id, faculty_id, division_id, day, slot
+lectures: id, timetable_id, date
+attendance: id, lecture_id, student_id, status (P/A)
+attendance_audit: attendance_id, old_status, new_status, edited_by, edited_at
+notifications: id, user_id, message, seen, created_at [NEW]
+complaints: id, student_id, faculty_id, message, status
+
+✅ Verification Plan
+Rules: Verify threshold logic triggers defaulter flagging.
+Notifications: Ensure students receive warnings immediately upon low attendance update.
+Reports: Validate all 5 report types generate accurate PDF content.
+Audit: Modify attendance and verify log entry creation.
+Visualization: Verify charts reflect correct percentages for diverse roles.
