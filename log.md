@@ -8,3 +8,6 @@ How to add an entry (keep it brief):
    - Initialized the Flask + plain HTML/CSS/JS scaffold for Attendance-Management-system
    - Added role blueprints, service/model stubs
    - Added static assets, docs, and starter tests to guide the team
+2. Dhruvil Thummar - 22 Jan 2026
+   - Implemented auth flow with hashed credential verification, role redirects, offcanvas login UI, and client-side validation improvements
+   - Added .env auto-load, DB pool fail-fast check, Supabase/local DB config guidance, and schema/seed instructions for local Postgres

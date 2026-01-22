@@ -1,110 +1,108 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
 
--- Postgres schema for the Attendance Management System.
--- Run with: psql "$DATABASE_URL" -f scripts/create_schema.sql
-
-BEGIN;
-
--- Optional lookup for departments (referenced by HODs).
-CREATE TABLE IF NOT EXISTS departments (
-	id          BIGSERIAL PRIMARY KEY,
-	name        TEXT NOT NULL UNIQUE,
-	created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE public.attendance_audits (
+  id bigint NOT NULL DEFAULT nextval('attendance_audits_id_seq'::regclass),
+  attendance_id bigint NOT NULL,
+  old_status character CHECK (old_status = ANY (ARRAY['P'::bpchar, 'A'::bpchar])),
+  new_status character CHECK (new_status = ANY (ARRAY['P'::bpchar, 'A'::bpchar])),
+  edited_by bigint,
+  edited_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT attendance_audits_pkey PRIMARY KEY (id),
+  CONSTRAINT attendance_audits_attendance_id_fkey FOREIGN KEY (attendance_id) REFERENCES public.attendance_records(id),
+  CONSTRAINT attendance_audits_edited_by_fkey FOREIGN KEY (edited_by) REFERENCES public.users(id)
 );
-
-CREATE TABLE IF NOT EXISTS users (
-	id             BIGSERIAL PRIMARY KEY,
-	email          TEXT NOT NULL UNIQUE,
-	password_hash  TEXT NOT NULL,
-	role           TEXT NOT NULL CHECK (role IN ('Admin', 'HOD', 'Faculty', 'Student')),
-	created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE public.attendance_records (
+  id bigint NOT NULL DEFAULT nextval('attendance_records_id_seq'::regclass),
+  lecture_id bigint NOT NULL,
+  student_id bigint NOT NULL,
+  status character NOT NULL CHECK (status = ANY (ARRAY['P'::bpchar, 'A'::bpchar])),
+  recorded_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT attendance_records_pkey PRIMARY KEY (id),
+  CONSTRAINT attendance_records_lecture_id_fkey FOREIGN KEY (lecture_id) REFERENCES public.lectures(id),
+  CONSTRAINT attendance_records_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id)
 );
-
-CREATE TABLE IF NOT EXISTS divisions (
-	id          BIGSERIAL PRIMARY KEY,
-	name        TEXT NOT NULL UNIQUE,
-	semester    SMALLINT NOT NULL CHECK (semester BETWEEN 1 AND 8),
-	created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE public.departments (
+  id bigint NOT NULL DEFAULT nextval('departments_id_seq'::regclass),
+  name text NOT NULL UNIQUE,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT departments_pkey PRIMARY KEY (id)
 );
-
-CREATE TABLE IF NOT EXISTS subjects (
-	id          BIGSERIAL PRIMARY KEY,
-	code        TEXT NOT NULL UNIQUE,
-	name        TEXT NOT NULL,
-	created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE public.divisions (
+  id bigint NOT NULL DEFAULT nextval('divisions_id_seq'::regclass),
+  name text NOT NULL UNIQUE,
+  semester smallint NOT NULL CHECK (semester >= 1 AND semester <= 8),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT divisions_pkey PRIMARY KEY (id)
 );
-
-CREATE TABLE IF NOT EXISTS faculty (
-	id           BIGSERIAL PRIMARY KEY,
-	user_id      BIGINT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
-	department   TEXT NOT NULL,
-	created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE public.faculty (
+  id bigint NOT NULL DEFAULT nextval('faculty_id_seq'::regclass),
+  user_id bigint NOT NULL UNIQUE,
+  department text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT faculty_pkey PRIMARY KEY (id),
+  CONSTRAINT faculty_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
-
-CREATE TABLE IF NOT EXISTS hods (
-	id             BIGSERIAL PRIMARY KEY,
-	user_id        BIGINT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
-	department_id  BIGINT REFERENCES departments(id) ON DELETE SET NULL,
-	created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE public.hods (
+  id bigint NOT NULL DEFAULT nextval('hods_id_seq'::regclass),
+  user_id bigint NOT NULL UNIQUE,
+  department_id bigint,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT hods_pkey PRIMARY KEY (id),
+  CONSTRAINT hods_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT hods_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id)
 );
-
-CREATE TABLE IF NOT EXISTS students (
-	id             BIGSERIAL PRIMARY KEY,
-	user_id        BIGINT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
-	enrollment_no  TEXT NOT NULL UNIQUE,
-	division_id    BIGINT REFERENCES divisions(id) ON DELETE SET NULL,
-	created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE public.lectures (
+  id bigint NOT NULL DEFAULT nextval('lectures_id_seq'::regclass),
+  timetable_id bigint NOT NULL,
+  lecture_date date NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT lectures_pkey PRIMARY KEY (id),
+  CONSTRAINT lectures_timetable_id_fkey FOREIGN KEY (timetable_id) REFERENCES public.timetable_entries(id)
 );
-
-CREATE TABLE IF NOT EXISTS timetable_entries (
-	id           BIGSERIAL PRIMARY KEY,
-	subject_id   BIGINT NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
-	faculty_id   BIGINT REFERENCES faculty(id) ON DELETE SET NULL,
-	division_id  BIGINT REFERENCES divisions(id) ON DELETE CASCADE,
-	day          TEXT NOT NULL,  -- e.g., Monday
-	slot         TEXT NOT NULL,  -- e.g., 09:00-10:00
-	created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-	CONSTRAINT uniq_division_slot UNIQUE (division_id, day, slot)
+CREATE TABLE public.notifications (
+  id bigint NOT NULL DEFAULT nextval('notifications_id_seq'::regclass),
+  user_id bigint NOT NULL,
+  message text NOT NULL,
+  seen boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT notifications_pkey PRIMARY KEY (id),
+  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
-
-CREATE TABLE IF NOT EXISTS lectures (
-	id            BIGSERIAL PRIMARY KEY,
-	timetable_id  BIGINT NOT NULL REFERENCES timetable_entries(id) ON DELETE CASCADE,
-	lecture_date  DATE NOT NULL,
-	created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-	CONSTRAINT uniq_lecture_per_day UNIQUE (timetable_id, lecture_date)
+CREATE TABLE public.students (
+  id bigint NOT NULL DEFAULT nextval('students_id_seq'::regclass),
+  user_id bigint NOT NULL UNIQUE,
+  enrollment_no text NOT NULL UNIQUE,
+  division_id bigint,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT students_pkey PRIMARY KEY (id),
+  CONSTRAINT students_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT students_division_id_fkey FOREIGN KEY (division_id) REFERENCES public.divisions(id)
 );
-
-CREATE TABLE IF NOT EXISTS attendance_records (
-	id           BIGSERIAL PRIMARY KEY,
-	lecture_id   BIGINT NOT NULL REFERENCES lectures(id) ON DELETE CASCADE,
-	student_id   BIGINT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
-	status       CHAR(1) NOT NULL CHECK (status IN ('P', 'A')),
-	recorded_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-	CONSTRAINT uniq_attendance_per_student UNIQUE (lecture_id, student_id)
+CREATE TABLE public.subjects (
+  id bigint NOT NULL DEFAULT nextval('subjects_id_seq'::regclass),
+  code text NOT NULL UNIQUE,
+  name text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT subjects_pkey PRIMARY KEY (id)
 );
-
-CREATE TABLE IF NOT EXISTS attendance_audits (
-	id             BIGSERIAL PRIMARY KEY,
-	attendance_id  BIGINT NOT NULL REFERENCES attendance_records(id) ON DELETE CASCADE,
-	old_status     CHAR(1) CHECK (old_status IN ('P', 'A')),
-	new_status     CHAR(1) CHECK (new_status IN ('P', 'A')),
-	edited_by      BIGINT REFERENCES users(id) ON DELETE SET NULL,
-	edited_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE public.timetable_entries (
+  id bigint NOT NULL DEFAULT nextval('timetable_entries_id_seq'::regclass),
+  subject_id bigint NOT NULL,
+  faculty_id bigint,
+  division_id bigint,
+  day text NOT NULL,
+  slot text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT timetable_entries_pkey PRIMARY KEY (id),
+  CONSTRAINT timetable_entries_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id),
+  CONSTRAINT timetable_entries_faculty_id_fkey FOREIGN KEY (faculty_id) REFERENCES public.faculty(id),
+  CONSTRAINT timetable_entries_division_id_fkey FOREIGN KEY (division_id) REFERENCES public.divisions(id)
 );
-
-CREATE TABLE IF NOT EXISTS notifications (
-	id          BIGSERIAL PRIMARY KEY,
-	user_id     BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-	message     TEXT NOT NULL,
-	seen        BOOLEAN NOT NULL DEFAULT FALSE,
-	created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE public.users (
+  id bigint NOT NULL DEFAULT nextval('users_id_seq'::regclass),
+  email text NOT NULL UNIQUE,
+  password_hash text NOT NULL,
+  role text NOT NULL CHECK (role = ANY (ARRAY['Admin'::text, 'HOD'::text, 'Faculty'::text, 'Student'::text])),
+  CONSTRAINT users_pkey PRIMARY KEY (id)
 );
-
--- Helpful indexes for lookups.
-CREATE INDEX IF NOT EXISTS idx_students_division ON students(division_id);
-CREATE INDEX IF NOT EXISTS idx_faculty_department ON faculty(department);
-CREATE INDEX IF NOT EXISTS idx_timetable_division_day ON timetable_entries(division_id, day);
-CREATE INDEX IF NOT EXISTS idx_attendance_lecture ON attendance_records(lecture_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
-
-COMMIT;

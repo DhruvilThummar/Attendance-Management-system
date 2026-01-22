@@ -1,8 +1,11 @@
 {% set path = request.path %}
+{% set user = g.user %}
 <nav class="navbar navbar-expand-lg rounded-4 mt-3 container">
   <div class="container-fluid">
     <div class="d-flex align-items-center gap-3">
-      <a class="navbar-brand fw-bold" href="/">Attendify</a>
+      <a class="navbar-brand fw-bold" href="/">
+        <i class="bi bi-calendar-check-fill me-2"></i>Attendify
+      </a>
       <span class="badge badge-soft">Beta</span>
     </div>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
@@ -10,17 +13,69 @@
     </button>
     <div class="collapse navbar-collapse" id="nav">
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-lg-2">
-        <li class="nav-item"><a class="nav-link {% if '/admin' in path %}active{% endif %}" href="/admin">Admin</a></li>
-        <li class="nav-item"><a class="nav-link {% if '/hod' in path %}active{% endif %}" href="/hod">HOD</a></li>
-        <li class="nav-item"><a class="nav-link {% if '/faculty' in path %}active{% endif %}" href="/faculty">Faculty</a></li>
-        <li class="nav-item"><a class="nav-link {% if '/student' in path %}active{% endif %}" href="/student">Student</a></li>
-        <li class="nav-item d-none d-lg-block ms-2">
-          <a class="btn btn-primary btn-sm" href="/login">Sign in</a>
-        </li>
+        
+        {% if user %}
+          {# Show role-specific navigation based on logged-in user #}
+          {% if user.role == 'Admin' %}
+            <li class="nav-item"><a class="nav-link {% if '/admin' in path %}active{% endif %}" href="/admin"><i class="bi bi-shield-fill-check me-1"></i>Dashboard</a></li>
+          {% elif user.role == 'HOD' %}
+            <li class="nav-item"><a class="nav-link {% if '/hod' in path %}active{% endif %}" href="/hod"><i class="bi bi-person-badge-fill me-1"></i>Dashboard</a></li>
+          {% elif user.role == 'Faculty' %}
+            <li class="nav-item"><a class="nav-link {% if '/faculty' in path %}active{% endif %}" href="/faculty"><i class="bi bi-person-workspace me-1"></i>Dashboard</a></li>
+          {% elif user.role == 'Student' %}
+            <li class="nav-item"><a class="nav-link {% if '/student' in path %}active{% endif %}" href="/student"><i class="bi bi-mortarboard-fill me-1"></i>Dashboard</a></li>
+          {% endif %}
+          
+          <li class="nav-item"><a class="nav-link {% if '/about' in path %}active{% endif %}" href="/about"><i class="bi bi-info-circle me-1"></i>About</a></li>
+          
+          <li class="nav-item d-none d-lg-block ms-2">
+            <span class="navbar-text text-muted me-2">
+              <i class="bi bi-person-circle me-1"></i>{{ user.name or user.email }}
+            </span>
+          </li>
+          <li class="nav-item d-none d-lg-block">
+            <form method="post" action="/logout" class="d-inline">
+              <button class="btn btn-outline-light btn-sm px-3" type="submit">
+                <i class="bi bi-box-arrow-right me-1"></i>Logout
+              </button>
+            </form>
+          </li>
+        {% else %}
+          {# Show all role links when not logged in #}
+          <li class="nav-item"><a class="nav-link {% if '/admin' in path %}active{% endif %}" href="/admin"><i class="bi bi-shield-fill-check me-1"></i>Admin</a></li>
+          <li class="nav-item"><a class="nav-link {% if '/hod' in path %}active{% endif %}" href="/hod"><i class="bi bi-person-badge-fill me-1"></i>HOD</a></li>
+          <li class="nav-item"><a class="nav-link {% if '/faculty' in path %}active{% endif %}" href="/faculty"><i class="bi bi-person-workspace me-1"></i>Faculty</a></li>
+          <li class="nav-item"><a class="nav-link {% if '/student' in path %}active{% endif %}" href="/student"><i class="bi bi-mortarboard-fill me-1"></i>Student</a></li>
+          <li class="nav-item"><a class="nav-link {% if '/about' in path %}active{% endif %}" href="/about"><i class="bi bi-info-circle me-1"></i>About</a></li>
+          
+          <li class="nav-item d-none d-lg-block ms-2">
+            <button class="btn btn-primary btn-sm px-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#loginOffcanvas" aria-controls="loginOffcanvas">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Sign in
+            </button>
+          </li>
+        {% endif %}
       </ul>
-      <div class="d-lg-none mt-3">
-        <a class="btn btn-primary w-100" href="/login">Sign in</a>
-      </div>
+      
+      {% if user %}
+        {# Mobile menu for logged-in users #}
+        <div class="d-lg-none mt-3">
+          <div class="text-muted mb-2">
+            <i class="bi bi-person-circle me-1"></i>{{ user.name or user.email }}
+          </div>
+          <form method="post" action="/logout">
+            <button class="btn btn-outline-light w-100" type="submit">
+              <i class="bi bi-box-arrow-right me-2"></i>Logout
+            </button>
+          </form>
+        </div>
+      {% else %}
+        {# Mobile sign-in button #}
+        <div class="d-lg-none mt-3">
+          <button class="btn btn-primary w-100" type="button" data-bs-toggle="offcanvas" data-bs-target="#loginOffcanvas" aria-controls="loginOffcanvas">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign in
+          </button>
+        </div>
+      {% endif %}
     </div>
   </div>
 </nav>

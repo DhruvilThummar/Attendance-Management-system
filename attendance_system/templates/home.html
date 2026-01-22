@@ -1,33 +1,118 @@
 {% extends 'base.html' %}
 {% block title %}Attendance System{% endblock %}
 {% block content %}
-<div class="hero text-center">
-  <span class="badge badge-soft mb-3">Unified attendance stack</span>
-  <h1 class="display-5 mb-3">Smart attendance for admins, faculties, and students.</h1>
-  <p class="lead text-muted">Role-based dashboards, fast marking, defaulter alerts, and exportable reports in one streamlined UI.</p>
-  <div class="d-flex flex-wrap justify-content-center gap-3 mt-3">
-    <a class="btn btn-primary" href="/login">Go to login</a>
-    <a class="btn btn-outline-light" href="/student">Student view</a>
+{% if not g.user %}
+<div class="alert alert-info border-0 shadow-sm d-flex align-items-center gap-3">
+  <i class="bi bi-info-circle-fill fs-4 text-primary"></i>
+  <div>
+    <div class="fw-semibold">Sign in to access role dashboards</div>
+    <small class="text-muted">Admin, HOD, Faculty, and Student areas require authentication.</small>
+  </div>
+  <div class="ms-auto d-flex gap-2">
+    <a class="btn btn-primary btn-sm" href="/login">
+      <i class="bi bi-box-arrow-in-right me-1"></i>Sign in
+    </a>
+    <a class="btn btn-outline-secondary btn-sm" href="/about">
+      <i class="bi bi-info-circle me-1"></i>About
+    </a>
+  </div>
+</div>
+{% endif %}
+
+<div class="hero text-center py-5">
+  <span class="badge badge-soft mb-3"><i class="bi bi-stars me-1"></i>Unified attendance stack</span>
+  <h1 class="display-4 mb-3 fw-bold">Smart attendance for admins, faculties, and students.</h1>
+  <p class="lead text-muted mb-4">Role-based dashboards, fast marking, defaulter alerts, and exportable reports in one streamlined UI.</p>
+  <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+    <a class="btn btn-primary btn-lg px-4" href="/login">
+      <i class="bi bi-box-arrow-in-right me-2"></i>Sign in now
+    </a>
+    <a class="btn btn-outline-light btn-lg px-4" href="/about">
+      <i class="bi bi-info-circle me-2"></i>Learn more
+    </a>
   </div>
 </div>
 
-<div class="row g-4 mt-2">
+<div class="row g-4 mt-4" id="features">
   <div class="col-lg-4">
-    <div class="card-glass h-100">
+    <div class="card-glass h-100 text-center">
+      <div class="mb-3">
+        <i class="bi bi-lightning-charge-fill text-warning" style="font-size: 2.5rem;"></i>
+      </div>
       <h2 class="h5">Fast marking</h2>
       <p class="text-muted mb-0">One-click status updates and audit-safe edits for every lecture slot.</p>
     </div>
   </div>
   <div class="col-lg-4">
-    <div class="card-glass h-100">
+    <div class="card-glass h-100 text-center">
+      <div class="mb-3">
+        <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 2.5rem;"></i>
+      </div>
       <h2 class="h5">Defaulter radar</h2>
       <p class="text-muted mb-0">Real-time flags with subject-wise risk and notification hand-offs.</p>
     </div>
   </div>
   <div class="col-lg-4">
-    <div class="card-glass h-100">
+    <div class="card-glass h-100 text-center">
+      <div class="mb-3">
+        <i class="bi bi-file-earmark-pdf-fill text-success" style="font-size: 2.5rem;"></i>
+      </div>
       <h2 class="h5">Reports & backups</h2>
       <p class="text-muted mb-0">Export-ready PDFs and auto backups stored in the reports vault.</p>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mt-4">
+  <div class="col-lg-6">
+    <div class="card-glass h-100">
+      <h2 class="h5 mb-3"><i class="bi bi-people-fill me-2 text-primary"></i>Role-based Access</h2>
+      <p class="text-muted mb-3">Secure authentication and authorization for all user types:</p>
+      {% if not g.user %}
+      <div class="alert alert-secondary py-2 px-3 d-flex align-items-center gap-2">
+        <i class="bi bi-lock-fill text-primary"></i>
+        <span class="small">Sign in to enter Admin, HOD, Faculty, or Student dashboards.</span>
+        <a class="btn btn-primary btn-sm ms-auto" href="/login">Sign in</a>
+      </div>
+      {% endif %}
+      <div class="row g-3">
+        <div class="col-6">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-shield-fill-check text-primary"></i>
+            <span>Admin</span>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-person-badge-fill text-info"></i>
+            <span>HOD</span>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-person-workspace text-success"></i>
+            <span>Faculty</span>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-mortarboard-fill text-warning"></i>
+            <span>Student</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card-glass h-100">
+      <h2 class="h5 mb-3"><i class="bi bi-graph-up-arrow me-2 text-success"></i>Advanced Analytics</h2>
+      <p class="text-muted mb-3">Comprehensive insights and visualization:</p>
+      <ul class="list-unstyled mb-0">
+        <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Real-time attendance tracking</li>
+        <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Subject-wise performance charts</li>
+        <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Automated defaulter detection</li>
+        <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Custom report generation</li>
+      </ul>
     </div>
   </div>
 </div>
