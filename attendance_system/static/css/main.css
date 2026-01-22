@@ -1,1 +1,110 @@
-body { background-color: #f7f9fc; }
+:root {
+  --bg: #0f172a;
+  --card: rgba(255, 255, 255, 0.08);
+  --card-border: rgba(255, 255, 255, 0.15);
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #7c3aed;
+  --accent-2: #22d3ee;
+  --shadow: 0 15px 60px rgba(0, 0, 0, 0.35);
+}
+
+* { font-family: "Space Grotesk", "Segoe UI", sans-serif; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  position: relative;
+}
+
+.page-bg {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 15% 20%, rgba(124, 58, 237, 0.25), transparent 35%),
+              radial-gradient(circle at 80% 10%, rgba(34, 211, 238, 0.25), transparent 30%),
+              radial-gradient(circle at 60% 80%, rgba(124, 58, 237, 0.25), transparent 30%),
+              linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+  z-index: -2;
+}
+
+.page-grid {
+  position: relative;
+  z-index: 1;
+}
+
+a { color: var(--accent-2); }
+
+a:hover { color: var(--accent); }
+
+.navbar {
+  border: 1px solid var(--card-border);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+}
+
+.navbar-brand, .nav-link {
+  color: var(--text) !important;
+}
+
+.nav-link.active {
+  color: var(--accent-2) !important;
+  font-weight: 600;
+}
+
+.card-glass {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.btn-primary {
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  border: none;
+  box-shadow: var(--shadow);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+.form-control, .form-select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 0.2rem rgba(34, 211, 238, 0.25);
+}
+
+.text-muted { color: var(--muted) !important; }
+
+.hero {
+  margin-bottom: 32px;
+}
+
+.hero h1 { font-weight: 700; }
+
+.badge-soft {
+  background: rgba(124, 58, 237, 0.15);
+  color: #e9d5ff;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+}
+
+.stat-tile {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid var(--card-border);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+}
+
+.stat-value { font-size: 1.8rem; font-weight: 700; }
+
+.list-unstyled li + li { margin-top: 8px; }

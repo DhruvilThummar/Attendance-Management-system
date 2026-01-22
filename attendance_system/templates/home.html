@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Attendance System{% endblock %}
+{% block content %}
+<div class="hero text-center">
+  <span class="badge badge-soft mb-3">Unified attendance stack</span>
+  <h1 class="display-5 mb-3">Smart attendance for admins, faculties, and students.</h1>
+  <p class="lead text-muted">Role-based dashboards, fast marking, defaulter alerts, and exportable reports in one streamlined UI.</p>
+  <div class="d-flex flex-wrap justify-content-center gap-3 mt-3">
+    <a class="btn btn-primary" href="/login">Go to login</a>
+    <a class="btn btn-outline-light" href="/student">Student view</a>
+  </div>
+</div>
+
+<div class="row g-4 mt-2">
+  <div class="col-lg-4">
+    <div class="card-glass h-100">
+      <h2 class="h5">Fast marking</h2>
+      <p class="text-muted mb-0">One-click status updates and audit-safe edits for every lecture slot.</p>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card-glass h-100">
+      <h2 class="h5">Defaulter radar</h2>
+      <p class="text-muted mb-0">Real-time flags with subject-wise risk and notification hand-offs.</p>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card-glass h-100">
+      <h2 class="h5">Reports & backups</h2>
+      <p class="text-muted mb-0">Export-ready PDFs and auto backups stored in the reports vault.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

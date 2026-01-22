@@ -1,19 +1,41 @@
 {% extends 'base.html' %}
+{% block title %}Sign in | Attendance System{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-4">
-    <h1 class="h4 mb-3">Login</h1>
-    <form>
-      <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input class="form-control" type="email" required>
+<div class="row align-items-center justify-content-between g-4">
+  <div class="col-lg-6">
+    <div class="hero">
+      <span class="badge badge-soft mb-3">Secure RBAC</span>
+      <h1 class="display-5 mb-3">Sign in to manage attendance in real time.</h1>
+      <p class="lead text-muted">Admin, HOD, Faculty, and Students get tailored dashboards with live status, defaulters, and notifications.</p>
+      <ul class="text-muted list-unstyled mt-3">
+        <li>• OTP-ready email field</li>
+        <li>• Session-based RBAC</li>
+        <li>• Audit-friendly login trail</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card-glass">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <div class="text-muted">Welcome back</div>
+          <h2 class="h4 mb-0">Sign in</h2>
+        </div>
+        <span class="badge badge-soft">v0.1</span>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input class="form-control" type="password" required>
-      </div>
-      <button class="btn btn-primary w-100" type="submit">Sign in</button>
-    </form>
+      <form method="post" action="/login">
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input class="form-control" name="email" type="email" placeholder="you@college.edu" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Password</label>
+          <input class="form-control" name="password" type="password" placeholder="••••••••" required>
+        </div>
+        <button class="btn btn-primary w-100" type="submit">Continue</button>
+        <p class="text-muted small mt-3 mb-0">Use the role-specific credentials provided by your admin. Sessions auto-expire for safety.</p>
+      </form>
+    </div>
   </div>
 </div>
 {% endblock %}

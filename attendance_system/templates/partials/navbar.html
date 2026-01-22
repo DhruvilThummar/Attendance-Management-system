@@ -1,16 +1,26 @@
-<nav class="navbar navbar-expand-lg bg-body-tertiary">
+{% set path = request.path %}
+<nav class="navbar navbar-expand-lg rounded-4 mt-3 container">
   <div class="container-fluid">
-    <a class="navbar-brand" href="/">Attendance</a>
+    <div class="d-flex align-items-center gap-3">
+      <a class="navbar-brand fw-bold" href="/">Attendify</a>
+      <span class="badge badge-soft">Beta</span>
+    </div>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="nav">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="/admin">Admin</a></li>
-        <li class="nav-item"><a class="nav-link" href="/hod">HOD</a></li>
-        <li class="nav-item"><a class="nav-link" href="/faculty">Faculty</a></li>
-        <li class="nav-item"><a class="nav-link" href="/student">Student</a></li>
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-lg-2">
+        <li class="nav-item"><a class="nav-link {% if '/admin' in path %}active{% endif %}" href="/admin">Admin</a></li>
+        <li class="nav-item"><a class="nav-link {% if '/hod' in path %}active{% endif %}" href="/hod">HOD</a></li>
+        <li class="nav-item"><a class="nav-link {% if '/faculty' in path %}active{% endif %}" href="/faculty">Faculty</a></li>
+        <li class="nav-item"><a class="nav-link {% if '/student' in path %}active{% endif %}" href="/student">Student</a></li>
+        <li class="nav-item d-none d-lg-block ms-2">
+          <a class="btn btn-primary btn-sm" href="/login">Sign in</a>
+        </li>
       </ul>
+      <div class="d-lg-none mt-3">
+        <a class="btn btn-primary w-100" href="/login">Sign in</a>
+      </div>
     </div>
   </div>
 </nav>

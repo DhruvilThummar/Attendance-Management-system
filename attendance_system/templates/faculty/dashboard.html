@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Faculty Dashboard | Attendance System{% endblock %}
+{% block content %}
+<div class="hero d-flex align-items-center justify-content-between flex-wrap gap-3">
+  <div>
+    <span class="badge badge-soft mb-2">Faculty</span>
+    <h1 class="h3 mb-2">Today's schedule</h1>
+    <p class="text-muted mb-0">Mark attendance, send notifications, and review audit history.</p>
+  </div>
+  <a class="btn btn-primary" href="#">Start marking</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="stat-tile"><div class="text-muted">Lectures today</div><div class="stat-value">3</div></div></div>
+  <div class="col-md-4"><div class="stat-tile"><div class="text-muted">Pending audits</div><div class="stat-value">2</div></div></div>
+  <div class="col-md-4"><div class="stat-tile"><div class="text-muted">Avg class health</div><div class="stat-value">88%</div></div></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card-glass h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Upcoming lectures</h2>
+        <a class="text-muted" href="#">View timetable</a>
+      </div>
+      <ul class="list-unstyled mb-0">
+        <li class="d-flex justify-content-between"><span>09:00 • DBMS • Division A</span><span class="badge bg-success">Ready</span></li>
+        <li class="d-flex justify-content-between"><span>11:00 • OS • Division B</span><span class="badge bg-secondary">Upcoming</span></li>
+        <li class="d-flex justify-content-between"><span>14:00 • Networks • Division C</span><span class="badge bg-secondary">Upcoming</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card-glass h-100">
+      <h2 class="h5 mb-3">Recent actions</h2>
+      <ul class="list-unstyled mb-0">
+        <li class="d-flex justify-content-between"><span>Attendance posted for DBMS</span><span class="text-muted">2m ago</span></li>
+        <li class="d-flex justify-content-between"><span>Notification sent to Division A</span><span class="text-muted">10m ago</span></li>
+        <li class="d-flex justify-content-between"><span>Correction requested by HOD</span><span class="text-muted">1h ago</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

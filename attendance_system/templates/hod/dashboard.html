@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}HOD Dashboard | Attendance System{% endblock %}
+{% block content %}
+<div class="hero d-flex align-items-center justify-content-between flex-wrap gap-3">
+  <div>
+    <span class="badge badge-soft mb-2">Department oversight</span>
+    <h1 class="h3 mb-2">HOD overview</h1>
+    <p class="text-muted mb-0">Track departmental attendance, approve corrections, and coordinate faculties.</p>
+  </div>
+  <a class="btn btn-primary" href="#">Download weekly report</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="stat-tile"><div class="text-muted">Dept average</div><div class="stat-value">82%</div></div></div>
+  <div class="col-md-4"><div class="stat-tile"><div class="text-muted">Flagged courses</div><div class="stat-value">6</div></div></div>
+  <div class="col-md-4"><div class="stat-tile"><div class="text-muted">Open correction requests</div><div class="stat-value">12</div></div></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card-glass h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Courses below 75%</h2>
+        <a class="text-muted" href="#">See details</a>
+      </div>
+      <ul class="list-unstyled mb-0">
+        <li class="d-flex justify-content-between"><span>Data Structures</span><span class="badge bg-danger">64%</span></li>
+        <li class="d-flex justify-content-between"><span>DBMS</span><span class="badge bg-warning text-dark">72%</span></li>
+        <li class="d-flex justify-content-between"><span>Discrete Math</span><span class="badge bg-warning text-dark">74%</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card-glass h-100">
+      <h2 class="h5 mb-3">Faculty check-ins</h2>
+      <ul class="list-unstyled mb-0">
+        <li class="d-flex justify-content-between"><span>Prof. Mehta</span><span class="text-muted">Updated 5 mins ago</span></li>
+        <li class="d-flex justify-content-between"><span>Prof. Iyer</span><span class="text-muted">Updated 12 mins ago</span></li>
+        <li class="d-flex justify-content-between"><span>Prof. Patel</span><span class="text-muted">Updated 30 mins ago</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

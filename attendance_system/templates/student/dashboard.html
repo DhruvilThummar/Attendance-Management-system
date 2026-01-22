@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Student Dashboard | Attendance System{% endblock %}
+{% block content %}
+<div class="hero d-flex align-items-center justify-content-between flex-wrap gap-3">
+  <div>
+    <span class="badge badge-soft mb-2">Student</span>
+    <h1 class="h3 mb-2">Your attendance at a glance</h1>
+    <p class="text-muted mb-0">Track subject-wise percentages, defaulter risk, and latest notices.</p>
+  </div>
+  <a class="btn btn-primary" href="#">Download report</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="stat-tile"><div class="text-muted">Overall</div><div class="stat-value">91%</div></div></div>
+  <div class="col-md-4"><div class="stat-tile"><div class="text-muted">Subjects below 75%</div><div class="stat-value">1</div></div></div>
+  <div class="col-md-4"><div class="stat-tile"><div class="text-muted">Notifications</div><div class="stat-value">3</div></div></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card-glass h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Subject-wise</h2>
+        <a class="text-muted" href="#">View history</a>
+      </div>
+      <ul class="list-unstyled mb-0">
+        <li class="d-flex justify-content-between"><span>DBMS</span><span class="badge bg-success">92%</span></li>
+        <li class="d-flex justify-content-between"><span>OS</span><span class="badge bg-success">88%</span></li>
+        <li class="d-flex justify-content-between"><span>Networks</span><span class="badge bg-warning text-dark">76%</span></li>
+        <li class="d-flex justify-content-between"><span>Maths IV</span><span class="badge bg-success">90%</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card-glass h-100">
+      <h2 class="h5 mb-3">Notifications</h2>
+      <ul class="list-unstyled mb-0">
+        <li class="d-flex justify-content-between"><span>Attendance warning for Networks</span><span class="text-muted">Today</span></li>
+        <li class="d-flex justify-content-between"><span>Timetable update for Monday</span><span class="text-muted">Yesterday</span></li>
+        <li class="d-flex justify-content-between"><span>Lab cancelled Friday</span><span class="text-muted">2d ago</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: attendance-system
+Version: 0.1.0
+Summary: Smart Attendance Management System
+Author: Team
+Requires-Python: >=3.11
+Requires-Dist: Flask>=2.3
+Requires-Dist: psycopg2-binary>=2.9
+Requires-Dist: matplotlib>=3.8
+Requires-Dist: reportlab>=4.0
+Requires-Dist: weasyprint>=61.0
+Requires-Dist: supabase>=2.0
