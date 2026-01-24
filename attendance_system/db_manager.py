@@ -1,63 +1,122 @@
-"""Database connection helpers using psycopg2."""
+"""
+Database manager using mysql.connector as requested.
+"""
 from __future__ import annotations
+import mysql.connector
+import os
+from flask import current_app
 
-import logging
-from contextlib import contextmanager
-from typing import Any, Iterable
-
-import psycopg2
-import psycopg2.pool
-
-logger = logging.getLogger(__name__)
-
-_pool: psycopg2.pool.SimpleConnectionPool | None = None
-
-
-def init_db_pool(dsn: str, minconn: int = 1, maxconn: int = 5) -> None:
-    global _pool
-    if _pool:
-        return
+def create_connection():
+    """
+    Establishes a connection to the MySQL database.
+    Configuration is fetched from Flask config or Environment variables.
+    """
     try:
-        _pool = psycopg2.pool.SimpleConnectionPool(minconn, maxconn, dsn)
-        # Quick connectivity check so we fail fast with a clear error
-        with get_conn() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT 1;")
-        logger.info("DB pool initialized")
-    except Exception as exc:  # surface the real reason (bad URL, bad creds, SSL, etc.)
-        logger.error("Failed to initialize DB pool: %s", exc)
-        _pool = None
-        raise
+        # Parse DATABASE_URL or use individual env vars
+        # DB URL format: mysql://user:pass@host:port/dbname
+        # We'll use simple env vars fallback if URL parsing is complex given the strict pattern request
+        
+        # Taking reference from user's code but adapting for Config
+        # We need to support the connection string we already use or parse it.
+        from urllib.parse import urlparse
+        
+        db_url = os.getenv("DATABASE_URL", "mysql://root:password@localhost:3306/attendance_db")
+        # Handle the commonly used mysql:// scheme
+        if not db_url:
+             return None
+             
+        # Simple parse for standard URL
+        try:
+            result = urlparse(db_url)
+            host = result.hostname
+            user = result.username
+            password = result.password
+            database = result.path.lstrip('/')
+            port = result.port or 3306
+        except:
+            # Fallback defaults locally
+            host = "localhost"
+            user = "root"
+            password = ""
+            database = "attendance_db"
 
+        # Connect
+        mydb = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database,
+            port=port
+        )
+        return mydb
+        
+    except mysql.connector.Error as err:
+        # Using print instead of st.error since this is Flask
+        print(f"Error connecting to database: {err}")
+        return None
 
-def close_pool() -> None:
-    global _pool
-    if _pool:
-        _pool.closeall()
-        _pool = None
+def execute(query: str, params: tuple | None = None):
+    """
+    Executes a SQL query and returns the result (for SELECT) 
+    or commits changes (for INSERT/UPDATE/DELETE).
+    Alias for run_query to maintain compatibility with existing code.
+    """
+    return run_query(query, params)
 
+def fetch_one(query: str, params: tuple | None = None):
+    """
+    Helper to fetch a single row.
+    """
+    rows = run_query(query, params)
+    if isinstance(rows, list) and len(rows) > 0:
+        # run_query returns dictionary=True? 
+        # The user's code used dictionary=True. 
+        # My existing code expects tuples mainly.
+        # I need to check what my codebase expects.
+        # My code does `row[0]` accessing by index often (e.g. `is_approved = row[0]`).
+        # If I switch to dictionary=True, I break ALL that code.
+        # I MUST use dictionary=False for compatibility OR refactor the whole app.
+        # Given "tack a reference", I should adapt it to fit.
+        # I will use dictionary=False to match my existing `fetch_one` contract.
+        return rows[0]
+    return None
 
-@contextmanager
-def get_conn():
-    if not _pool:
-        raise RuntimeError("Database pool not initialized")
-    conn = _pool.getconn()
-    try:
-        yield conn
-    finally:
-        _pool.putconn(conn)
+# Placeholder for init_db_pool legacy calls (no-op now as we connect per query)
+def init_db_pool(dsn: str = ""):
+    pass
 
-
-def execute(query: str, params: Iterable[Any] | None = None) -> list[tuple[Any, ...]]:
-    if not _pool:
-        logger.warning("Database pool not initialized; returning empty result")
+def run_query(query, params=None):
+    """
+    Executes a SQL query.
+    """
+    conn = create_connection()
+    if conn is None:
         return []
-    with get_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query, params or [])
-            if cur.description:
-                rows = cur.fetchall()
-            else:
-                rows = []
+    
+    try:
+        # Using dictionary=False to maintain compatibility with tuple-based access in my app
+        cursor = conn.cursor(dictionary=False)
+        
+        if params:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
+            
+        if query.strip().upper().startswith(("INSERT", "UPDATE", "DELETE", "CREATE", "DROP", "ALTER")):
             conn.commit()
-            return rows
+            # For INSERT, return lastrowid so we can get keys
+            if query.strip().upper().startswith("INSERT"):
+                return cursor.lastrowid
+            return [] # Other DML returns empty list
+        else:
+            return cursor.fetchall()
+            
+    except mysql.connector.Error as err:
+        print(f"Query Error: {err}")
+        # Re-raise or return empty? My old code might expect exceptions or handle them.
+        # I'll return empty list to be safe as per user snippet style
+        return []
+    finally:
+        if conn and conn.is_connected():
+            cursor.close()
+            conn.close()

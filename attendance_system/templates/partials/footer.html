@@ -1,67 +1,72 @@
-<footer class="footer mt-5">
+<footer class="mt-auto pt-5">
   <div class="container">
-    <div class="footer-content">
+    <div class="card-glass border-0 rounded-4 p-5">
       <div class="row g-4">
         <div class="col-lg-4 col-md-6">
-          <div class="footer-brand mb-3">
-            <h5 class="fw-bold mb-2">Attendify</h5>
-            <span class="badge badge-soft">Beta v0.1</span>
-          </div>
+          <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-calendar-check-fill me-2 text-primary"></i>Attendify</h5>
           <p class="text-muted small mb-3">
-            Smart Attendance Management System with role-based access, real-time tracking, and automated reporting for educational institutions.
+            Empowering educational institutions with smart, role-based attendance management, real-time analytics, and
+            automated reporting.
           </p>
-          <div class="social-links">
-            <a href="https://github.com/DhruvilThummar/Attendance-Management-system" class="social-icon" aria-label="GitHub"><i class="bi bi-github"></i></a>
+          <div class="d-flex gap-3 social-links">
+            <a href="#" class="btn btn-sm btn-outline-primary rounded-circle"><i class="bi bi-twitter"></i></a>
+            <a href="#" class="btn btn-sm btn-outline-primary rounded-circle"><i class="bi bi-linkedin"></i></a>
+            <a href="https://github.com/DhruvilThummar/Attendance-Management-system"
+              class="btn btn-sm btn-outline-primary rounded-circle"><i class="bi bi-github"></i></a>
           </div>
         </div>
-        
-        <div class="col-lg-2 col-md-6 col-6">
-          <h6 class="footer-title">Quick Links</h6>
-          <ul class="footer-links list-unstyled">
-            <li><a href="/">Home</a></li>
-            <li><a href="/about">About</a></li>
-            <li><a href="/login">Sign In</a></li>
-            <li><a href="/contact">Contact</a></li>
+
+        <div class="col-lg-2 col-md-6">
+          <h6 class="text-dark fw-semibold mb-3">Quick Links</h6>
+          <ul class="list-unstyled text-muted small">
+            <li class="mb-2"><a href="/" class="text-decoration-none text-muted hover-primary">Home</a></li>
+            <li class="mb-2"><a href="/about" class="text-decoration-none text-muted hover-primary">About Us</a></li>
+            <li class="mb-2"><a href="/register-college" class="text-decoration-none text-muted hover-primary">Register
+                College</a></li>
+            <li><a href="/login" class="text-decoration-none text-muted hover-primary">Login</a></li>
           </ul>
         </div>
-        
-        <div class="col-lg-2 col-md-6 col-6">
-          <h6 class="footer-title">Roles</h6>
-          <ul class="footer-links list-unstyled">
-            <li><a href="/admin">Admin</a></li>
-            <li><a href="/hod">HOD</a></li>
-            <li><a href="/faculty">Faculty</a></li>
-            <li><a href="/student">Student</a></li>
+
+        <div class="col-lg-2 col-md-6">
+          <h6 class="text-dark fw-semibold mb-3">Portals</h6>
+          <ul class="list-unstyled text-muted small">
+            <li class="mb-2"><a href="/admin" class="text-decoration-none text-muted hover-primary">Admin Console</a>
+            </li>
+            <li class="mb-2"><a href="/faculty" class="text-decoration-none text-muted hover-primary">Faculty Desk</a>
+            </li>
+            <li class="mb-2"><a href="/student" class="text-decoration-none text-muted hover-primary">Student Zone</a>
+            </li>
+            <li><a href="/super_admin" class="text-decoration-none text-muted hover-primary">Super Admin</a></li>
           </ul>
         </div>
-        
+
         <div class="col-lg-4 col-md-6">
-          <h6 class="footer-title">Features</h6>
-          <ul class="footer-features list-unstyled">
-            <li>✓ Real-time Attendance Tracking</li>
-            <li>✓ Automated Defaulter Detection</li>
-            <li>✓ Comprehensive Reports & Analytics</li>
-            <li>✓ Secure Role-Based Access</li>
-          </ul>
+          <h6 class="text-dark fw-semibold mb-3">Newsletter</h6>
+          <p class="text-muted small">Subscribe for updates on features and releases.</p>
+          <form action="#" class="d-flex gap-2">
+            <input type="email" class="form-control form-control-sm border-secondary-subtle"
+              placeholder="Email address">
+            <button class="btn btn-primary btn-sm">Subscribe</button>
+          </form>
         </div>
       </div>
-      
-      <hr class="footer-divider my-4">
-      
-      <div class="row align-items-center">
-        <div class="col-md-6 text-center text-md-start">
-          <p class="footer-copyright mb-0">
-            &copy; 2026 Attendify. Built with <span class="text-danger">❤</span> for education.
-          </p>
-        </div>
-        <div class="col-md-6 text-center text-md-end mt-2 mt-md-0">
-          <div class="footer-tech">
-            <span class="tech-badge">Flask</span>
-            <span class="tech-badge">PostgreSQL</span>
-            <span class="tech-badge">Bootstrap 5</span>
-          </div>
-        </div>
+
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center pt-4 mt-4 border-top">
+        <p class="mb-0 text-muted small">&copy; 2026 Attendify. Designed by <span class="text-dark fw-semibold">Dhruvil
+            Thummar</span>.</p>
+        <ul class="list-inline mb-0 small">
+          <li class="list-inline-item"><a href="#" class="text-decoration-none text-muted hover-primary">Privacy</a>
+          </li>
+          <li class="list-inline-item"><a href="#" class="text-decoration-none text-muted hover-primary">Terms</a></li>
+        </ul>
       </div>
     </div>
   </div>
 </footer>
+
+<style>
+  .hover-primary:hover {
+    color: var(--bs-primary) !important;
+    transition: color 0.2s;
+  }
+</style>

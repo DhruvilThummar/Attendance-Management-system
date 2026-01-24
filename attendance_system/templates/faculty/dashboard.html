@@ -1,66 +1,129 @@
 {% extends 'base.html' %}
-{% block title %}Faculty Dashboard | Attendance System{% endblock %}
+
+{% block title %}Faculty Dashboard - Attendify{% endblock %}
+
 {% block content %}
-{% if not g.user %}
-  <div class="row justify-content-center">
-    <div class="col-lg-6">
-      <div class="card-glass text-center">
-        <div class="mb-4">
-          <i class="bi bi-lock-fill" style="font-size: 4rem; color: var(--accent);"></i>
-        </div>
-        <h2 class="h3 mb-3">Authentication Required</h2>
-        <p class="text-muted mb-4">You need to sign in to access the Faculty Dashboard. Please log in with your faculty credentials to continue.</p>
-        <div class="d-flex flex-wrap justify-content-center gap-3">
-          <a class="btn btn-primary btn-lg px-4" href="/login">
-            <i class="bi bi-box-arrow-in-right me-2"></i>Sign in now
-          </a>
-          <a class="btn btn-outline-light btn-lg px-4" href="/">
-            <i class="bi bi-house-fill me-2"></i>Go to Home
-          </a>
-        </div>
-      </div>
-    </div>
+<div class="row mb-4">
+  <div class="col-md-12">
+    <h2 class="fw-bold">Faculty Dashboard</h2>
+    <p class="text-muted">Manage your lectures and attendance.</p>
   </div>
-{% else %}
-<div class="hero d-flex align-items-center justify-content-between flex-wrap gap-3">
-  <div>
-    <span class="badge badge-soft mb-2">Faculty</span>
-    <h1 class="h3 mb-2">Today's schedule</h1>
-    <p class="text-muted mb-0">Mark attendance, send notifications, and review audit history.</p>
-  </div>
-  <a class="btn btn-primary" href="#">Start marking</a>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-md-4"><div class="stat-tile"><div class="text-muted">Lectures today</div><div class="stat-value">3</div></div></div>
-  <div class="col-md-4"><div class="stat-tile"><div class="text-muted">Pending audits</div><div class="stat-value">2</div></div></div>
-  <div class="col-md-4"><div class="stat-tile"><div class="text-muted">Avg class health</div><div class="stat-value">88%</div></div></div>
-</div>
-
-<div class="row g-4">
-  <div class="col-lg-7">
-    <div class="card-glass h-100">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="h5 mb-0">Upcoming lectures</h2>
-        <a class="text-muted" href="#">View timetable</a>
+{# Approval Section #}
+{% if pending_approvals %}
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-info bg-opacity-10 py-3">
+        <h5 class="card-title mb-0 text-info-emphasis"><i class="bi bi-mortarboard-fill me-2"></i>Pending Student
+          Approvals</h5>
       </div>
-      <ul class="list-unstyled mb-0">
-        <li class="d-flex justify-content-between"><span>09:00 • DBMS • Division A</span><span class="badge bg-success">Ready</span></li>
-        <li class="d-flex justify-content-between"><span>11:00 • OS • Division B</span><span class="badge bg-secondary">Upcoming</span></li>
-        <li class="d-flex justify-content-between"><span>14:00 • Networks • Division C</span><span class="badge bg-secondary">Upcoming</span></li>
-      </ul>
-    </div>
-  </div>
-  <div class="col-lg-5">
-    <div class="card-glass h-100">
-      <h2 class="h5 mb-3">Recent actions</h2>
-      <ul class="list-unstyled mb-0">
-        <li class="d-flex justify-content-between"><span>Attendance posted for DBMS</span><span class="text-muted">2m ago</span></li>
-        <li class="d-flex justify-content-between"><span>Notification sent to Division A</span><span class="text-muted">10m ago</span></li>
-        <li class="d-flex justify-content-between"><span>Correction requested by HOD</span><span class="text-muted">1h ago</span></li>
-      </ul>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="bg-light">
+              <tr>
+                <th class="ps-4">Email</th>
+                <th>Role</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in pending_approvals %}
+              <tr>
+                <td class="ps-4 fw-semibold">{{ user.email }}</td>
+                <td><span class="badge bg-secondary">{{ user.role }}</span></td>
+                <td>
+                  <form action="{{ url_for('faculty.approve_user', user_id=user.id) }}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                  </form>
+                  <form action="{{ url_for('faculty.reject_user', user_id=user.id) }}" method="post"
+                    class="d-inline ms-1">
+                    <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 {% endif %}
+
+<div class="row">
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Daily Schedule</h5>
+        <form action="" method="get" class="d-flex align-items-center gap-2">
+          <label for="date" class="small text-muted mb-0">Date:</label>
+          <input type="date" name="date" class="form-control form-control-sm" value="{{ selected_date }}"
+            onchange="this.form.submit()">
+        </form>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="bg-light">
+              <tr>
+                <th class="ps-4">Time</th>
+                <th>Subject</th>
+                <th>Division</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for lecture in lectures %}
+              <tr>
+                <td class="ps-4 fw-semibold">{{ lecture.slot }}</td>
+                <td>{{ lecture.subject }}</td>
+                <td><span class="badge bg-secondary bg-opacity-10 text-secondary">{{ lecture.division }}</span></td>
+                <td>
+                  {% if lecture.status == 'Completed' %}
+                  <span class="badge bg-success bg-opacity-10 text-success">Taken</span>
+                  {% else %}
+                  <span class="badge bg-warning bg-opacity-10 text-warning">Pending</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if lecture.status != 'Completed' %}
+                  <a href="{{ url_for('faculty.mark_attendance', lecture_id=lecture.id) }}"
+                    class="btn btn-sm btn-primary">
+                    Mark Attendance
+                  </a>
+                  {% else %}
+                  <button class="btn btn-sm btn-outline-secondary" disabled>View</button>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="5" class="text-center py-4 text-muted">No lectures scheduled for today.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    {# Quick Actions or Recent Activity could go here #}
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h5 class="card-title mb-0">Actions</h5>
+      </div>
+      <div class="card-body">
+        <button class="btn btn-outline-primary w-100 mb-2">My TimeTable</button>
+        <button class="btn btn-outline-primary w-100">Correction Request</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -1,4 +1,4 @@
-"""Authentication service using PostgreSQL + password hashing."""
+"""Authentication service using MySQL + password hashing."""
 from __future__ import annotations
 
 from typing import Optional
@@ -21,7 +21,7 @@ def verify_credentials(email: str, password: str) -> Optional[dict]:
 
     rows = execute(
         """
-        SELECT id, email, password_hash, role
+        SELECT id, email, password, role
         FROM users
         WHERE LOWER(email) = LOWER(%s)
         LIMIT 1

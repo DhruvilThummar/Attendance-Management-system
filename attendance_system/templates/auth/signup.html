@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - Attendify{% endblock %}
+
+{% block content %}
+<div class="row align-items-center justify-content-center min-vh-60">
+    <div class="col-md-5">
+        <div class="card card-glass border-0">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="mb-3">
+                        <i class="bi bi-person-plus-fill fs-1 text-gradient"></i>
+                    </div>
+                    <h3 class="fw-bold">Create Account</h3>
+                    <p class="text-muted">Join the academic platform.</p>
+                </div>
+
+                {% if error %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i>{{ error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+
+                {% if success %}
+                <div class="alert alert-success" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>{{ success }}
+                    <div class="mt-2">
+                        <a href="/login" class="fw-bold">Proceed to Login</a>
+                    </div>
+                </div>
+                {% else %}
+                <form method="post" class="needs-validation" novalidate id="signup-form">
+                    <div class="mb-3">
+                        <label class="form-label" for="college">College/Institution</label>
+                        <select class="form-select" id="college" name="college_id" required>
+                            <option value="" selected disabled>Select your College</option>
+                            {% for college in colleges %}
+                            <option value="{{ college.id }}">{{ college.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please select a college.</div>
+                        <div class="form-text"><small>Don't see your college? <a href="/register-college">Register it
+                                    here</a>.</small></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="email">Email Address</label>
+                        <input class="form-control" id="email" name="email" type="email" placeholder="name@college.edu"
+                            required>
+                        <div class="invalid-feedback">
+                            Please enter a valid email address (e.g., user@domain.com).
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="password">Password</label>
+                        <div class="position-relative">
+                            <input class="form-control pe-5" id="password" name="password" type="password"
+                                placeholder="••••••••" required minlength="8">
+                            <button type="button"
+                                class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2"
+                                data-password-toggle tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <div class="invalid-feedback">
+                                Password must be 8+ chars, have 1 uppercase, 1 number, and 1 special char.
+                            </div>
+                        </div>
+                        <div class="form-text text-muted">Format: 1 Upper, 1 Number, 1 Special Char, 8+ chars.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label" for="role">I am a...</label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="" selected disabled>Select Role</option>
+                            <option value="Student">Student</option>
+                            <option value="Faculty">Faculty Member</option>
+                            <option value="HOD">Head of Department</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid">
+                        <button class="btn btn-primary py-2" type="submit">
+                            <i class="bi bi-person-plus me-2"></i>Register
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+
+                <div class="text-center mt-4">
+                    <p class="text-muted small">Already have an account? <a href="/login"
+                            class="fw-bold text-decoration-none">Sign In</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

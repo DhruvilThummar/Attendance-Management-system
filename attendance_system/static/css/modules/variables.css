@@ -1,0 +1,16 @@
+:root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --card-border: #e2e8f0;
+    --text: #1e293b;
+    --muted: #64748b;
+    --accent: #6366f1;
+    /* Indigo */
+    --accent-2: #06b6d4;
+    /* Cyan */
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --font-main: "Space Grotesk", "Segoe UI", sans-serif;
+}
