@@ -15,6 +15,7 @@ attendance_system/blueprints/auth.py
 attendance_system/blueprints/faculty.py
 attendance_system/blueprints/hod.py
 attendance_system/blueprints/student.py
+attendance_system/blueprints/super_admin.py
 attendance_system/models/__init__.py
 attendance_system/models/attendance.py
 attendance_system/models/audit.py
@@ -36,7 +37,7 @@ attendance_system/services/file_service.py
 attendance_system/services/notification_service.py
 attendance_system/services/report_service.py
 attendance_system/services/rules_service.py
+attendance_system/services/schedule_parser_service.py
 attendance_system/services/search_service.py
 attendance_system/services/timetable_service.py
 attendance_system/services/visualization_service.py
-tests/test_smoke.py

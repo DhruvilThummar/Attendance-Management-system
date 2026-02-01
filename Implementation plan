@@ -3,7 +3,7 @@ A robust, role-based system for automating attendance, explicitly designed to sa
 
 🚀 Tech Stack
 Backend: Flask (Python)
-Database: Pure PostgreSQL (using Raw SQL via psycopg2)
+Database: MySQL (using Raw SQL via mysql-connector-python)
 Frontend: HTML5, CSS3 (Vanilla + Bootstrap 5), JS (ES6)
 Reporting: ReportLab / WeasyPrint
 Analytics: Matplotlib (Visualization), Custom BST (Data Structures)
@@ -78,7 +78,7 @@ Automated backups to /static/reports/backups/.
 Admin can create, update, and assign Subjects and Divisions to students and faculties, forming the foundation of the timetable and attendance workflow.
 
 🗃️ Database Schema (Raw SQL + DBMS)
-Engine: PostgreSQL accessed via psycopg2.
+Engine: MySQL accessed via mysql-connector-python.
 Logic: All queries written as raw SQL strings for explicit DBMS demonstration.
 Operations: CREATE, INSERT, UPDATE, DELETE, SELECT, JOIN, GROUP BY.
 users: id, email, password, role (Admin, HOD, Faculty, Student)

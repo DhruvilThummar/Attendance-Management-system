@@ -4,9 +4,8 @@ Database manager using mysql.connector as requested.
 from __future__ import annotations
 import mysql.connector
 import os
-from flask import current_app
 
-def create_connection():
+def create_connection(dsn: str | None = None):
     """
     Establishes a connection to the MySQL database.
     Configuration is fetched from Flask config or Environment variables.
@@ -20,7 +19,7 @@ def create_connection():
         # We need to support the connection string we already use or parse it.
         from urllib.parse import urlparse
         
-        db_url = os.getenv("DATABASE_URL", "mysql://root:password@localhost:3306/attendance_db")
+        db_url = dsn or os.getenv("DATABASE_URL", "mysql://root:password@localhost:3306/attendance_db")
         # Handle the commonly used mysql:// scheme
         if not db_url:
              return None
@@ -81,9 +80,24 @@ def fetch_one(query: str, params: tuple | None = None):
         return rows[0]
     return None
 
-# Placeholder for init_db_pool legacy calls (no-op now as we connect per query)
-def init_db_pool(dsn: str = ""):
-    pass
+# Legacy compatibility: validate DB connectivity at startup.
+def init_db_pool(dsn: str = "") -> None:
+    conn = create_connection(dsn or None)
+    if conn is None:
+        raise RuntimeError("Failed to create MySQL connection")
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        _ = cursor.fetchone()
+    finally:
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 def run_query(query, params=None):
     """
