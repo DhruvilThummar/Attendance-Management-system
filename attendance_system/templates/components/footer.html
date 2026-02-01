@@ -1,0 +1,170 @@
+<!-- Enhanced Footer Component -->
+<footer class="footer bg-dark text-white py-5">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <!-- Brand Section -->
+            <div class="col-md-3 col-lg-3 mb-4">
+                <div class="footer-brand mb-3">
+                    <h5 class="d-flex align-items-center">
+                        <i class="bi bi-calendar-check-fill me-2"></i>
+                        Attendify
+                    </h5>
+                    <p class="text-muted small">Smart Attendance Management System</p>
+                </div>
+                <div class="social-links">
+                    <a href="#" class="social-link-footer"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="social-link-footer"><i class="bi bi-twitter"></i></a>
+                    <a href="#" class="social-link-footer"><i class="bi bi-linkedin"></i></a>
+                    <a href="#" class="social-link-footer"><i class="bi bi-instagram"></i></a>
+                </div>
+            </div>
+
+            <!-- Product Links -->
+            <div class="col-md-3 col-lg-2">
+                <h6 class="footer-title">Product</h6>
+                <ul class="footer-links">
+                    <li><a href="/" class="footer-link">Home</a></li>
+                    <li><a href="/about" class="footer-link">About</a></li>
+                    <li><a href="/contact" class="footer-link">Contact</a></li>
+                    <li><a href="/pricing" class="footer-link">Pricing</a></li>
+                </ul>
+            </div>
+
+            <!-- Company Links -->
+            <div class="col-md-3 col-lg-2">
+                <h6 class="footer-title">Company</h6>
+                <ul class="footer-links">
+                    <li><a href="#" class="footer-link">Blog</a></li>
+                    <li><a href="#" class="footer-link">Careers</a></li>
+                    <li><a href="#" class="footer-link">Partners</a></li>
+                    <li><a href="#" class="footer-link">Press</a></li>
+                </ul>
+            </div>
+
+            <!-- Resources Links -->
+            <div class="col-md-3 col-lg-2">
+                <h6 class="footer-title">Resources</h6>
+                <ul class="footer-links">
+                    <li><a href="#" class="footer-link">Documentation</a></li>
+                    <li><a href="#" class="footer-link">API Reference</a></li>
+                    <li><a href="#" class="footer-link">Support</a></li>
+                    <li><a href="#" class="footer-link">FAQ</a></li>
+                </ul>
+            </div>
+
+            <!-- Legal Links -->
+            <div class="col-md-3 col-lg-2">
+                <h6 class="footer-title">Legal</h6>
+                <ul class="footer-links">
+                    <li><a href="#" class="footer-link">Privacy</a></li>
+                    <li><a href="#" class="footer-link">Terms</a></li>
+                    <li><a href="#" class="footer-link">Security</a></li>
+                    <li><a href="#" class="footer-link">Compliance</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <hr class="bg-secondary opacity-25">
+
+        <!-- Copyright Section -->
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <p class="text-muted small mb-0">
+                    &copy; 2026 Attendance System. All rights reserved.
+                </p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p class="text-muted small mb-0">
+                    Made with <i class="bi bi-heart-fill text-danger"></i> by
+                    <a href="#" class="text-white fw-600">Dev Team</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+    .footer {
+        background: linear-gradient(180deg, #1c2e4a 0%, #2d47a7 100%);
+        margin-top: 4rem;
+        border-top: 3px solid #3b5bdb;
+    }
+
+    .footer-brand h5 {
+        font-weight: 700;
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .social-links {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .social-link-footer {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .social-link-footer:hover {
+        background: #3b5bdb;
+        transform: translateY(-3px);
+    }
+
+    .footer-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .footer-links {
+        list-style: none;
+        padding: 0;
+    }
+
+    .footer-link {
+        color: rgba(255, 255, 255, 0.75);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-block;
+        padding: 0.25rem 0;
+    }
+
+    .footer-link:hover {
+        color: white;
+        padding-left: 0.25rem;
+    }
+
+    .footer-links li {
+        margin-bottom: 0.75rem;
+    }
+
+    @media (max-width: 768px) {
+        .footer {
+            margin-top: 2rem;
+        }
+
+        .col-md-3 {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .social-links {
+            justify-content: center;
+        }
+
+        .text-md-end {
+            text-align: center;
+        }
+    }
+</style>

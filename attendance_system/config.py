@@ -13,8 +13,9 @@ class Config:
     SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret")
 
     # Expected format: mysql://user:password@host:port/dbname
+    # Database name 'databse' matches the schema.sql
     DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", "mysql://root:password@localhost:3306/attendance_db"
+        "DATABASE_URL", "mysql://root:password@localhost:3306/databse"
     )
 
     # Optional: schema file path used by seed script

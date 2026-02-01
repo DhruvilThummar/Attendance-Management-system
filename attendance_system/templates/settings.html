@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Attendance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard"><i class="bi bi-calendar-check-fill"></i> Attendify</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto" id="nav-menu"></ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <h1 class="mb-4"><i class="bi bi-gear"></i> System Settings</h1>
+
+        <div id="alert-container"></div>
+
+        <!-- Attendance Rules -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Attendance Rules</h5>
+            </div>
+            <div class="card-body">
+                <form id="rules-form">
+                    <div class="mb-3">
+                        <label for="minimum_percentage" class="form-label">Minimum Attendance Percentage *</label>
+                        <input type="number" class="form-control" id="minimum_percentage" name="minimum_percentage" 
+                               min="0" max="100" step="0.01" value="75" required>
+                        <div class="form-text">Students below this percentage are marked as defaulters</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="warning_percentage" class="form-label">Warning Threshold *</label>
+                        <input type="number" class="form-control" id="warning_percentage" name="warning_percentage" 
+                               min="0" max="100" step="0.01" value="80" required>
+                        <div class="form-text">Students below this receive warnings</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="proxy_detection" class="form-label">Proxy Detection</label>
+                        <select class="form-select" id="proxy_detection" name="proxy_detection">
+                            <option value="1">Enabled</option>
+                            <option value="0">Disabled</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save Rules</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Notification Settings -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Notification Settings</h5>
+            </div>
+            <div class="card-body">
+                <form id="notification-form">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="email_notifications" name="email_notifications" checked>
+                            <label class="form-check-label" for="email_notifications">
+                                Enable Email Notifications
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="low_attendance_alerts" name="low_attendance_alerts" checked>
+                            <label class="form-check-label" for="low_attendance_alerts">
+                                Send alerts for low attendance
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="parent_notifications" name="parent_notifications" checked>
+                            <label class="form-check-label" for="parent_notifications">
+                                Notify parents about defaulters
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save Notification Settings</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Academic Calendar -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Academic Calendar</h5>
+            </div>
+            <div class="card-body">
+                <form id="calendar-form">
+                    <div class="mb-3">
+                        <label for="semester_start" class="form-label">Semester Start Date *</label>
+                        <input type="date" class="form-control" id="semester_start" name="semester_start" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="semester_end" class="form-label">Semester End Date *</label>
+                        <input type="date" class="form-control" id="semester_end" name="semester_end" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="working_days" class="form-label">Working Days</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="monday" name="working_days" value="Monday" checked>
+                                <label class="form-check-label" for="monday">Mon</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="tuesday" name="working_days" value="Tuesday" checked>
+                                <label class="form-check-label" for="tuesday">Tue</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="wednesday" name="working_days" value="Wednesday" checked>
+                                <label class="form-check-label" for="wednesday">Wed</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="thursday" name="working_days" value="Thursday" checked>
+                                <label class="form-check-label" for="thursday">Thu</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="friday" name="working_days" value="Friday" checked>
+                                <label class="form-check-label" for="friday">Fri</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="saturday" name="working_days" value="Saturday">
+                                <label class="form-check-label" for="saturday">Sat</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save Calendar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Backup & Export -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Backup & Export</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" id="export-data-btn">
+                        <i class="bi bi-download"></i> Export All Data
+                    </button>
+                    <button class="btn btn-outline-secondary" id="backup-db-btn">
+                        <i class="bi bi-database"></i> Backup Database
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="/static/js/settings.js"></script>
+</body>
+</html>

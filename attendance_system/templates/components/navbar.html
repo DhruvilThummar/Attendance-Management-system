@@ -1,0 +1,294 @@
+<!-- Enhanced Navbar Component -->
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top" id="mainNavbar">
+    <div class="container-fluid">
+        <!-- Brand -->
+        <a class="navbar-brand d-flex align-items-center" href="/">
+            <i class="bi bi-calendar-check-fill me-2"></i>
+            <span class="brand-text">Attendify</span>
+        </a>
+
+        <!-- Mobile Toggle -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Content -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <!-- Left Menu -->
+            <ul class="navbar-nav me-auto" id="navLeftMenu">
+                <!-- Populated by JavaScript based on user role -->
+            </ul>
+
+            <!-- Right Menu -->
+            <ul class="navbar-nav ms-auto align-items-center" id="navRightMenu">
+                <!-- Search (Desktop) -->
+                <li class="nav-item d-none d-lg-block me-3">
+                    <form class="d-flex" role="search">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-transparent border-0">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input class="form-control form-control-sm border-0" type="search" placeholder="Search..." aria-label="Search">
+                        </div>
+                    </form>
+                </li>
+
+                <!-- Notifications -->
+                <li class="nav-item dropdown me-2">
+                    <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-bell-fill"></i>
+                        <span class="notification-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            3
+                        </span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown">
+                        <h6 class="dropdown-header">Notifications</h6>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item notification-item" href="#">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-exclamation-circle-fill text-warning"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <p class="mb-0 small">Low attendance alert</p>
+                                    <small class="text-muted">2 minutes ago</small>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-center small text-muted" href="#">View all notifications</a>
+                    </div>
+                </li>
+
+                <!-- User Menu -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        <div class="user-avatar me-2">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <span class="d-none d-md-inline-block" id="navUserName">User</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end user-dropdown" aria-labelledby="userDropdown">
+                        <li class="dropdown-header">
+                            <div id="navUserInfo">
+                                <strong id="navUserFullName">User Name</strong>
+                                <small class="d-block text-muted" id="navUserRole">Role</small>
+                            </div>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
+                        <li><a class="dropdown-item" href="/settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="logout(); return false;"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<style>
+    #mainNavbar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        padding: 0.75rem 0;
+    }
+
+    .navbar-brand {
+        font-weight: 700;
+        font-size: 1.5rem;
+        transition: transform 0.3s;
+    }
+
+    .navbar-brand:hover {
+        transform: scale(1.05);
+    }
+
+    .nav-link {
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-weight: 600;
+        padding: 0.5rem 1rem !important;
+        transition: all 0.3s;
+        border-radius: 0.5rem;
+    }
+
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white !important;
+    }
+
+    .nav-link.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: white !important;
+    }
+
+    .user-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .notification-badge {
+        font-size: 0.65rem;
+        padding: 0.25em 0.5em;
+    }
+
+    .notification-dropdown {
+        min-width: 350px;
+        max-height: 400px;
+        overflow-y: auto;
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        border-radius: 0.5rem;
+    }
+
+    .notification-item {
+        padding: 1rem;
+        transition: background 0.3s;
+    }
+
+    .notification-item:hover {
+        background: #f8f9fc;
+    }
+
+    .user-dropdown {
+        min-width: 250px;
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        border-radius: 0.5rem;
+    }
+
+    .dropdown-header {
+        padding: 1rem;
+        background: #f8f9fc;
+    }
+
+    .dropdown-item {
+        padding: 0.75rem 1rem;
+        transition: all 0.3s;
+    }
+
+    .dropdown-item:hover {
+        background: #f8f9fc;
+        padding-left: 1.5rem;
+    }
+
+    .input-group-text {
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .input-group .form-control {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .input-group .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .input-group .form-control:focus {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        border-color: rgba(255, 255, 255, 0.3);
+        box-shadow: none;
+    }
+
+    @media (max-width: 991px) {
+        .notification-dropdown {
+            min-width: 100%;
+        }
+    }
+</style>
+
+<script>
+// Navbar initialization
+function initNavbar() {
+    updateNavbarForUser();
+    loadNotifications();
+}
+
+function updateNavbarForUser() {
+    const user = window.AppState?.user;
+    if (!user) return;
+
+    // Update user info
+    document.getElementById('navUserName').textContent = user.name.split(' ')[0];
+    document.getElementById('navUserFullName').textContent = user.name;
+    document.getElementById('navUserRole').textContent = user.role_name;
+
+    // Build navigation menu based on role
+    const leftMenu = document.getElementById('navLeftMenu');
+    let menuItems = [];
+
+    if (['ADMIN', 'HOD'].includes(user.role_name)) {
+        menuItems = [
+            { label: 'Dashboard', href: '/dashboard', icon: 'speedometer2' },
+            { label: 'Students', href: '/students', icon: 'people' },
+            { label: 'Faculty', href: '/faculty', icon: 'person-workspace' },
+            { label: 'Timetable', href: '/timetable', icon: 'calendar3' },
+            { label: 'Reports', href: '/reports', icon: 'graph-up' }
+        ];
+    } else if (user.role_name === 'FACULTY') {
+        menuItems = [
+            { label: 'Dashboard', href: '/dashboard', icon: 'speedometer2' },
+            { label: 'Attendance', href: '/attendance', icon: 'clipboard-check' },
+            { label: 'Timetable', href: '/timetable', icon: 'calendar3' },
+            { label: 'Reports', href: '/reports', icon: 'graph-up' }
+        ];
+    } else if (user.role_name === 'STUDENT') {
+        menuItems = [
+            { label: 'Dashboard', href: '/dashboard', icon: 'speedometer2' },
+            { label: 'My Attendance', href: '/student-attendance', icon: 'clipboard-data' },
+            { label: 'Timetable', href: '/timetable', icon: 'calendar3' }
+        ];
+    }
+
+    leftMenu.innerHTML = menuItems.map(item => `
+        <li class="nav-item">
+            <a class="nav-link" href="${item.href}">
+                <i class="bi bi-${item.icon} me-1"></i>
+                ${item.label}
+            </a>
+        </li>
+    `).join('');
+
+    // Highlight active page
+    const currentPath = window.location.pathname;
+    document.querySelectorAll('#navLeftMenu .nav-link').forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+            link.classList.add('active');
+        }
+    });
+}
+
+async function loadNotifications() {
+    try {
+        const response = await fetch('/api/notifications/recent');
+        const notifications = await response.json();
+        
+        const badge = document.querySelector('.notification-badge');
+        if (notifications.unread > 0) {
+            badge.textContent = notifications.unread > 9 ? '9+' : notifications.unread;
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error loading notifications:', error);
+    }
+}
+
+// Initialize on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNavbar);
+} else {
+    initNavbar();
+}
+</script>
