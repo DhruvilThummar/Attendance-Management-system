@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}About Us{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-4 mb-4">About Attendance Management System</h1>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="card-title">Our Mission</h3>
+                    <p class="card-text">
+                        To provide an efficient, reliable, and user-friendly attendance management system
+                        that helps educational institutions streamline their attendance tracking process.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="card-title">Features</h3>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">✓ Real-time attendance marking</li>
+                        <li class="list-group-item">✓ Role-based dashboards for different users</li>
+                        <li class="list-group-item">✓ Comprehensive reporting and analytics</li>
+                        <li class="list-group-item">✓ Automated notifications and alerts</li>
+                        <li class="list-group-item">✓ Timetable management</li>
+                        <li class="list-group-item">✓ Multi-level access control</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="card-title">User Roles</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Students</h5>
+                            <p>View personal attendance, track progress, and receive notifications</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Faculty</h5>
+                            <p>Mark attendance, manage classes, and generate reports</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>HOD</h5>
+                            <p>Monitor department attendance, manage timetables, and oversee faculty</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Administrators</h5>
+                            <p>System-wide management, user creation, and configuration</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Technology Stack</h3>
+                    <p class="card-text">
+                        Built with modern web technologies including Flask, MySQL, and responsive design
+                        principles to ensure accessibility across all devices.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

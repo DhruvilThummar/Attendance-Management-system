@@ -21,7 +21,7 @@ Usage:
 
 from __future__ import annotations
 
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from dotenv import load_dotenv
 
 from .config import Config
@@ -95,10 +95,6 @@ def create_app(config: dict | None = None) -> Flask:
     # Routes: /dashboard/* (Faculty, HOD, Student, Parent, College, Admin)
     app.register_blueprint(dashboards)
     
-    # API endpoints - RESTful API routes
-    # Prefix: /api
-    app.register_blueprint(api, url_prefix="/api")
-    
     # Core pages - Main application pages
     # Routes: /, /about, /contact
     app.register_blueprint(core)
@@ -114,5 +110,22 @@ def create_app(config: dict | None = None) -> Flask:
     # Attendance management pages
     # Routes: /mark-attendance, /student-attendance
     app.register_blueprint(attendance)
+    
+    # API endpoints - RESTful API routes
+    # Prefix: /api
+    # Routes: /api/login, /api/registration, /api/reports, /api/departments, /api/attendance
+    app.register_blueprint(api, url_prefix="/api")
+    
+    # ========== ERROR HANDLERS ==========
+    @app.errorhandler(404)
+    def not_found_error(error):
+        \"\"\"Handle 404 errors.\"\"\"
+        return render_template('404.html'), 404 if app.config.get('TEMPLATES_AUTO_RELOAD') else jsonify({'error': 'Not found'}), 404
+    
+    @app.errorhandler(500)
+    def internal_error(error):
+        \"\"\"Handle 500 errors.\"\"\"
+        app.logger.error(f'Server Error: {error}')
+        return render_template('500.html'), 500 if app.config.get('TEMPLATES_AUTO_RELOAD') else jsonify({'error': 'Internal server error'}), 500
 
     return app
