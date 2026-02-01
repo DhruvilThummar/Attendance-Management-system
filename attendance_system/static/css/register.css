@@ -3,7 +3,7 @@
 .register-container {
     min-height: 100vh;
     padding: 2rem 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
     position: relative;
 }
 
@@ -30,12 +30,12 @@
     padding: 2rem;
     border-radius: 1rem 1rem 0 0;
     text-align: center;
-    border-bottom: 3px solid #667eea;
+    border-bottom: 3px solid #0d6efd;
 }
 
 .register-header .brand-icon {
     font-size: 3rem;
-    color: #667eea;
+    color: #0d6efd;
     margin-bottom: 1rem;
 }
 
@@ -84,7 +84,7 @@
 }
 
 .step-indicator li.active::before {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #0d6efd, #0b5ed7);
     color: white;
 }
 

@@ -1,7 +1,7 @@
 /* Home Page Styles */
 
 .hero-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #9fa8d2 0%, #05124c 100%);
     color: white;
     padding: 100px 0;
     position: relative;
@@ -53,7 +53,7 @@
 
 .btn-hero-primary {
     background: white;
-    color: #667eea;
+    color: #0d6efd;
 }
 
 .btn-hero-primary:hover {
@@ -69,7 +69,7 @@
 
 .btn-hero-outline:hover {
     background: white;
-    color: #667eea;
+    color: #0d6efd;
 }
 
 .stats-section {
@@ -85,7 +85,7 @@
 .stat-number {
     font-size: 3rem;
     font-weight: 700;
-    color: #667eea;
+    color: #a3add7;
     margin-bottom: 0.5rem;
 }
 
@@ -137,7 +137,7 @@
     width: 80px;
     height: 80px;
     margin: 0 auto 1.5rem;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #0c1439, hsl(270, 35%, 80%));
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -160,7 +160,7 @@
 
 .cta-section {
     padding: 100px 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, hsl(229, 24%, 59%) 0%, #736b7b 100%);
     color: white;
     text-align: center;
 }
@@ -227,7 +227,7 @@
 }
 
 .social-link:hover {
-    background: #667eea;
+    background: #0d6efd;
     transform: translateY(-3px);
 }
 
