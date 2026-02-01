@@ -1,21 +1,2 @@
-/* Main Stylesheet Import Hub */
-@import "modules/variables.css";
-@import "modules/animations.css";
-@import "modules/layout.css";
-@import "modules/components.css";
-
-/* Helper Utilities */
-.text-gradient {
-  background: linear-gradient(120deg, var(--accent), var(--accent-2));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.min-vh-60 {
-  min-height: 60vh;
-}
-
-.text-muted {
-  color: var(--muted) !important;
-}
+body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; }
+.container { max-width: 960px; margin: 0 auto; padding: 16px; }
