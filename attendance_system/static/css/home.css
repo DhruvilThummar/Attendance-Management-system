@@ -1,9 +1,9 @@
 /* Home Page Styles */
 
 .hero-section {
-    background: linear-gradient(135deg, #9fa8d2 0%, #05124c 100%);
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
     color: white;
-    padding: 100px 0;
+    padding: 100px 0 80px;
     position: relative;
     overflow: hidden;
 }
@@ -85,7 +85,7 @@
 .stat-number {
     font-size: 3rem;
     font-weight: 700;
-    color: #a3add7;
+    color: #0d6efd;
     margin-bottom: 0.5rem;
 }
 
@@ -137,7 +137,7 @@
     width: 80px;
     height: 80px;
     margin: 0 auto 1.5rem;
-    background: linear-gradient(135deg, #0c1439, hsl(270, 35%, 80%));
+    background: linear-gradient(135deg, #0d6efd, #0b5ed7);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -160,7 +160,7 @@
 
 .cta-section {
     padding: 100px 0;
-    background: linear-gradient(135deg, hsl(229, 24%, 59%) 0%, #736b7b 100%);
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
     color: white;
     text-align: center;
 }
@@ -178,15 +178,53 @@
 }
 
 .footer {
-    background: #1a1d20;
-    color: #858796;
+    background: #212529;
+    color: #f8f9fa;
     padding: 3rem 0 1rem;
 }
 
 .footer-title {
-    color: white;
+    color: #ffffff;
     font-weight: 700;
     margin-bottom: 1rem;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.2rem;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+    }
 }
 
 .footer-links {

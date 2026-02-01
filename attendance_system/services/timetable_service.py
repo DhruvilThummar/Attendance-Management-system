@@ -14,7 +14,9 @@ Version: 1.0
 """
 
 from typing import List, Dict, Any, Optional
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta
+
+from ..db_manager import get_cursor, fetch_all, fetch_one
 
 
 class TimetableService:
@@ -83,32 +85,53 @@ class TimetableService:
             if not self._validate_time(start_time, end_time):
                 return {'success': False, 'error': 'Invalid time format'}
             
+            # Normalize day for DB enum
+            day_enum = self._normalize_day(day_of_week)
+
             # Check for scheduling conflicts
             conflict = self._check_conflict(
-                faculty_id, day_of_week, start_time, end_time
+                faculty_id, division_id, day_enum, start_time, end_time
             )
             if conflict:
                 return {'success': False, 'error': 'Faculty has conflict with another class'}
             
             # Create schedule record
-            schedule_data = {
-                'division_id': division_id,
-                'subject_id': subject_id,
-                'faculty_id': faculty_id,
-                'day_of_week': day_of_week,
-                'start_time': start_time,
-                'end_time': end_time,
-                'room_no': room_no,
-                'created_at': datetime.now()
-            }
-            
-            # TODO: Insert to database
-            # schedule_id = self.db.insert('timetable', schedule_data)
-            
+            # Determine next lecture number for the day/division
+            lecture_no_row = fetch_one(
+                """
+                SELECT COALESCE(MAX(lecture_no), 0) + 1
+                FROM timetable
+                WHERE division_id = %s AND day_of_week = %s
+                """,
+                [division_id, day_enum],
+            )
+            lecture_no = int(lecture_no_row[0]) if lecture_no_row else 1
+
+            with get_cursor() as (conn, cur):
+                cur.execute(
+                    """
+                    INSERT INTO timetable (
+                        subject_id, faculty_id, division_id, day_of_week,
+                        lecture_no, room_no, start_time, end_time
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        subject_id,
+                        faculty_id,
+                        division_id,
+                        day_enum,
+                        lecture_no,
+                        room_no or None,
+                        start_time,
+                        end_time,
+                    ),
+                )
+                schedule_id = cur.lastrowid
+
             return {
                 'success': True,
                 'message': 'Schedule created successfully',
-                'schedule_id': 1
+                'schedule_id': schedule_id
             }
         
         except Exception as e:
@@ -132,11 +155,23 @@ class TimetableService:
             # Returns schedule grouped by day
         """
         try:
-            # TODO: Query from database and organize by day
-            # query = {'division_id': division_id}
-            # records = self.db.query('timetable', query)
-            # Organize by day of week
-            
+            query = """
+                SELECT
+                    timetable_id,
+                    subject_id,
+                    faculty_id,
+                    division_id,
+                    day_of_week,
+                    lecture_no,
+                    room_no,
+                    start_time,
+                    end_time
+                FROM timetable
+                WHERE division_id = %s
+                ORDER BY day_of_week, start_time
+            """
+            rows = fetch_all(query, [division_id])
+
             organized_schedule = {
                 'Monday': [],
                 'Tuesday': [],
@@ -146,7 +181,21 @@ class TimetableService:
                 'Saturday': [],
                 'Sunday': []
             }
-            
+
+            for row in rows:
+                entry = {
+                    'timetable_id': row[0],
+                    'subject_id': row[1],
+                    'faculty_id': row[2],
+                    'division_id': row[3],
+                    'day_of_week': self._denormalize_day(row[4]),
+                    'lecture_no': row[5],
+                    'room_no': row[6],
+                    'start_time': str(row[7]),
+                    'end_time': str(row[8])
+                }
+                organized_schedule[entry['day_of_week']].append(entry)
+
             return organized_schedule
         
         except Exception as e:
@@ -166,11 +215,36 @@ class TimetableService:
             list: Faculty's schedule entries
         """
         try:
-            # TODO: Query from database
-            # query = {'faculty_id': faculty_id}
-            # records = self.db.query('timetable', query)
-            
-            return []
+            query = """
+                SELECT
+                    timetable_id,
+                    subject_id,
+                    faculty_id,
+                    division_id,
+                    day_of_week,
+                    lecture_no,
+                    room_no,
+                    start_time,
+                    end_time
+                FROM timetable
+                WHERE faculty_id = %s
+                ORDER BY day_of_week, start_time
+            """
+            rows = fetch_all(query, [faculty_id])
+            return [
+                {
+                    'timetable_id': r[0],
+                    'subject_id': r[1],
+                    'faculty_id': r[2],
+                    'division_id': r[3],
+                    'day_of_week': self._denormalize_day(r[4]),
+                    'lecture_no': r[5],
+                    'room_no': r[6],
+                    'start_time': str(r[7]),
+                    'end_time': str(r[8])
+                }
+                for r in rows
+            ]
         
         except Exception as e:
             return []
@@ -219,20 +293,14 @@ class TimetableService:
             while current_date <= end:
                 # Check if this day matches the schedule day
                 if self._get_day_name(current_date) == schedule['day_of_week']:
-                    # Create lecture record
-                    lecture_data = {
-                        'schedule_id': schedule_id,
-                        'division_id': schedule['division_id'],
-                        'subject_id': schedule['subject_id'],
-                        'faculty_id': schedule['faculty_id'],
-                        'lecture_date': current_date,
-                        'start_time': schedule['start_time'],
-                        'end_time': schedule['end_time'],
-                        'room_no': schedule['room_no']
-                    }
-                    
-                    # TODO: Insert to database
-                    # self.db.insert('lectures', lecture_data)
+                    with get_cursor() as (conn, cur):
+                        cur.execute(
+                            """
+                            INSERT INTO lecture (timetable_id, lecture_date)
+                            VALUES (%s, %s)
+                            """,
+                            (schedule_id, current_date.date()),
+                        )
                     lectures_created += 1
                 
                 current_date += timedelta(days=1)
@@ -262,9 +330,34 @@ class TimetableService:
             dict: Success status
         """
         try:
-            # TODO: Update in database
-            # self.db.update('timetable', schedule_id, updates)
-            
+            allowed_fields = {
+                'subject_id', 'faculty_id', 'division_id', 'day_of_week',
+                'lecture_no', 'room_no', 'start_time', 'end_time', 'building_block'
+            }
+            set_clauses = []
+            params: List[Any] = []
+
+            for key, value in updates.items():
+                if key not in allowed_fields:
+                    continue
+                if key == 'day_of_week':
+                    value = self._normalize_day(str(value))
+                set_clauses.append(f"{key} = %s")
+                params.append(value)
+
+            if not set_clauses:
+                return {'success': False, 'error': 'No valid fields to update'}
+
+            params.append(schedule_id)
+            query = f"""
+                UPDATE timetable
+                SET {', '.join(set_clauses)}
+                WHERE timetable_id = %s
+            """
+
+            with get_cursor() as (conn, cur):
+                cur.execute(query, params)
+
             return {'success': True, 'message': 'Schedule updated'}
         
         except Exception as e:
@@ -276,9 +369,10 @@ class TimetableService:
         """Validate day of week."""
         valid_days = [
             'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-            'Friday', 'Saturday', 'Sunday'
+            'Friday', 'Saturday'
         ]
-        return day in valid_days
+        valid_enum = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+        return day in valid_days or day in valid_enum
     
     def _validate_time(self, start_time: str, end_time: str) -> bool:
         """Validate time format and logic."""
@@ -292,20 +386,82 @@ class TimetableService:
     def _check_conflict(
         self,
         faculty_id: int,
+        division_id: int,
         day: str,
         start_time: str,
         end_time: str
     ) -> bool:
         """Check for scheduling conflicts."""
-        # TODO: Query database for conflicts
-        return False
+        query = """
+            SELECT 1
+            FROM timetable
+            WHERE day_of_week = %s
+              AND (faculty_id = %s OR division_id = %s)
+              AND NOT (end_time <= %s OR start_time >= %s)
+            LIMIT 1
+        """
+        row = fetch_one(query, [day, faculty_id, division_id, start_time, end_time])
+        return bool(row)
     
     def _get_schedule(self, schedule_id: int) -> Optional[Dict]:
         """Get schedule record by ID."""
-        # TODO: Query database
-        return None
+        query = """
+            SELECT
+                timetable_id,
+                subject_id,
+                faculty_id,
+                division_id,
+                day_of_week,
+                lecture_no,
+                room_no,
+                start_time,
+                end_time
+            FROM timetable
+            WHERE timetable_id = %s
+            LIMIT 1
+        """
+        row = fetch_one(query, [schedule_id])
+        if not row:
+            return None
+        return {
+            'timetable_id': row[0],
+            'subject_id': row[1],
+            'faculty_id': row[2],
+            'division_id': row[3],
+            'day_of_week': self._denormalize_day(row[4]),
+            'lecture_no': row[5],
+            'room_no': row[6],
+            'start_time': str(row[7]),
+            'end_time': str(row[8])
+        }
     
     def _get_day_name(self, date: datetime) -> str:
         """Get day name from date."""
         days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         return days[date.weekday()]
+
+    def _normalize_day(self, day: str) -> str:
+        mapping = {
+            'Monday': 'MON',
+            'Tuesday': 'TUE',
+            'Wednesday': 'WED',
+            'Thursday': 'THU',
+            'Friday': 'FRI',
+            'Saturday': 'SAT',
+            'Sunday': 'SUN'
+        }
+        if day in mapping:
+            return mapping[day]
+        return day
+
+    def _denormalize_day(self, day: str) -> str:
+        mapping = {
+            'MON': 'Monday',
+            'TUE': 'Tuesday',
+            'WED': 'Wednesday',
+            'THU': 'Thursday',
+            'FRI': 'Friday',
+            'SAT': 'Saturday',
+            'SUN': 'Sunday'
+        }
+        return mapping.get(day, day)

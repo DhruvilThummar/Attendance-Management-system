@@ -39,6 +39,8 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Tuple, Optional
 import numpy as np
 
+from ..db_manager import fetch_all, fetch_one
+
 from ..models.user import Student
 from ..models.attendance import Attendance
 from ..exceptions import ReportGenerationError
@@ -67,6 +69,82 @@ class ReportService:
         self.attendance_records: Dict[int, List[Attendance]] = {}
         self.viz = VisualizationService()  # Initialize visualization service
 
+    # ========== DATABASE HELPERS ==========
+
+    @staticmethod
+    def _rows_to_dicts(rows: List[tuple], keys: List[str]) -> List[Dict[str, Any]]:
+        return [dict(zip(keys, row)) for row in rows]
+
+    def _fetch_attendance_rows(
+        self,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        student_id: Optional[int] = None,
+        subject_id: Optional[int] = None,
+        faculty_id: Optional[int] = None,
+        division_id: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """Fetch attendance rows from DB with optional filters."""
+        where: List[str] = []
+        params: List[Any] = []
+
+        if start_date and end_date:
+            where.append("DATE(a.marked_at) BETWEEN %s AND %s")
+            params.extend([start_date.date(), end_date.date()])
+
+        if student_id:
+            where.append("a.student_id = %s")
+            params.append(student_id)
+
+        if subject_id:
+            where.append("t.subject_id = %s")
+            params.append(subject_id)
+
+        if faculty_id:
+            where.append("t.faculty_id = %s")
+            params.append(faculty_id)
+
+        if division_id:
+            where.append("t.division_id = %s")
+            params.append(division_id)
+
+        where_sql = f"WHERE {' AND '.join(where)}" if where else ""
+
+        query = f"""
+            SELECT
+                a.attendance_id,
+                a.student_id,
+                a.lecture_id,
+                s.status_name,
+                a.marked_at,
+                l.lecture_date,
+                t.subject_id,
+                t.faculty_id,
+                t.division_id
+            FROM attendance a
+            JOIN attendance_status s ON s.status_id = a.status_id
+            LEFT JOIN lecture l ON l.lecture_id = a.lecture_id
+            LEFT JOIN timetable t ON t.timetable_id = l.timetable_id
+            {where_sql}
+            ORDER BY a.marked_at ASC
+        """
+
+        rows = fetch_all(query, params)
+        return self._rows_to_dicts(
+            rows,
+            [
+                "attendance_id",
+                "student_id",
+                "lecture_id",
+                "status",
+                "marked_at",
+                "lecture_date",
+                "subject_id",
+                "faculty_id",
+                "division_id",
+            ],
+        )
+
     def add_attendance_record(self, student_id: int, attendance: Attendance) -> None:
         """Add attendance record."""
         if student_id not in self.attendance_records:
@@ -76,27 +154,51 @@ class ReportService:
     def generate_daily_report(self, date: datetime) -> Dict[str, Any]:
         """Generate daily attendance report."""
         try:
-            present_count = 0
-            absent_count = 0
-            records_by_student = {}
+            try:
+                rows = self._fetch_attendance_rows(start_date=date, end_date=date)
+            except Exception:
+                rows = []
 
-            for student_id, records in self.attendance_records.items():
-                day_records = [
-                    r for r in records
-                    if r.created_at and r.created_at.date() == date.date()
-                ]
+            if rows:
+                present_count = sum(1 for r in rows if r["status"] == "PRESENT")
+                absent_count = sum(1 for r in rows if r["status"] == "ABSENT")
+                records_by_student: Dict[int, Dict[str, Any]] = {}
 
-                if day_records:
-                    present = sum(1 for r in day_records if r.is_present)
-                    absent = len(day_records) - present
-                    present_count += present
-                    absent_count += absent
+                for r in rows:
+                    student_id = int(r["student_id"])
+                    if student_id not in records_by_student:
+                        records_by_student[student_id] = {
+                            "present": 0,
+                            "absent": 0,
+                            "records": 0,
+                        }
+                    records_by_student[student_id]["records"] += 1
+                    if r["status"] == "PRESENT":
+                        records_by_student[student_id]["present"] += 1
+                    else:
+                        records_by_student[student_id]["absent"] += 1
+            else:
+                present_count = 0
+                absent_count = 0
+                records_by_student = {}
 
-                    records_by_student[student_id] = {
-                        "present": present,
-                        "absent": absent,
-                        "records": len(day_records),
-                    }
+                for student_id, records in self.attendance_records.items():
+                    day_records = [
+                        r for r in records
+                        if r.created_at and r.created_at.date() == date.date()
+                    ]
+
+                    if day_records:
+                        present = sum(1 for r in day_records if r.is_present)
+                        absent = len(day_records) - present
+                        present_count += present
+                        absent_count += absent
+
+                        records_by_student[student_id] = {
+                            "present": present,
+                            "absent": absent,
+                            "records": len(day_records),
+                        }
 
             return {
                 "report_type": "Daily",
@@ -118,36 +220,60 @@ class ReportService:
         """Generate weekly attendance report."""
         try:
             end_date = start_date + timedelta(days=6)
+            try:
+                rows = self._fetch_attendance_rows(start_date=start_date, end_date=end_date)
+            except Exception:
+                rows = []
+
             present_count = 0
             absent_count = 0
-            daily_breakdown = {}
+            daily_breakdown: Dict[str, Dict[str, int]] = {}
 
             current_date = start_date
             while current_date <= end_date:
-                daily_present = 0
-                daily_absent = 0
-
-                for student_id, records in self.attendance_records.items():
-                    day_records = [
-                        r for r in records
-                        if r.created_at and r.created_at.date() == current_date.date()
-                    ]
-
-                    for record in day_records:
-                        if record.is_present:
-                            daily_present += 1
-                        else:
-                            daily_absent += 1
-
-                present_count += daily_present
-                absent_count += daily_absent
-
-                daily_breakdown[current_date.isoformat()] = {
-                    "present": daily_present,
-                    "absent": daily_absent,
-                }
-
+                daily_key = current_date.date().isoformat()
+                daily_breakdown[daily_key] = {"present": 0, "absent": 0}
                 current_date += timedelta(days=1)
+
+            if rows:
+                for r in rows:
+                    day = r["marked_at"].date() if r["marked_at"] else r["lecture_date"]
+                    day_key = day.isoformat() if hasattr(day, "isoformat") else str(day)
+                    if day_key not in daily_breakdown:
+                        daily_breakdown[day_key] = {"present": 0, "absent": 0}
+                    if r["status"] == "PRESENT":
+                        daily_breakdown[day_key]["present"] += 1
+                        present_count += 1
+                    else:
+                        daily_breakdown[day_key]["absent"] += 1
+                        absent_count += 1
+            else:
+                current_date = start_date
+                while current_date <= end_date:
+                    daily_present = 0
+                    daily_absent = 0
+
+                    for student_id, records in self.attendance_records.items():
+                        day_records = [
+                            r for r in records
+                            if r.created_at and r.created_at.date() == current_date.date()
+                        ]
+
+                        for record in day_records:
+                            if record.is_present:
+                                daily_present += 1
+                            else:
+                                daily_absent += 1
+
+                    present_count += daily_present
+                    absent_count += daily_absent
+
+                    daily_breakdown[current_date.isoformat()] = {
+                        "present": daily_present,
+                        "absent": daily_absent,
+                    }
+
+                    current_date += timedelta(days=1)
 
             return {
                 "report_type": "Weekly",
@@ -174,10 +300,14 @@ class ReportService:
                 end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
             else:
                 end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+            try:
+                rows = self._fetch_attendance_rows(start_date=start_date, end_date=end_date)
+            except Exception:
+                rows = []
 
             present_count = 0
             absent_count = 0
-            weekly_breakdown = {}
+            weekly_breakdown: Dict[str, Dict[str, int]] = {}
 
             current_date = start_date
             week_num = 1
@@ -185,35 +315,39 @@ class ReportService:
             while current_date <= end_date:
                 week_end = min(current_date + timedelta(days=6), end_date)
                 week_key = f"Week {week_num}"
+                weekly_breakdown[week_key] = {"present": 0, "absent": 0}
 
-                week_present = 0
-                week_absent = 0
+                if rows:
+                    for r in rows:
+                        day = r["marked_at"].date() if r["marked_at"] else r["lecture_date"]
+                        if not day or day < current_date.date() or day > week_end.date():
+                            continue
+                        if r["status"] == "PRESENT":
+                            weekly_breakdown[week_key]["present"] += 1
+                            present_count += 1
+                        else:
+                            weekly_breakdown[week_key]["absent"] += 1
+                            absent_count += 1
+                else:
+                    check_date = current_date
+                    while check_date <= week_end:
+                        for student_id, records in self.attendance_records.items():
+                            day_records = [
+                                r for r in records
+                                if r.created_at and r.created_at.date() == check_date.date()
+                            ]
 
-                check_date = current_date
-                while check_date <= week_end:
-                    for student_id, records in self.attendance_records.items():
-                        day_records = [
-                            r for r in records
-                            if r.created_at and r.created_at.date() == check_date.date()
-                        ]
+                            for record in day_records:
+                                if record.is_present:
+                                    weekly_breakdown[week_key]["present"] += 1
+                                    present_count += 1
+                                else:
+                                    weekly_breakdown[week_key]["absent"] += 1
+                                    absent_count += 1
 
-                        for record in day_records:
-                            if record.is_present:
-                                week_present += 1
-                            else:
-                                week_absent += 1
+                        check_date += timedelta(days=1)
 
-                    check_date += timedelta(days=1)
-
-                present_count += week_present
-                absent_count += week_absent
-
-                weekly_breakdown[week_key] = {
-                    "present": week_present,
-                    "absent": week_absent,
-                }
-
-                current_date = week_end + timedelta(days=1)
+                current_date += timedelta(days=7)
                 week_num += 1
 
             return {
@@ -236,21 +370,32 @@ class ReportService:
     def generate_student_report(self, student_id: int) -> Dict[str, Any]:
         """Generate individual student attendance report."""
         try:
-            records = self.attendance_records.get(student_id, [])
+            try:
+                rows = self._fetch_attendance_rows(student_id=student_id)
+            except Exception:
+                rows = []
 
-            if not records:
-                return {
-                    "student_id": student_id,
-                    "total_lectures": 0,
-                    "present": 0,
-                    "absent": 0,
-                    "attendance_percentage": 0.0,
-                    "status": "No data",
-                }
+            if rows:
+                total = len(rows)
+                present = sum(1 for r in rows if r["status"] == "PRESENT")
+                absent = total - present
+                percentage = (present / total * 100) if total > 0 else 0
+            else:
+                records = self.attendance_records.get(student_id, [])
 
-            present = sum(1 for r in records if r.is_present)
-            absent = len(records) - present
-            percentage = (present / len(records) * 100) if records else 0
+                if not records:
+                    return {
+                        "student_id": student_id,
+                        "total_lectures": 0,
+                        "present": 0,
+                        "absent": 0,
+                        "attendance_percentage": 0.0,
+                        "status": "No data",
+                    }
+
+                present = sum(1 for r in records if r.is_present)
+                absent = len(records) - present
+                percentage = (present / len(records) * 100) if records else 0
 
             return {
                 "student_id": student_id,
@@ -272,17 +417,47 @@ class ReportService:
     def generate_defaulter_list(self) -> List[Dict[str, Any]]:
         """Generate list of defaulter students."""
         try:
-            defaulters = []
+            try:
+                rows = fetch_all(
+                    """
+                    SELECT
+                        a.student_id,
+                        SUM(CASE WHEN s.status_name = 'PRESENT' THEN 1 ELSE 0 END) AS present_count,
+                        COUNT(*) AS total_count
+                    FROM attendance a
+                    JOIN attendance_status s ON s.status_id = a.status_id
+                    GROUP BY a.student_id
+                    """
+                )
+            except Exception:
+                rows = []
 
-            for student_id in self.attendance_records.keys():
-                report = self.generate_student_report(student_id)
+            defaulters: List[Dict[str, Any]] = []
 
-                if report["status"] == "Defaulter":
-                    defaulters.append(report)
+            if rows:
+                for student_id, present_count, total_count in rows:
+                    total_count = int(total_count)
+                    present_count = int(present_count)
+                    percentage = (present_count / total_count * 100) if total_count > 0 else 0
+                    if percentage < 75:
+                        defaulters.append(
+                            {
+                                "student_id": int(student_id),
+                                "total_lectures": total_count,
+                                "present": present_count,
+                                "absent": total_count - present_count,
+                                "attendance_percentage": round(percentage, 2),
+                                "status": "Defaulter",
+                            }
+                        )
+            else:
+                for student_id in self.attendance_records.keys():
+                    report = self.generate_student_report(student_id)
 
-            # Sort by attendance percentage (lowest first)
+                    if report["status"] == "Defaulter":
+                        defaulters.append(report)
+
             defaulters.sort(key=lambda x: x["attendance_percentage"])
-
             return defaulters
         except Exception as e:
             raise ReportGenerationError(
@@ -294,15 +469,58 @@ class ReportService:
     ) -> Dict[str, Any]:
         """Generate subject-wise attendance report."""
         try:
-            # This would require subject-level attendance tracking
-            # For now, return a template
+            totals = fetch_one(
+                """
+                SELECT
+                    COUNT(*) AS total_records,
+                    SUM(CASE WHEN s.status_name = 'PRESENT' THEN 1 ELSE 0 END) AS present_count
+                FROM attendance a
+                JOIN attendance_status s ON s.status_id = a.status_id
+                LEFT JOIN lecture l ON l.lecture_id = a.lecture_id
+                LEFT JOIN timetable t ON t.timetable_id = l.timetable_id
+                WHERE t.subject_id = %s
+                """,
+                [subject_id],
+            )
+
+            total_records = int(totals[0]) if totals else 0
+            present_count = int(totals[1]) if totals and totals[1] is not None else 0
+            average_attendance = (present_count / total_records * 100) if total_records > 0 else 0.0
+
+            per_student = fetch_all(
+                """
+                SELECT
+                    a.student_id,
+                    SUM(CASE WHEN s.status_name = 'PRESENT' THEN 1 ELSE 0 END) AS present_count,
+                    COUNT(*) AS total_count
+                FROM attendance a
+                JOIN attendance_status s ON s.status_id = a.status_id
+                LEFT JOIN lecture l ON l.lecture_id = a.lecture_id
+                LEFT JOIN timetable t ON t.timetable_id = l.timetable_id
+                WHERE t.subject_id = %s
+                GROUP BY a.student_id
+                """,
+                [subject_id],
+            )
+
+            students_above = 0
+            students_below = 0
+            for _, present, total in per_student:
+                total = int(total)
+                present = int(present)
+                pct = (present / total * 100) if total > 0 else 0
+                if pct >= 75:
+                    students_above += 1
+                else:
+                    students_below += 1
+
             return {
                 "report_type": "Subject-wise",
                 "subject_id": subject_id,
-                "total_classes": 0,
-                "average_attendance": 0.0,
-                "students_above_threshold": 0,
-                "students_below_threshold": 0,
+                "total_classes": total_records,
+                "average_attendance": round(average_attendance, 2),
+                "students_above_threshold": students_above,
+                "students_below_threshold": students_below,
             }
         except Exception as e:
             raise ReportGenerationError(
@@ -311,24 +529,52 @@ class ReportService:
 
     def get_report_statistics(self) -> Dict[str, Any]:
         """Get overall statistics."""
-        total_present = 0
-        total_absent = 0
+        try:
+            totals = fetch_one(
+                """
+                SELECT
+                    SUM(CASE WHEN s.status_name = 'PRESENT' THEN 1 ELSE 0 END) AS present_count,
+                    SUM(CASE WHEN s.status_name = 'ABSENT' THEN 1 ELSE 0 END) AS absent_count,
+                    COUNT(*) AS total_count,
+                    COUNT(DISTINCT a.student_id) AS students_tracked
+                FROM attendance a
+                JOIN attendance_status s ON s.status_id = a.status_id
+                """
+            )
 
-        for records in self.attendance_records.values():
-            total_present += sum(1 for r in records if r.is_present)
-            total_absent += sum(1 for r in records if not r.is_present)
+            total_present = int(totals[0]) if totals and totals[0] is not None else 0
+            total_absent = int(totals[1]) if totals and totals[1] is not None else 0
+            total = int(totals[2]) if totals and totals[2] is not None else 0
+            students_tracked = int(totals[3]) if totals and totals[3] is not None else 0
 
-        total = total_present + total_absent
+            return {
+                "total_attendance_records": total,
+                "total_present": total_present,
+                "total_absent": total_absent,
+                "overall_attendance_rate": (
+                    (total_present / total * 100) if total > 0 else 0
+                ),
+                "students_tracked": students_tracked,
+            }
+        except Exception:
+            total_present = 0
+            total_absent = 0
 
-        return {
-            "total_attendance_records": total,
-            "total_present": total_present,
-            "total_absent": total_absent,
-            "overall_attendance_rate": (
-                (total_present / total * 100) if total > 0 else 0
-            ),
-            "students_tracked": len(self.attendance_records),
-        }
+            for records in self.attendance_records.values():
+                total_present += sum(1 for r in records if r.is_present)
+                total_absent += sum(1 for r in records if not r.is_present)
+
+            total = total_present + total_absent
+
+            return {
+                "total_attendance_records": total,
+                "total_present": total_present,
+                "total_absent": total_absent,
+                "overall_attendance_rate": (
+                    (total_present / total * 100) if total > 0 else 0
+                ),
+                "students_tracked": len(self.attendance_records),
+            }
     # ========== VISUALIZATION METHODS ==========
     # All methods return base64 encoded images for embedding in HTML
     
