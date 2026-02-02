@@ -28,20 +28,24 @@
                             <span class="input-group-text bg-transparent border-0">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input class="form-control form-control-sm border-0" type="search" placeholder="Search..." aria-label="Search">
+                            <input class="form-control form-control-sm border-0" type="search" placeholder="Search..."
+                                aria-label="Search">
                         </div>
                     </form>
                 </li>
 
                 <!-- Notifications -->
                 <li class="nav-item dropdown me-2">
-                    <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown">
+                    <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button"
+                        data-bs-toggle="dropdown">
                         <i class="bi bi-bell-fill"></i>
-                        <span class="notification-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        <span
+                            class="notification-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                             3
                         </span>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown">
+                    <div class="dropdown-menu dropdown-menu-end notification-dropdown"
+                        aria-labelledby="notificationDropdown">
                         <h6 class="dropdown-header">Notifications</h6>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item notification-item" href="#">
@@ -62,7 +66,8 @@
 
                 <!-- User Menu -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown"
+                        role="button" data-bs-toggle="dropdown">
                         <div class="user-avatar me-2">
                             <i class="bi bi-person-fill"></i>
                         </div>
@@ -75,11 +80,17 @@
                                 <small class="d-block text-muted" id="navUserRole">Role</small>
                             </div>
                         </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="/profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="/profile"><i class="bi bi-person me-2"></i>My Profile</a>
+                        </li>
                         <li><a class="dropdown-item" href="/settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="#" onclick="logout(); return false;"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="logout(); return false;"><i
+                                    class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
                 </li>
             </ul>
@@ -209,49 +220,49 @@
 </style>
 
 <script>
-// Navbar initialization
-function initNavbar() {
-    updateNavbarForUser();
-    loadNotifications();
-}
-
-function updateNavbarForUser() {
-    const user = window.AppState?.user;
-    if (!user) return;
-
-    // Update user info
-    document.getElementById('navUserName').textContent = user.name.split(' ')[0];
-    document.getElementById('navUserFullName').textContent = user.name;
-    document.getElementById('navUserRole').textContent = user.role_name;
-
-    // Build navigation menu based on role
-    const leftMenu = document.getElementById('navLeftMenu');
-    let menuItems = [];
-
-    if (['ADMIN', 'HOD'].includes(user.role_name)) {
-        menuItems = [
-            { label: 'Dashboard', href: '/dashboard', icon: 'speedometer2' },
-            { label: 'Students', href: '/students', icon: 'people' },
-            { label: 'Faculty', href: '/faculty', icon: 'person-workspace' },
-            { label: 'Timetable', href: '/timetable', icon: 'calendar3' },
-            { label: 'Reports', href: '/reports', icon: 'graph-up' }
-        ];
-    } else if (user.role_name === 'FACULTY') {
-        menuItems = [
-            { label: 'Dashboard', href: '/dashboard', icon: 'speedometer2' },
-            { label: 'Attendance', href: '/attendance', icon: 'clipboard-check' },
-            { label: 'Timetable', href: '/timetable', icon: 'calendar3' },
-            { label: 'Reports', href: '/reports', icon: 'graph-up' }
-        ];
-    } else if (user.role_name === 'STUDENT') {
-        menuItems = [
-            { label: 'Dashboard', href: '/dashboard', icon: 'speedometer2' },
-            { label: 'My Attendance', href: '/student-attendance', icon: 'clipboard-data' },
-            { label: 'Timetable', href: '/timetable', icon: 'calendar3' }
-        ];
+    // Navbar initialization
+    function initNavbar() {
+        updateNavbarForUser();
+        loadNotifications();
     }
 
-    leftMenu.innerHTML = menuItems.map(item => `
+    function updateNavbarForUser() {
+        const user = window.AppState?.user;
+        if (!user) return;
+
+        // Update user info
+        document.getElementById('navUserName').textContent = user.name.split(' ')[0];
+        document.getElementById('navUserFullName').textContent = user.name;
+        document.getElementById('navUserRole').textContent = user.role_name;
+
+        // Build navigation menu based on role
+        const leftMenu = document.getElementById('navLeftMenu');
+        let menuItems = [];
+
+        if (['ADMIN', 'HOD'].includes(user.role_name)) {
+            menuItems = [
+                { label: 'Dashboard', href: '/dashboard', icon: 'speedometer2' },
+                { label: 'Students', href: '/students', icon: 'people' },
+                { label: 'Faculty', href: '/faculty', icon: 'person-workspace' },
+                { label: 'Timetable', href: '/timetable', icon: 'calendar3' },
+                { label: 'Reports', href: '/reports', icon: 'graph-up' }
+            ];
+        } else if (user.role_name === 'FACULTY') {
+            menuItems = [
+                { label: 'Dashboard', href: '/dashboard', icon: 'speedometer2' },
+                { label: 'Mark Attendance', href: '/mark-attendance', icon: 'clipboard-check' },
+                { label: 'Timetable', href: '/timetable', icon: 'calendar3' },
+                { label: 'Reports', href: '/reports', icon: 'graph-up' }
+            ];
+        } else if (user.role_name === 'STUDENT') {
+            menuItems = [
+                { label: 'Dashboard', href: '/dashboard', icon: 'speedometer2' },
+                { label: 'My Attendance', href: '/student-attendance', icon: 'clipboard-data' },
+                { label: 'Timetable', href: '/timetable', icon: 'calendar3' }
+            ];
+        }
+
+        leftMenu.innerHTML = menuItems.map(item => `
         <li class="nav-item">
             <a class="nav-link" href="${item.href}">
                 <i class="bi bi-${item.icon} me-1"></i>
@@ -260,35 +271,35 @@ function updateNavbarForUser() {
         </li>
     `).join('');
 
-    // Highlight active page
-    const currentPath = window.location.pathname;
-    document.querySelectorAll('#navLeftMenu .nav-link').forEach(link => {
-        if (link.getAttribute('href') === currentPath) {
-            link.classList.add('active');
-        }
-    });
-}
-
-async function loadNotifications() {
-    try {
-        const response = await fetch('/api/notifications/recent');
-        const notifications = await response.json();
-        
-        const badge = document.querySelector('.notification-badge');
-        if (notifications.unread > 0) {
-            badge.textContent = notifications.unread > 9 ? '9+' : notifications.unread;
-        } else {
-            badge.style.display = 'none';
-        }
-    } catch (error) {
-        console.error('Error loading notifications:', error);
+        // Highlight active page
+        const currentPath = window.location.pathname;
+        document.querySelectorAll('#navLeftMenu .nav-link').forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+            }
+        });
     }
-}
 
-// Initialize on page load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initNavbar);
-} else {
-    initNavbar();
-}
+    async function loadNotifications() {
+        try {
+            const response = await fetch('/api/notifications/recent');
+            const notifications = await response.json();
+
+            const badge = document.querySelector('.notification-badge');
+            if (notifications.unread > 0) {
+                badge.textContent = notifications.unread > 9 ? '9+' : notifications.unread;
+            } else {
+                badge.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error loading notifications:', error);
+        }
+    }
+
+    // Initialize on page load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initNavbar);
+    } else {
+        initNavbar();
+    }
 </script>

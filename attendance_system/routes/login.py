@@ -2,75 +2,142 @@
 
 from __future__ import annotations
 
-from flask import render_template, request, jsonify, session
+from flask import request, jsonify, session
 from werkzeug.security import check_password_hash
 
 from . import api
-from ..db_manager import get_connection
+from ..db_manager import create_connection
 
 
-@api.route("/login", methods=["GET", "POST"])
+@api.route("/login", methods=["POST"])
+@api.route("/auth/login", methods=["POST"])
 def login():
-    """
-    Login route for authentication.
-    
-    GET: Returns the login page
-    POST: Processes login credentials and creates session
-    
-    Returns:
-        GET: login.html template
-        POST: JSON response with success/error status
-    """
-    if request.method == "GET":
-        return render_template("login.html")
-    
-    # POST - Handle login submission
+    """Login route for authentication (JSON)."""
     data = request.get_json() or request.form
-    username = data.get("username")
+    identifier = data.get("email") or data.get("username")
     password = data.get("password")
-    
-    if not username or not password:
-        return jsonify({"success": False, "message": "Username and password required"}), 400
-    
+
+    if not identifier or not password:
+        return jsonify({"success": False, "message": "Email/username and password required"}), 400
+
     try:
-        conn = get_connection()
+        conn = create_connection()
         cursor = conn.cursor(dictionary=True)
-        
-        # Query user from database
+
         cursor.execute(
-            "SELECT user_id, username, password_hash, role FROM users WHERE username = %s",
-            (username,)
+            """
+            SELECT
+                u.user_id,
+                u.name,
+                u.email,
+                u.mobile,
+                u.password_hash,
+                u.role_id,
+                u.college_id,
+                u.is_approved,
+                r.role_name,
+                c.college_name
+            FROM users u
+            JOIN role r ON u.role_id = r.role_id
+            LEFT JOIN college c ON u.college_id = c.college_id
+            WHERE u.email = %s OR u.name = %s
+            LIMIT 1
+            """,
+            (identifier, identifier),
         )
         user = cursor.fetchone()
-        
+
         cursor.close()
         conn.close()
-        
-        if user and check_password_hash(user["password_hash"], password):
-            # Create session
-            session["user_id"] = user["user_id"]
-            session["username"] = user["username"]
-            session["role"] = user["role"]
-            
-            return jsonify({
-                "success": True,
-                "message": "Login successful",
-                "redirect": f"/dashboard/{user['role'].lower()}"
-            })
-        else:
+
+        if not user or not check_password_hash(user["password_hash"], password):
             return jsonify({"success": False, "message": "Invalid credentials"}), 401
-            
+
+        if not user.get("is_approved"):
+            return jsonify({"success": False, "message": "Account pending approval"}), 403
+
+        session["user_id"] = user["user_id"]
+        session["role"] = user["role_name"]
+        session["email"] = user["email"]
+
+        return jsonify({
+            "success": True,
+            "message": "Login successful",
+            "user": {
+                "user_id": user["user_id"],
+                "name": user["name"],
+                "email": user["email"],
+                "phone": user.get("mobile"),
+                "role_id": user["role_id"],
+                "role_name": user["role_name"],
+                "college_id": user.get("college_id"),
+                "college_name": user.get("college_name"),
+            },
+            "redirect": "/dashboard"
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@api.route("/auth/me", methods=["GET"])
+@api.route("/me", methods=["GET"])
+def me():
+    """Return the current authenticated user (JSON)."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    try:
+        conn = create_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT
+                u.user_id,
+                u.name,
+                u.email,
+                u.mobile,
+                u.role_id,
+                r.role_name,
+                u.college_id,
+                c.college_name
+            FROM users u
+            JOIN role r ON u.role_id = r.role_id
+            LEFT JOIN college c ON u.college_id = c.college_id
+            WHERE u.user_id = %s
+            LIMIT 1
+            """,
+            (user_id,),
+        )
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not user:
+            return jsonify({"success": False, "message": "User not found"}), 404
+
+        return jsonify({
+            "success": True,
+            "user": {
+                "user_id": user["user_id"],
+                "name": user["name"],
+                "email": user["email"],
+                "phone": user.get("mobile"),
+                "role_id": user["role_id"],
+                "role_name": user["role_name"],
+                "college_id": user.get("college_id"),
+                "college_name": user.get("college_name"),
+            }
+        })
+
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
 
 @api.route("/logout", methods=["POST"])
+@api.route("/auth/logout", methods=["POST"])
 def logout():
-    """
-    Logout route - Clears user session.
-    
-    Returns:
-        JSON response with success status
-    """
+    """Logout route - Clears user session."""
     session.clear()
     return jsonify({"success": True, "message": "Logged out successfully"})

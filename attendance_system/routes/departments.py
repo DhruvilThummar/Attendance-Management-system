@@ -2,23 +2,37 @@
 
 from __future__ import annotations
 
-from flask import render_template, request, jsonify
+from flask import request, jsonify
 
 from . import api
-from ..db_manager import get_connection
+from ..db_manager import create_connection
 from ..decorators.rbac import login_required, admin_only
 
 
 @api.route("/departments", methods=["GET"])
-@login_required
-def departments_page():
-    """
-    Departments page route.
-    
-    Returns:
-        departments.html template
-    """
-    return render_template("departments.html")
+def list_departments_public():
+    """Public list of departments for registration forms."""
+    try:
+        conn = create_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT dept_id, dept_name
+            FROM department
+            ORDER BY dept_name
+            """
+        )
+
+        departments = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(departments)
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 @api.route("/departments/list", methods=["GET"])
@@ -31,19 +45,16 @@ def list_departments():
         JSON response with departments list
     """
     try:
-        conn = get_connection()
+        conn = create_connection()
         cursor = conn.cursor(dictionary=True)
         
-        cursor.execute("""
-            SELECT 
-                department_id,
-                department_name,
-                department_code,
-                hod_id,
-                created_at
-            FROM departments
-            ORDER BY department_name
-        """)
+        cursor.execute(
+            """
+            SELECT dept_id, dept_name
+            FROM department
+            ORDER BY dept_name
+            """
+        )
         
         departments = cursor.fetchall()
         
@@ -74,20 +85,22 @@ def create_department():
     data = request.get_json()
     
     department_name = data.get("department_name")
-    department_code = data.get("department_code")
     hod_id = data.get("hod_id")
-    
-    if not all([department_name, department_code]):
-        return jsonify({"success": False, "message": "Department name and code are required"}), 400
+    college_id = data.get("college_id")
+
+    if not all([department_name, college_id]):
+        return jsonify({"success": False, "message": "Department name and college are required"}), 400
     
     try:
-        conn = get_connection()
+        conn = create_connection()
         cursor = conn.cursor()
         
         cursor.execute(
-            """INSERT INTO departments (department_name, department_code, hod_id)
-               VALUES (%s, %s, %s)""",
-            (department_name, department_code, hod_id)
+            """
+            INSERT INTO department (dept_name, college_id, hod_faculty_id)
+            VALUES (%s, %s, %s)
+            """,
+            (department_name, college_id, hod_id),
         )
         
         conn.commit()
@@ -121,12 +134,12 @@ def manage_department(department_id):
     """
     if request.method == "GET":
         try:
-            conn = get_connection()
+            conn = create_connection()
             cursor = conn.cursor(dictionary=True)
             
             cursor.execute(
-                "SELECT * FROM departments WHERE department_id = %s",
-                (department_id,)
+                "SELECT * FROM department WHERE dept_id = %s",
+                (department_id,),
             )
             department = cursor.fetchone()
             
@@ -146,27 +159,27 @@ def manage_department(department_id):
         data = request.get_json()
         
         try:
-            conn = get_connection()
+            conn = create_connection()
             cursor = conn.cursor()
             
             update_fields = []
             values = []
             
             if "department_name" in data:
-                update_fields.append("department_name = %s")
+                update_fields.append("dept_name = %s")
                 values.append(data["department_name"])
-            if "department_code" in data:
-                update_fields.append("department_code = %s")
-                values.append(data["department_code"])
+            if "college_id" in data:
+                update_fields.append("college_id = %s")
+                values.append(data["college_id"])
             if "hod_id" in data:
-                update_fields.append("hod_id = %s")
+                update_fields.append("hod_faculty_id = %s")
                 values.append(data["hod_id"])
             
             if not update_fields:
                 return jsonify({"success": False, "message": "No fields to update"}), 400
             
             values.append(department_id)
-            query = f"UPDATE departments SET {', '.join(update_fields)} WHERE department_id = %s"
+            query = f"UPDATE department SET {', '.join(update_fields)} WHERE dept_id = %s"
             
             cursor.execute(query, values)
             conn.commit()
@@ -182,10 +195,10 @@ def manage_department(department_id):
     elif request.method == "DELETE":
         # Delete department - requires admin privileges
         try:
-            conn = get_connection()
+            conn = create_connection()
             cursor = conn.cursor()
             
-            cursor.execute("DELETE FROM departments WHERE department_id = %s", (department_id,))
+            cursor.execute("DELETE FROM department WHERE dept_id = %s", (department_id,))
             conn.commit()
             
             cursor.close()

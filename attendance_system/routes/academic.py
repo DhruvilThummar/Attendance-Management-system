@@ -31,6 +31,12 @@ def subjects():
     return render_template("subjects.html")
 
 
+@academic.get("/divisions")
+def divisions():
+    """Divisions management page."""
+    return render_template("divisions.html")
+
+
 @academic.get("/departments")
 def departments():
     """Departments management page."""

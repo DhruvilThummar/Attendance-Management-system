@@ -30,9 +30,10 @@ async function checkAuth() {
         const response = await fetch(`${API_BASE}/auth/me`, {
             credentials: 'include'
         });
-        
+
         if (response.ok) {
-            AppState.user = await response.json();
+            const data = await response.json();
+            AppState.user = data.user || data;
             AppState.isAuthenticated = true;
             updateNavigation();
         } else {
@@ -59,6 +60,15 @@ function updateNavigation() {
     const user = AppState.user;
     if (!user) {
         navMenu.innerHTML = `
+            <li class="nav-item">
+                <a class="nav-link" href="/">Home</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/about">About</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/contact">Contact</a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link" href="/login">Login</a>
             </li>
@@ -97,7 +107,7 @@ function updateNavigation() {
         case 'FACULTY':
             menuItems.push(
                 { label: 'Timetable', href: '/timetable', icon: 'bi-calendar3' },
-                { label: 'Attendance', href: '/attendance', icon: 'bi-clipboard-check' },
+                { label: 'Mark Attendance', href: '/mark-attendance', icon: 'bi-clipboard-check' },
                 { label: 'Students', href: '/students', icon: 'bi-people' },
                 { label: 'Reports', href: '/reports', icon: 'bi-graph-up' }
             );
@@ -139,11 +149,14 @@ function updateNavigation() {
 function setupNavigation() {
     // Handle browser back/forward
     window.addEventListener('popstate', loadCurrentPage);
-    
+
     // Handle all anchor clicks for SPA routing
     document.addEventListener('click', (e) => {
         const link = e.target.closest('a');
-        if (link && link.href && link.host === window.location.host && !link.target) {
+        if (!link) return;
+
+        const shouldSpaNavigate = link.dataset && link.dataset.spa === 'true';
+        if (shouldSpaNavigate && link.href && link.host === window.location.host && !link.target) {
             e.preventDefault();
             navigateTo(link.pathname);
         }
@@ -164,7 +177,7 @@ function navigateTo(path) {
 function loadCurrentPage() {
     const path = window.location.pathname;
     AppState.currentPage = path;
-    
+
     // Update active nav links
     document.querySelectorAll('.nav-link').forEach(link => {
         const linkPath = new URL(link.href, window.location.origin).pathname;
@@ -184,7 +197,7 @@ async function logout() {
     } catch (error) {
         console.error('Logout error:', error);
     }
-    
+
     AppState.user = null;
     AppState.isAuthenticated = false;
     window.location.href = '/login';
@@ -203,7 +216,7 @@ function showAlert(message, type = 'info') {
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
+
     container.appendChild(alert);
 
     // Auto-dismiss after 5 seconds
@@ -244,16 +257,17 @@ async function apiRequest(endpoint, options = {}) {
     };
 
     const config = { ...defaultOptions, ...options };
-    
+
     try {
         showLoading();
-        const response = await fetch(`${API_BASE}${endpoint}`, config);
+        const url = endpoint.startsWith('/api') ? endpoint : `${API_BASE}${endpoint}`;
+        const response = await fetch(url, config);
         const data = await response.json();
-        
+
         if (!response.ok) {
             throw new Error(data.message || 'Request failed');
         }
-        
+
         return data;
     } catch (error) {
         console.error('API request failed:', error);

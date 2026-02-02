@@ -6,7 +6,7 @@ from flask import request, jsonify, session
 from datetime import datetime
 
 from . import api
-from ..db_manager import get_connection
+from ..db_manager import create_connection
 from ..decorators.rbac import login_required, faculty_only
 from ..services.attendance_service import AttendanceService
 
@@ -110,7 +110,7 @@ def get_lecture_attendance(lecture_id):
         JSON response with attendance records
     """
     try:
-        conn = get_connection()
+        conn = create_connection()
         cursor = conn.cursor(dictionary=True)
         
         cursor.execute("""
@@ -162,7 +162,7 @@ def update_attendance(attendance_id):
         return jsonify({"success": False, "message": "Status is required"}), 400
     
     try:
-        conn = get_connection()
+        conn = create_connection()
         cursor = conn.cursor()
         
         cursor.execute(
@@ -208,7 +208,7 @@ def bulk_mark_attendance():
     
     try:
         faculty_id = session.get("user_id")
-        conn = get_connection()
+        conn = create_connection()
         cursor = conn.cursor()
         
         # Insert or update attendance records

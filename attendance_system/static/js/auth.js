@@ -3,15 +3,31 @@
  * Handles login, registration, and logout
  */
 
+const fallbackAlert = (message, type = 'info') => {
+    const container = document.getElementById('alert-container');
+    if (!container) return;
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    container.appendChild(alert);
+};
+
+const showAlert = window.showAlert || fallbackAlert;
+const showLoading = window.showLoading || (() => { });
+const hideLoading = window.hideLoading || (() => { });
+
 // Login Form Handler
 const loginForm = document.getElementById('login-form');
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-        
+
         try {
             showLoading();
             const response = await fetch('/api/auth/login', {
@@ -22,13 +38,13 @@ if (loginForm) {
                 credentials: 'include',
                 body: JSON.stringify({ email, password })
             });
-            
+
             const data = await response.json();
-            
+
             if (response.ok) {
                 showAlert('Login successful! Redirecting...', 'success');
                 setTimeout(() => {
-                    window.location.href = '/dashboard';
+                    window.location.href = data.redirect || '/dashboard';
                 }, 1000);
             } else {
                 showAlert(data.message || 'Login failed', 'danger');
@@ -47,15 +63,15 @@ const registerForm = document.getElementById('register-form');
 if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirm_password').value;
-        
+
         if (password !== confirmPassword) {
             showAlert('Passwords do not match!', 'danger');
             return;
         }
-        
+
         const formData = {
             name: document.getElementById('name').value,
             email: document.getElementById('email').value,
@@ -64,7 +80,7 @@ if (registerForm) {
             college_id: document.getElementById('college_id').value,
             role_id: document.getElementById('role_id').value
         };
-        
+
         // Add role-specific fields
         const roleId = parseInt(formData.role_id);
         if (roleId === 3) { // Faculty
@@ -76,7 +92,7 @@ if (registerForm) {
             formData.dept_id = document.getElementById('dept_id').value;
             formData.semester_id = document.getElementById('semester_id').value;
         }
-        
+
         try {
             showLoading();
             const response = await fetch('/api/auth/register', {
@@ -86,9 +102,9 @@ if (registerForm) {
                 },
                 body: JSON.stringify(formData)
             });
-            
+
             const data = await response.json();
-            
+
             if (response.ok) {
                 showAlert('Registration successful! Please wait for admin approval.', 'success');
                 setTimeout(() => {
@@ -108,10 +124,10 @@ if (registerForm) {
 
 // Password Toggle
 document.querySelectorAll('.toggle-password').forEach(button => {
-    button.addEventListener('click', function() {
+    button.addEventListener('click', function () {
         const input = this.previousElementSibling;
         const icon = this.querySelector('i');
-        
+
         if (input.type === 'password') {
             input.type = 'text';
             icon.classList.remove('bi-eye');
@@ -128,11 +144,11 @@ document.querySelectorAll('.toggle-password').forEach(button => {
 async function loadColleges() {
     const collegeSelect = document.getElementById('college_id');
     if (!collegeSelect) return;
-    
+
     try {
         const response = await fetch('/api/colleges');
         const colleges = await response.json();
-        
+
         collegeSelect.innerHTML = '<option value="">Select College</option>';
         colleges.forEach(college => {
             const option = document.createElement('option');
@@ -149,14 +165,14 @@ async function loadColleges() {
 async function loadRoles() {
     const roleSelect = document.getElementById('role_id');
     if (!roleSelect) return;
-    
+
     try {
         const response = await fetch('/api/roles');
         const roles = await response.json();
-        
+
         // Filter out admin and superadmin roles
         const allowedRoles = roles.filter(r => ['FACULTY', 'STUDENT', 'PARENT'].includes(r.role_name));
-        
+
         roleSelect.innerHTML = '<option value="">Select Role</option>';
         allowedRoles.forEach(role => {
             const option = document.createElement('option');
@@ -164,7 +180,7 @@ async function loadRoles() {
             option.textContent = role.role_name;
             roleSelect.appendChild(option);
         });
-        
+
         // Handle role change to show/hide role-specific fields
         roleSelect.addEventListener('change', handleRoleChange);
     } catch (error) {
@@ -178,12 +194,12 @@ function handleRoleChange(e) {
     const facultyFields = document.getElementById('faculty-fields');
     const studentFields = document.getElementById('student-fields');
     const parentFields = document.getElementById('parent-fields');
-    
+
     // Hide all role-specific fields
     if (facultyFields) facultyFields.classList.add('d-none');
     if (studentFields) studentFields.classList.add('d-none');
     if (parentFields) parentFields.classList.add('d-none');
-    
+
     // Show relevant fields based on role
     if (roleId === 3 && facultyFields) { // Faculty
         facultyFields.classList.remove('d-none');
@@ -201,11 +217,11 @@ function handleRoleChange(e) {
 async function loadDepartments() {
     const deptSelect = document.getElementById('dept_id');
     if (!deptSelect) return;
-    
+
     try {
         const response = await fetch('/api/departments');
         const departments = await response.json();
-        
+
         deptSelect.innerHTML = '<option value="">Select Department</option>';
         departments.forEach(dept => {
             const option = document.createElement('option');
@@ -213,7 +229,7 @@ async function loadDepartments() {
             option.textContent = dept.dept_name;
             deptSelect.appendChild(option);
         });
-        
+
         // If student, load divisions when department changes
         if (document.getElementById('division_id')) {
             deptSelect.addEventListener('change', loadDivisions);
@@ -228,11 +244,11 @@ async function loadDivisions() {
     const deptId = document.getElementById('dept_id').value;
     const divisionSelect = document.getElementById('division_id');
     if (!divisionSelect || !deptId) return;
-    
+
     try {
         const response = await fetch(`/api/divisions?dept_id=${deptId}`);
         const divisions = await response.json();
-        
+
         divisionSelect.innerHTML = '<option value="">Select Division</option>';
         divisions.forEach(div => {
             const option = document.createElement('option');
@@ -249,11 +265,11 @@ async function loadDivisions() {
 async function loadSemesters() {
     const semesterSelect = document.getElementById('semester_id');
     if (!semesterSelect) return;
-    
+
     try {
         const response = await fetch('/api/semesters');
         const semesters = await response.json();
-        
+
         semesterSelect.innerHTML = '<option value="">Select Semester</option>';
         semesters.forEach(sem => {
             const option = document.createElement('option');

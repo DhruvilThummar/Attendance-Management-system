@@ -27,7 +27,7 @@ from dotenv import load_dotenv
 from .config import Config
 from .db_manager import init_db_pool
 from .blueprints.dashboards import dashboards
-from .routes import api, core, dashboard, academic, attendance
+from .routes import api, core, dashboard, academic, attendance, auth
 
 
 def create_app(config: dict | None = None) -> Flask:
@@ -98,6 +98,10 @@ def create_app(config: dict | None = None) -> Flask:
     # Core pages - Main application pages
     # Routes: /, /about, /contact
     app.register_blueprint(core)
+
+    # Auth pages - Login & registration
+    # Routes: /login, /register
+    app.register_blueprint(auth)
     
     # Dashboard pages - User dashboards
     # Routes: /dashboard, /settings, /profile, /reports
@@ -119,12 +123,12 @@ def create_app(config: dict | None = None) -> Flask:
     # ========== ERROR HANDLERS ==========
     @app.errorhandler(404)
     def not_found_error(error):
-        \"\"\"Handle 404 errors.\"\"\"
+        """Handle 404 errors."""
         return render_template('404.html'), 404 if app.config.get('TEMPLATES_AUTO_RELOAD') else jsonify({'error': 'Not found'}), 404
     
     @app.errorhandler(500)
     def internal_error(error):
-        \"\"\"Handle 500 errors.\"\"\"
+        """Handle 500 errors."""
         app.logger.error(f'Server Error: {error}')
         return render_template('500.html'), 500 if app.config.get('TEMPLATES_AUTO_RELOAD') else jsonify({'error': 'Internal server error'}), 500
 

@@ -137,10 +137,10 @@ async function loadNotifications() {
     try {
         const response = await fetch('/api/notifications/recent');
         const data = await response.json();
-        
+
         NavbarState.notifications = data.notifications || [];
         NavbarState.unreadCount = data.unread || 0;
-        
+
         updateNotificationBadge();
         renderNotifications();
     } catch (error) {
