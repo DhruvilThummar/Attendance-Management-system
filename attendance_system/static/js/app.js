@@ -39,7 +39,7 @@ async function checkAuth() {
         } else {
             AppState.isAuthenticated = false;
             // Redirect to login if not on public pages
-            const publicPages = ['/login', '/register', '/'];
+            const publicPages = ['/login', '/register', '/', '/about', '/contact'];
             if (!publicPages.includes(window.location.pathname)) {
                 window.location.href = '/login';
             }

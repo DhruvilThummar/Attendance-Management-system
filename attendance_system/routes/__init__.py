@@ -23,6 +23,13 @@ from . import attendance_api
 from . import lookup
 from . import notifications
 
+# Import standalone blueprints
+from .students import students_bp
+from .faculty import faculty_bp
+from .timetable import timetable_bp
+from .profile import profile_bp
+from .lectures import lectures_bp
+
 # Export all blueprints for app.py to register
 __all__ = [
     "api",           # API routes (prefix: /api)
@@ -30,5 +37,10 @@ __all__ = [
     "core",          # Core pages (/, /about, /contact)
     "dashboard",     # Dashboard pages (/dashboard, /settings, /profile, /reports)
     "academic",      # Academic pages (/faculty, /students, /timetable, /subjects, /departments)
-    "attendance"     # Attendance pages (/mark-attendance, /student-attendance)
+    "attendance",    # Attendance pages (/mark-attendance, /student-attendance)
+    "students_bp",   # Student API routes
+    "faculty_bp",    # Faculty API routes
+    "timetable_bp",  # Timetable API routes
+    "profile_bp",    # Profile API routes
+    "lectures_bp"    # Lectures API routes
 ]

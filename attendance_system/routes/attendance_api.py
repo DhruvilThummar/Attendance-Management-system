@@ -116,16 +116,18 @@ def get_lecture_attendance(lecture_id):
         cursor.execute("""
             SELECT 
                 a.attendance_id,
-                a.student_id,
-                u.first_name,
-                u.last_name,
-                a.status,
-                a.date,
-                a.remarks
+                s.student_id,
+                u.name,
+                s.roll_no,
+                s.enrollment_no,
+                ast.status_name,
+                a.marked_at
             FROM attendance a
-            JOIN users u ON a.student_id = u.user_id
+            JOIN student s ON a.student_id = s.student_id
+            JOIN users u ON s.user_id = u.user_id
+            JOIN attendance_status ast ON a.status_id = ast.status_id
             WHERE a.lecture_id = %s
-            ORDER BY u.last_name, u.first_name
+            ORDER BY s.roll_no
         """, (lecture_id,))
         
         records = cursor.fetchall()
@@ -147,29 +149,36 @@ def update_attendance(attendance_id):
     Update an existing attendance record.
     
     PUT body:
-        - status: "present", "absent", "late", "excused"
-        - remarks: Optional remarks
+        - status: "PRESENT" or "ABSENT"
     
     Returns:
         JSON response with success status
     """
     data = request.get_json()
     
-    status = data.get("status")
-    remarks = data.get("remarks")
+    status_name = data.get("status", "").upper()
     
-    if not status:
-        return jsonify({"success": False, "message": "Status is required"}), 400
+    if status_name not in ["PRESENT", "ABSENT"]:
+        return jsonify({"success": False, "message": "Status must be PRESENT or ABSENT"}), 400
     
     try:
         conn = create_connection()
         cursor = conn.cursor()
         
+        # Get status_id from status_name
         cursor.execute(
-            """UPDATE attendance 
-               SET status = %s, remarks = %s, updated_at = NOW()
-               WHERE attendance_id = %s""",
-            (status, remarks, attendance_id)
+            "SELECT status_id FROM attendance_status WHERE status_name = %s",
+            (status_name,)
+        )
+        status_row = cursor.fetchone()
+        if not status_row:
+            return jsonify({"success": False, "message": "Invalid status"}), 400
+        
+        status_id = status_row[0]
+        
+        cursor.execute(
+            "UPDATE attendance SET status_id = %s WHERE attendance_id = %s",
+            (status_id, attendance_id)
         )
         
         conn.commit()
@@ -207,27 +216,28 @@ def bulk_mark_attendance():
         return jsonify({"success": False, "message": "Lecture ID and attendance data are required"}), 400
     
     try:
-        faculty_id = session.get("user_id")
         conn = create_connection()
         cursor = conn.cursor()
         
+        # Get status IDs
+        cursor.execute("SELECT status_id, status_name FROM attendance_status")
+        status_map = {row[1]: row[0] for row in cursor.fetchall()}
+        
         # Insert or update attendance records
         for record in attendance_data:
+            status_name = record.get("status", "PRESENT").upper()
+            status_id = status_map.get(status_name, status_map.get("PRESENT"))
+            
             cursor.execute(
                 """INSERT INTO attendance 
-                   (student_id, lecture_id, date, status, remarks, marked_by)
-                   VALUES (%s, %s, %s, %s, %s, %s)
+                   (student_id, lecture_id, status_id)
+                   VALUES (%s, %s, %s)
                    ON DUPLICATE KEY UPDATE
-                   status = VALUES(status),
-                   remarks = VALUES(remarks),
-                   updated_at = NOW()""",
+                   status_id = VALUES(status_id)""",
                 (
                     record["student_id"],
                     lecture_id,
-                    attendance_date,
-                    record.get("status", "present"),
-                    record.get("remarks"),
-                    faculty_id
+                    status_id
                 )
             )
         

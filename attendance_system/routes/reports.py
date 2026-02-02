@@ -108,3 +108,91 @@ def analytics_data():
         return jsonify({"success": True, "data": data})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+# ========== Frontend Report Endpoints (UI-Compatible) ==========
+
+@api.route("/reports/daily", methods=["GET"])
+@login_required
+def daily_report():
+    """Daily report data for UI widgets."""
+    try:
+        date_str = request.args.get("date")
+        date = datetime.strptime(date_str, "%Y-%m-%d") if date_str else datetime.now()
+        data = report_svc.generate_daily_report(date)
+        return jsonify({
+            "report_type": "daily",
+            "summary": data,
+            "students": [],
+            "trend": []
+        })
+    except Exception:
+        return jsonify({"report_type": "daily", "students": [], "trend": []})
+
+
+@api.route("/reports/weekly", methods=["GET"])
+@login_required
+def weekly_report():
+    """Weekly report data for UI widgets."""
+    try:
+        date_str = request.args.get("date")
+        start_date = datetime.strptime(date_str, "%Y-%m-%d") if date_str else datetime.now()
+        data = report_svc.generate_weekly_report(start_date)
+        return jsonify({
+            "report_type": "weekly",
+            "summary": data,
+            "students": [],
+            "trend": []
+        })
+    except Exception:
+        return jsonify({"report_type": "weekly", "students": [], "trend": []})
+
+
+@api.route("/reports/monthly", methods=["GET"])
+@login_required
+def monthly_report():
+    """Monthly report data for UI widgets."""
+    try:
+        year = int(request.args.get("year", datetime.now().year))
+        month = int(request.args.get("month", datetime.now().month))
+        data = report_svc.generate_monthly_report(year, month)
+        return jsonify({
+            "report_type": "monthly",
+            "summary": data,
+            "students": [],
+            "trend": []
+        })
+    except Exception:
+        return jsonify({"report_type": "monthly", "students": [], "trend": []})
+
+
+@api.route("/reports/defaulters", methods=["GET"])
+@login_required
+def defaulters_report():
+    """Defaulters report data for UI widgets."""
+    try:
+        defaulters = report_svc.generate_defaulter_list()
+        return jsonify({"defaulters": defaulters})
+    except Exception:
+        return jsonify({"defaulters": []})
+
+
+@api.route("/reports/subject-wise", methods=["GET"])
+@login_required
+def subject_wise_report():
+    """Subject-wise report data for UI widgets."""
+    try:
+        subject_id = request.args.get("subject")
+        if subject_id:
+            data = report_svc.generate_subject_wise_report(int(subject_id))
+            return jsonify({"subjects": [data]})
+    except Exception:
+        pass
+    return jsonify({"subjects": []})
+
+
+@api.route("/reports/division-wise", methods=["GET"])
+@login_required
+def division_wise_report():
+    """Division-wise report data for UI widgets."""
+    return jsonify({"divisions": []})

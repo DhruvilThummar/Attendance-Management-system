@@ -18,7 +18,11 @@ def list_departments_public():
 
         cursor.execute(
             """
-            SELECT dept_id, dept_name
+            SELECT
+                dept_id AS id,
+                dept_name AS name,
+                dept_id,
+                dept_name
             FROM department
             ORDER BY dept_name
             """
@@ -50,7 +54,11 @@ def list_departments():
         
         cursor.execute(
             """
-            SELECT dept_id, dept_name
+            SELECT
+                dept_id AS id,
+                dept_name AS name,
+                dept_id,
+                dept_name
             FROM department
             ORDER BY dept_name
             """

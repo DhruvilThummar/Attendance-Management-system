@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from flask import request, jsonify, session
-from werkzeug.security import check_password_hash
+import hashlib
+
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from . import api
 from ..db_manager import create_connection
@@ -50,7 +52,34 @@ def login():
         cursor.close()
         conn.close()
 
-        if not user or not check_password_hash(user["password_hash"], password):
+        if not user:
+            return jsonify({"success": False, "message": "Invalid credentials"}), 401
+
+        password_hash = user["password_hash"]
+        valid_password = check_password_hash(password_hash, password)
+
+        # Legacy SHA256 fallback (older users created with SHA256 hashes)
+        if not valid_password and len(password_hash) == 64:
+            legacy_hash = hashlib.sha256(password.encode()).hexdigest()
+            valid_password = legacy_hash == password_hash
+
+            # Upgrade to werkzeug hash after successful legacy login
+            if valid_password:
+                try:
+                    conn = create_connection()
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "UPDATE users SET password_hash = %s WHERE user_id = %s",
+                        (generate_password_hash(password), user["user_id"]),
+                    )
+                    conn.commit()
+                    cursor.close()
+                    conn.close()
+                except Exception:
+                    # Ignore upgrade failures; login will still succeed
+                    pass
+
+        if not valid_password:
             return jsonify({"success": False, "message": "Invalid credentials"}), 401
 
         if not user.get("is_approved"):

@@ -6,30 +6,16 @@ Script to create the first admin user.
 import os
 import sys
 import getpass
-import hashlib
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from attendance_system.db_manager import get_connection
+from werkzeug.security import generate_password_hash
+from attendance_system.db_manager import create_connection
 
 
-def hash_password(password):
-    """Hash password using SHA256."""
-    return hashlib.sha256(password.encode()).hexdigest()
-
-
-def create_college(cursor, college_name):
-    """Create a college and return its ID."""
-    cursor.execute(
-        "INSERT INTO college (college_name) VALUES (%s)",
-        (college_name,)
-    )
-    return cursor.lastrowid
-
-
-def create_admin_user(name, email, password, college_name):
+def create_admin_user(name, email, password, mobile, college_id):
     """Create an admin user."""
-    conn = get_connection()
+    conn = create_connection()
     if not conn:
         print("❌ Could not connect to database")
         return False
@@ -37,15 +23,11 @@ def create_admin_user(name, email, password, college_name):
     try:
         cursor = conn.cursor()
         
-        # Create college
-        college_id = create_college(cursor, college_name)
-        print(f"✓ Created college: {college_name} (ID: {college_id})")
-        
-        # Get ADMIN role_id
-        cursor.execute("SELECT role_id FROM role WHERE role_name = 'ADMIN'")
+        # Get ADMIN role_id (case-insensitive)
+        cursor.execute("SELECT role_id FROM role WHERE UPPER(role_name) = 'ADMIN'")
         result = cursor.fetchone()
         if not result:
-            print("❌ ADMIN role not found in database. Run seed_db.py first.")
+            print("❌ Admin role not found in database. Run scripts/seed_initial_data.py first.")
             return False
         
         role_id = result[0]
@@ -54,15 +36,17 @@ def create_admin_user(name, email, password, college_name):
         cursor.execute("SELECT user_id FROM users WHERE email = %s", (email,))
         if cursor.fetchone():
             print(f"❌ User with email {email} already exists")
+            cursor.close()
+            conn.close()
             return False
         
-        # Create admin user
-        password_hash = hash_password(password)
+        # Create admin user with werkzeug password hashing
+        password_hash = generate_password_hash(password)
         cursor.execute(
             """INSERT INTO users 
-               (college_id, name, email, password_hash, role_id, is_approved) 
-               VALUES (%s, %s, %s, %s, %s, 1)""",
-            (college_id, name, email, password_hash, role_id)
+               (college_id, name, email, password_hash, mobile, role_id, is_approved) 
+               VALUES (%s, %s, %s, %s, %s, %s, 1)""",
+            (college_id, name, email, password_hash, mobile, role_id)
         )
         
         conn.commit()
@@ -75,7 +59,7 @@ def create_admin_user(name, email, password, college_name):
         print("=" * 60)
         print(f"Name: {name}")
         print(f"Email: {email}")
-        print(f"College: {college_name}")
+        print(f"Mobile: {mobile}")
         print(f"Role: ADMIN")
         print()
         print("You can now login with these credentials.")
@@ -97,14 +81,39 @@ def main():
     print("=" * 60)
     print()
     
+    # First, show available colleges
+    try:
+        conn = create_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT college_id, college_name FROM college")
+        colleges = cursor.fetchall()
+        
+        if not colleges:
+            print("❌ No colleges found in database.")
+            print("   Run scripts/seed_initial_data.py first to add colleges.")
+            return False
+        
+        print("Available Colleges:")
+        for college in colleges:
+            print(f"  [{college['college_id']}] {college['college_name']}")
+        print()
+        
+        cursor.close()
+        conn.close()
+        
+    except Exception as e:
+        print(f"❌ Error connecting to database: {e}")
+        return False
+    
     # Get user input
     name = input("Admin Name: ").strip()
     email = input("Admin Email: ").strip()
-    college_name = input("College Name: ").strip()
+    mobile = input("Mobile Number: ").strip()
+    college_id = input(f"College ID (1-{len(colleges)}): ").strip()
     password = getpass.getpass("Password: ")
     confirm_password = getpass.getpass("Confirm Password: ")
     
-    if not all([name, email, college_name, password]):
+    if not all([name, email, mobile, college_id, password]):
         print("❌ All fields are required")
         return False
     
@@ -112,12 +121,18 @@ def main():
         print("❌ Passwords do not match")
         return False
     
-    if len(password) < 6:
-        print("❌ Password must be at least 6 characters")
+    if len(password) < 8:
+        print("❌ Password must be at least 8 characters")
+        return False
+    
+    try:
+        college_id = int(college_id)
+    except ValueError:
+        print("❌ Invalid college ID")
         return False
     
     # Create admin
-    return create_admin_user(name, email, password, college_name)
+    return create_admin_user(name, email, password, mobile, college_id)
 
 
 if __name__ == "__main__":
