@@ -26,28 +26,56 @@ def login():
         conn = create_connection()
         cursor = conn.cursor(dictionary=True)
 
-        cursor.execute(
-            """
-            SELECT
-                u.user_id,
-                u.name,
-                u.email,
-                u.mobile,
-                u.password_hash,
-                u.role_id,
-                u.college_id,
-                u.is_approved,
-                r.role_name,
-                c.college_name
-            FROM users u
-            JOIN role r ON u.role_id = r.role_id
-            LEFT JOIN college c ON u.college_id = c.college_id
-            WHERE u.email = %s OR u.name = %s
-            LIMIT 1
-            """,
-            (identifier, identifier),
-        )
-        user = cursor.fetchone()
+        try:
+            cursor.execute(
+                """
+                SELECT
+                    u.user_id,
+                    u.name,
+                    u.email,
+                    u.mobile,
+                    u.password_hash,
+                    u.role_id,
+                    u.college_id,
+                    u.is_approved,
+                    r.role_name,
+                    c.college_name
+                FROM users u
+                JOIN role r ON u.role_id = r.role_id
+                LEFT JOIN college c ON u.college_id = c.college_id
+                WHERE u.email = %s OR u.name = %s
+                LIMIT 1
+                """,
+                (identifier, identifier),
+            )
+            user = cursor.fetchone()
+        except Exception as query_error:
+            if "1146" in str(query_error) and "role" in str(query_error).lower():
+                cursor.execute(
+                    """
+                    SELECT
+                        u.user_id,
+                        u.name,
+                        u.email,
+                        u.mobile,
+                        u.password_hash,
+                        u.role_id,
+                        u.college_id,
+                        u.is_approved,
+                        c.college_name
+                    FROM users u
+                    LEFT JOIN college c ON u.college_id = c.college_id
+                    WHERE u.email = %s OR u.name = %s
+                    LIMIT 1
+                    """,
+                    (identifier, identifier),
+                )
+                user = cursor.fetchone()
+                if user and "role_name" not in user:
+                    role_map = {1: "ADMIN", 2: "HOD", 3: "FACULTY", 4: "STUDENT", 5: "PARENT"}
+                    user["role_name"] = role_map.get(user.get("role_id"), "UNKNOWN")
+            else:
+                raise
 
         cursor.close()
         conn.close()
@@ -120,26 +148,52 @@ def me():
     try:
         conn = create_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute(
-            """
-            SELECT
-                u.user_id,
-                u.name,
-                u.email,
-                u.mobile,
-                u.role_id,
-                r.role_name,
-                u.college_id,
-                c.college_name
-            FROM users u
-            JOIN role r ON u.role_id = r.role_id
-            LEFT JOIN college c ON u.college_id = c.college_id
-            WHERE u.user_id = %s
-            LIMIT 1
-            """,
-            (user_id,),
-        )
-        user = cursor.fetchone()
+        try:
+            cursor.execute(
+                """
+                SELECT
+                    u.user_id,
+                    u.name,
+                    u.email,
+                    u.mobile,
+                    u.role_id,
+                    r.role_name,
+                    u.college_id,
+                    c.college_name
+                FROM users u
+                JOIN role r ON u.role_id = r.role_id
+                LEFT JOIN college c ON u.college_id = c.college_id
+                WHERE u.user_id = %s
+                LIMIT 1
+                """,
+                (user_id,),
+            )
+            user = cursor.fetchone()
+        except Exception as query_error:
+            if "1146" in str(query_error) and "role" in str(query_error).lower():
+                cursor.execute(
+                    """
+                    SELECT
+                        u.user_id,
+                        u.name,
+                        u.email,
+                        u.mobile,
+                        u.role_id,
+                        u.college_id,
+                        c.college_name
+                    FROM users u
+                    LEFT JOIN college c ON u.college_id = c.college_id
+                    WHERE u.user_id = %s
+                    LIMIT 1
+                    """,
+                    (user_id,),
+                )
+                user = cursor.fetchone()
+                if user and "role_name" not in user:
+                    role_map = {1: "ADMIN", 2: "HOD", 3: "FACULTY", 4: "STUDENT", 5: "PARENT"}
+                    user["role_name"] = role_map.get(user.get("role_id"), "UNKNOWN")
+            else:
+                raise
         cursor.close()
         conn.close()
 
