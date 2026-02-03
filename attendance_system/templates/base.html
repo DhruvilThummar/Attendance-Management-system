@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+  <!-- Base metadata and shared resources -->
   <!-- Google Fonts Pre Connect -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,24 +24,29 @@
 
   <!-- CSS Files Links -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 
   <!-- Title -->
   <title>{% block title %}Base Template{% endblock %}</title>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
+  <!-- Global navigation -->
   {% include 'components/navbar.html' %}
 
+  <!-- Page content slot -->
   <main class="flex-grow-1">
     {% block content %}
     <!-- Main Content goes here -->
     {% endblock %}
   </main>
+  <!-- Global footer -->
   {% include 'components/footer.html' %}
 
   <noscript>Your browser don't support JavaScript!</noscript>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 </body>
 
 </html>

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Attendify{% endblock %}
+
+{% block content %}
+<!-- Login container -->
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <img src="{{ url_for('static', filename='img/logos/attendify.svg') }}" alt="Attendify">
+            <h2>Welcome Back</h2>
+            <p>Sign in to your Attendify account</p>
+        </div>
+
+        <!-- Login form -->
+        <form action="/login" method="post" novalidate>
+            <div class="form-group position-relative">
+                <label for="college" class="form-label">
+                    <i class="bi bi-building"></i> College Name
+                </label>
+                <input type="text" class="form-control" id="college" name="college"
+                    placeholder="Search and select your college..." autocomplete="off" required />
+                <input type="hidden" id="collegeId" name="collegeId" />
+                <div id="collegeSuggestions" class="suggestions-dropdown"></div>
+                <small id="collegeError" class="error-text d-none text-danger"></small>
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="form-label">
+                    <i class="bi bi-envelope"></i> Email Address
+                </label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com"
+                    required />
+                <small id="emailError" class="error-text d-none text-danger"></small>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">
+                    <i class="bi bi-lock"></i> Password
+                </label>
+                <input type="password" class="form-control" id="password" name="password"
+                    placeholder="Enter your password" required />
+                <small id="passwordError" class="error-text d-none text-danger"></small>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                <label for="remember" class="form-check-label">Remember me</label>
+            </div>
+
+            <button type="submit" class="btn btn-auth btn-primary btn-lg">
+                <i class="bi bi-box-arrow-in-right"></i> Sign In
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <!-- Register redirect -->
+            <p>Don't have an account?
+                <a href="/register">
+                    <i class="bi bi-person-plus"></i> Create one now
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

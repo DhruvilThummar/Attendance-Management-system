@@ -1,9 +1,11 @@
+/* Global layout and typography */
 body {
     font-family: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
     background-color: #f8fafc;
     color: #0f172a;
 }
 
+/* Hero sections */
 .hero-section {
     background:
         linear-gradient(135deg, rgba(11, 27, 58, 0.75) 0%, rgba(23, 37, 84, 0.7) 35%, rgba(76, 29, 149, 0.65) 100%),
@@ -35,6 +37,7 @@ body {
     background-color: rgba(248, 250, 252, 0.15);
 }
 
+/* Hero and stat cards */
 .hero-card {
     background: #ffffff;
     color: black;
@@ -63,6 +66,7 @@ body {
     color: #0f172a;
 }
 
+/* Feature cards */
 .feature-card {
     background: #ffffff;
     border: 1px solid rgba(148, 163, 184, 0.35);
@@ -84,6 +88,7 @@ body {
     box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
 }
 
+/* Outline buttons */
 .btn-outline-light {
     border-color: rgba(37, 99, 235, 0.4);
     color: #2563eb;
