@@ -5,13 +5,39 @@ body {
 }
 
 .hero-section {
-    background: radial-gradient(1200px circle at 10% 10%, rgba(59, 130, 246, 0.18), transparent 60%),
-        radial-gradient(800px circle at 90% 20%, rgba(14, 165, 233, 0.12), transparent 55%),
-        linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    background:
+        linear-gradient(135deg, rgba(11, 27, 58, 0.75) 0%, rgba(23, 37, 84, 0.7) 35%, rgba(76, 29, 149, 0.65) 100%),
+        url("/static/img/Gemini_Generated_Image_u1vmhru1vmhru1vm.png") center/cover no-repeat;
+    color: #f8fafc;
+}
+
+.hero-section h1,
+.hero-section p,
+.hero-section .lead,
+.hero-section .text-muted {
+    color: #f8fafc !important;
+}
+
+.hero-section h5 {
+    color: #012142 !important;
+}
+
+.hero-section .badge.text-bg-primary {
+    background-color: rgba(59, 130, 246, 0.9) !important;
+}
+
+.hero-section .btn-outline-light {
+    border-color: rgba(248, 250, 252, 0.85);
+    color: #f8fafc;
+}
+
+.hero-section .btn-outline-light:hover {
+    background-color: rgba(248, 250, 252, 0.15);
 }
 
 .hero-card {
     background: #ffffff;
+    color: black;
     border: 1px solid rgba(148, 163, 184, 0.35);
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
@@ -19,6 +45,7 @@ body {
 
 .stat-card {
     background: #f8fafc;
+    color: #000;
     border: 1px solid rgba(148, 163, 184, 0.35);
     border-radius: 12px;
     padding: 16px;
@@ -27,7 +54,7 @@ body {
 
 .stat-label {
     font-size: 0.85rem;
-    color: #64748b;
+    color: #091a31;
 }
 
 .stat-value {
