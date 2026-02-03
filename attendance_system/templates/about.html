@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}About - Attendify{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="container py-5">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <span class="badge text-bg-primary mb-3">About Attendify</span>
+                <h1 class="display-5 fw-bold">Smart, secure attendance for modern campuses</h1>
+                <p class="lead text-muted">Attendify helps institutions manage attendance with real-time logging,
+                    automated reporting, and role-based access for every stakeholder.</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-primary btn-lg" href="/attendance">
+                        <i class="bi bi-calendar-check"></i> Start Attendance
+                    </a>
+                    <a class="btn btn-outline-light btn-lg" href="/reports">
+                        <i class="bi bi-file-earmark-pdf"></i> Explore Reports
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="hero-card p-4">
+                    <h5 class="mb-3">Why Attendify?</h5>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="bi bi-shield-check text-success"></i> Secure RBAC access</li>
+                        <li class="mb-2"><i class="bi bi-lightning-charge text-warning"></i> Fast automated workflows
+                        </li>
+                        <li class="mb-2"><i class="bi bi-graph-up text-info"></i> Analytics & insights</li>
+                        <li><i class="bi bi-cloud-check text-primary"></i> Centralized reporting</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container py-5">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="feature-card h-100">
+                <i class="bi bi-buildings"></i>
+                <h5>Multi-Tenant Ready</h5>
+                <p>Manage multiple colleges from one secure instance with clear boundaries.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card h-100">
+                <i class="bi bi-person-badge"></i>
+                <h5>Role-Based Control</h5>
+                <p>Super Admin, HOD, Faculty, and Student dashboards tailored for each role.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card h-100">
+                <i class="bi bi-file-earmark-text"></i>
+                <h5>Report Automation</h5>
+                <p>Generate PDF reports and defaulter lists with one click.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

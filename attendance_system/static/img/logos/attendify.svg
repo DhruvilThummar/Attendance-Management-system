@@ -1,0 +1,94 @@
+<svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        .main-frame {
+            stroke-dasharray: 500;
+            stroke-dashoffset: 500;
+            animation: drawPath 1.8s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+        }
+
+        .check-mark {
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: drawPath 1s cubic-bezier(0.65, 0, 0.35, 1) 1.2s forwards;
+        }
+
+        .core-node {
+            opacity: 0;
+            transform-origin: center;
+            transform: scale(0);
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.9s forwards;
+        }
+
+        .scan-ring {
+            opacity: 0;
+            transform-origin: center;
+            animation: ringScale 2.5s ease-out 2s infinite;
+        }
+
+        @keyframes drawPath {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes popIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes ringScale {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(2.2);
+                opacity: 0;
+            }
+        }
+    </style>
+
+    <defs>
+        <!-- Main Brand Gradient -->
+        <linearGradient id="main-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#818cf8;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#c084fc;stop-opacity:1" />
+        </linearGradient>
+
+        <!-- Success Gradient -->
+        <linearGradient id="check-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#34d399;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+        </linearGradient>
+
+        <!-- High Fidelity Glow Filter -->
+        <filter id="soft-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+    </defs>
+
+    <!-- Scanning Rings (Ping Animation) -->
+    <circle class="scan-ring" cx="50" cy="42" r="12" stroke="#a855f7" stroke-width="0.5" />
+    <circle class="scan-ring" cx="50" cy="42" r="12" stroke="#6366f1" stroke-width="0.5"
+        style="animation-delay: 3.2s;" />
+
+    <!-- The "A" Structural Frame -->
+    <path class="main-frame" d="M22 82L46 22C48 17 52 17 54 22L68 56" stroke="url(#main-grad)" stroke-width="7"
+        stroke-linecap="round" filter="url(#soft-glow)" />
+
+    <!-- The Verification Check -->
+    <path class="check-mark" d="M40 58L52 70L82 35" stroke="url(#check-grad)" stroke-width="8" stroke-linecap="round"
+        stroke-linejoin="round" filter="url(#soft-glow)" />
+
+    <!-- Central Tech Node -->
+    <circle class="core-node" cx="50" cy="42" r="4.5" fill="white" filter="url(#soft-glow)" />
+    <circle class="core-node" cx="50" cy="42" r="2" fill="#4338ca" />
+</svg>

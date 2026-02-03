@@ -1,17 +1,101 @@
 {% extends 'base.html' %}
 
-{% block title %}AttendX{% endblock %}
+{% block title %}Attendify{% endblock %}
 
 {% block content %}
+<section class="hero-section">
+    <div class="container py-5">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-6">
+                <span class="badge text-bg-primary mb-3">Smart Attendance</span>
+                <h1 class="display-5 fw-bold">Welcome to Attendify</h1>
+                <p class="lead text-muted">Your reliable attendance management system for accurate, secure, and
+                    effortless tracking.</p>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <a class="btn btn-primary btn-lg" href="/login" role="button">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+                    </a>
+                    <a class="btn btn-outline-light btn-lg" href="/register" role="button">
+                        <i class="bi bi-person-plus"></i> Register
+                    </a>
+                </div>
+                <div class="d-flex gap-3 mt-4 text-muted small">
+                    <div><i class="bi bi-shield-check"></i> Secure</div>
+                    <div><i class="bi bi-speedometer2"></i> Fast</div>
+                    <div><i class="bi bi-graph-up"></i> Insightful</div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-card p-4 p-lg-5 d-none d-lg-flex flex-column align-items-center text-center">
+                    <img src="{{ url_for('static', filename='img/logos/attendify.svg') }}" alt="Attendify logo"
+                        width="160" height="160" class="mb-3" />
+                    <h5 class="mb-1">Attendify</h5>
+                    <p class="text-muted mb-0">Smart Attendance Management</p>
+                </div>
 
-<div class="container mt-5">
-    <div class="jumbotron text-center">
-        <h1 class="display-4">Welcome to AttendX</h1>
-        <p class="lead">Your reliable attendance management system.</p>
-        <hr class="my-4">
-        <p>Use the navigation bar to access different features.</p>
-        <a class="btn btn-primary btn-lg" href="/attendance" role="button">
-            <i class="bi bi-calendar-check"></i> Mark Attendance
-        </a>
+                <div class="hero-card p-4 p-lg-5 d-lg-none">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="mb-0">Today’s Overview</h5>
+                        <span class="badge text-bg-success">Live</span>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-label">Classes</div>
+                                <div class="stat-value">12</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-label">Students</div>
+                                <div class="stat-value">540</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-label">Present</div>
+                                <div class="stat-value">496</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-label">Defaulters</div>
+                                <div class="stat-value">18</div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="my-4" />
+                    <p class="text-muted small mb-0">Use the navigation bar to access attendance, reports, and settings.
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
+</section>
+
+<section class="container py-5">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="feature-card h-100">
+                <i class="bi bi-calendar2-check"></i>
+                <h5>Automated Scheduling</h5>
+                <p>Generate lectures and schedules from timetables in seconds.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card h-100">
+                <i class="bi bi-people"></i>
+                <h5>Role Based Access</h5>
+                <p>Secure dashboards for admins, faculty, and students.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card h-100">
+                <i class="bi bi-bar-chart-line"></i>
+                <h5>Analytics & Reports</h5>
+                <p>Visualize attendance trends and export PDF reports.</p>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}

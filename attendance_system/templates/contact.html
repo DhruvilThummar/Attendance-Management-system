@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact - Attendify{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="container py-5">
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <span class="badge text-bg-primary mb-3">Contact Us</span>
+                <h1 class="display-5 fw-bold">We’re here to help</h1>
+                <p class="lead text-muted">Reach out for setup help, support, or product questions.</p>
+
+                <div class="hero-card p-4 mt-4">
+                    <div class="mb-3">
+                        <div class="text-muted small">Email</div>
+                        <div class="fw-semibold">support@attendify.edu</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small">Phone</div>
+                        <div class="fw-semibold">+91 90000 00000</div>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Office Hours</div>
+                        <div class="fw-semibold">Mon–Fri, 9:00 AM – 6:00 PM</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-card p-4 p-lg-5">
+                    <h5 class="mb-3">Send a message</h5>
+                    <form>
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-control" placeholder="Your name" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" placeholder="you@example.com" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-control" rows="4" placeholder="How can we help?"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-send"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

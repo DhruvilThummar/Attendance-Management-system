@@ -1,45 +1,20 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-        <!-- Brand -->
-        <a class="navbar-brand fw-bold" href="/">
-            <i class="bi bi-clock-history"></i> AttendX
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark text-light">
+    <div class="container-fluid text-light">
+        <a class="navbar-brand" href="/">
+            <img src="/static/img/logos/attendify.svg" alt="Attendify logo" width="28" height="28" class="me-2" />
+            Attend<span class="text-danger">ify</span>
         </a>
-
-        <!-- Toggler for mobile -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="nav navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav1"
+            aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-
-        <!-- Navbar content -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="/">
-                        <i class="bi bi-house-fill"></i> Home
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/attendance">
-                        <i class="bi bi-calendar-check"></i> Attendance
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/reports">
-                        <i class="bi bi-file-earmark-pdf"></i> Reports
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/settings">
-                        <i class="bi bi-gear"></i> Settings
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/profile">
-                        <i class="bi bi-person-circle"></i> Profile
-                    </a>
-                </li>
-            </ul>
+        <div class="nav collapse navbar-collapse justify-content-end" id="nav1">
+            <div class="navbar-nav">
+                <a class=" nav-link active" aria-current="page" href="/">Home</a>
+                <a class="nav-link" href="/about">About</a>
+                <a class="nav-link" href="/contact">Contact</a>
+                <a class="nav-link" href="/login">Login</a>
+            </div>
         </div>
     </div>
 </nav>

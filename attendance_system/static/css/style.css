@@ -1,0 +1,67 @@
+body {
+    font-family: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+    background-color: #f8fafc;
+    color: #0f172a;
+}
+
+.hero-section {
+    background: radial-gradient(1200px circle at 10% 10%, rgba(59, 130, 246, 0.18), transparent 60%),
+        radial-gradient(800px circle at 90% 20%, rgba(14, 165, 233, 0.12), transparent 55%),
+        linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+}
+
+.hero-card {
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.stat-card {
+    background: #f8fafc;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.feature-card {
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-card i {
+    font-size: 2rem;
+    color: #2563eb;
+    display: inline-block;
+    margin-bottom: 12px;
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.btn-outline-light {
+    border-color: rgba(37, 99, 235, 0.4);
+    color: #2563eb;
+}
+
+.btn-outline-light:hover {
+    background-color: rgba(37, 99, 235, 0.08);
+}
