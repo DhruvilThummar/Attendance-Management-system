@@ -28,7 +28,7 @@ from .config import Config
 from .db_manager import init_db_pool
 from .blueprints.dashboards import dashboards
 from .routes import (api, core, dashboard, academic, attendance, auth, 
-                     students_bp, faculty_bp, timetable_bp, profile_bp, lectures_bp)
+                     students_bp, faculty_bp, timetable_bp, profile_bp, lectures_bp, dashboards_api)
 
 
 def create_app(config: dict | None = None) -> Flask:
@@ -127,6 +127,9 @@ def create_app(config: dict | None = None) -> Flask:
     app.register_blueprint(timetable_bp)
     app.register_blueprint(profile_bp)
     app.register_blueprint(lectures_bp)
+    
+    # Dashboard API endpoints
+    app.register_blueprint(dashboards_api)
     
     # ========== ERROR HANDLERS ==========
     @app.errorhandler(404)

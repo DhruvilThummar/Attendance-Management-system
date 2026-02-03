@@ -79,15 +79,15 @@ The system comes pre-seeded with the following accounts for testing.
 ### Super Admin (Global Scope)
 | Role        | Email           | Password     |
 | ----------- | --------------- | ------------ |
-| Super Admin | `Admin@edu.com` | `Admin@1212` |
+| Super Admin | `Admin@edu.com` | `Admin@123` |
 
 ### Demo College (Engineering)
 | Role          | Email                 | Password              |
 | ------------- | --------------------- | --------------------- |
-| College Admin | `admin@college.edu`   | `AdminPassword123!`   |
-| HOD           | `hod@college.edu`     | `HodPassword123!`     |
-| Faculty       | `faculty@college.edu` | `FacultyPassword123!` |
-| Student       | `student@college.edu` | `StudentPassword123!` |
+| College Admin | `admin@college.edu`   | `Admin@123`   |
+| HOD           | `hod@college.edu`     | `hod@123`     |
+| Faculty       | `faculty@college.edu` | `faculty@123` |
+| Student       | `student@college.edu` | `student@123!` |
 
 > **Note**: For new users, use the **Sign Up** page. Registration requires selecting a college (created by Super Admin). New accounts are "Pending" until approved by their respective superior (HOD approves Faculty, Faculty approves Students).
 
