@@ -21,14 +21,20 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
 
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-iecdLmaskl7CVJkEZSMUkrQ6usKICARBcQ7/1cs28XFvrSD3IheuONnlM4qMred4niY5HXJAO9UQw6MiKzVxYg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <!-- CSS Files Links -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 
+    <!-- Extra CSS Block -->
+    {% block extra_css %}{% endblock %}
+
     <!-- Title -->
     <title>{% block title %}Base Template{% endblock %}</title>
-</head>
-
 </head>
 
 <body>
@@ -48,6 +54,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+
+    <!-- Extra JS Block -->
+    {% block extra_js %}{% endblock %}
 </body>
 
 </html>
