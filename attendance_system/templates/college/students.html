@@ -1,0 +1,378 @@
+{% extends 'college/cbase.html' %}
+
+{% block title %}Students - College Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    {% include 'college/components/sidebar.html' %}
+
+    <div class="main-content">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+            <div class="container-fluid">
+                <span class="navbar-brand">
+                    <i class="fas fa-user-graduate me-2"></i>Students Management
+                </span>
+            </div>
+        </nav>
+
+        <div class="dashboard-content">
+            <div class="container-fluid p-4">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h1 class="page-title" id="studentTitle">Student Directory</h1>
+                        <p class="text-muted" id="studentSubtitle">Manage all students across departments</p>
+                    </div>
+                </div>
+
+                <!-- Department Not Selected Message -->
+                <div id="selectDeptMsg" style="display: none;" class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Department View:</strong> Select a department from the sidebar to view students organized by
+                    division.
+                </div>
+
+                <!-- Filter Options -->
+                <div class="row mb-4" id="filterSection">
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text">Department</span>
+                            <select class="form-select" id="studentDeptFilter"
+                                onchange="filterStudents(); showStudentView()">
+                                <option value="">All</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.dept_id }}">{{ dept.dept_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text">Division</span>
+                            <select class="form-select" id="studentDivFilter" onchange="filterStudents()">
+                                <option value="">All</option>
+                                {% for dept in departments %}
+                                {% for div in dept.divisions %}
+                                <option value="{{ div.div_id }}" data-dept="{{ dept.dept_id }}">{{ div.division_name }}
+                                </option>
+                                {% endfor %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="studentSearch"
+                                placeholder="Search by name or roll number..." onkeyup="filterStudents()">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Department-wise Students by Division -->
+                <div id="deptStudentsSection" style="display: none;">
+                    {% for dept in departments %}
+                    <div class="row mb-4 dept-students-section" data-dept-id="{{ dept.dept_id }}"
+                        id="students-dept-{{ dept.dept_id }}">
+                        <div class="col-12">
+                            <div class="department-divider">
+                                <h3>{{ dept.dept_name }}</h3>
+                                <span class="badge bg-primary">{{ dept.student_count }} students</span>
+                            </div>
+                        </div>
+
+                        {% for div in dept.divisions %}
+                        <div class="col-md-6 mb-3">
+                            <div class="student-card">
+                                <div class="student-card-header"
+                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                    <h4>Division {{ div.division_name }}</h4>
+                                    <p class="division-code">{{ div.division_code }}</p>
+                                </div>
+                                <div class="student-card-body">
+                                    <div class="student-info-row">
+                                        <span class="info-label">Department:</span>
+                                        <span>{{ dept.dept_name }}</span>
+                                    </div>
+                                    <div class="student-info-row">
+                                        <span class="info-label">Students:</span>
+                                        <span class="badge bg-warning">{{ div.student_count }}</span>
+                                    </div>
+                                    <div class="student-info-row">
+                                        <span class=\"info-label\">Capacity:</span>
+                                        <span class=\"badge bg-info\">{{ div.capacity }}</span>
+                                    </div>
+                                </div>
+                                <div class="student-card-footer">
+                                    <button class="btn btn-sm btn-outline-primary"
+                                        onclick="viewDivisionStudents({{ div.div_id }})">
+                                        <i class="fas fa-eye me-1"></i>View Students
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Students Table Section -->
+                <div id="tableViewSection">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">All Students</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Roll Number</th>
+                                                <th>Student Name</th>
+                                                <th>Department</th>
+                                                <th>Division</th>
+                                                <th>Email</th>
+                                                <th>Phone</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for student in students %}
+                                            <tr class="student-row" data-dept-id="{{ student.dept_id }}"
+                                                data-div-id="{{ student.div_id }}"
+                                                data-name="{{ student.name.lower() }}"
+                                                data-roll="{{ student.roll_number.lower() }}">
+                                                <td><strong>{{ student.roll_number }}</strong></td>
+                                                <td>{{ student.name }}</td>
+                                                <td>{{ student.dept_name }}</td>
+                                                <td>{{ student.division_name }}</td>
+                                                <td>{{ student.email }}</td>
+                                                <td>{{ student.phone }}</td>
+                                                <td><span class="badge bg-success">Active</span></td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary"
+                                                        onclick="viewStudentDetails({{ student.student_id }})">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-info"
+                                                        onclick="viewAttendance({{ student.student_id }})">
+                                                        <i class="fas fa-calendar-check"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Statistics -->
+                <div class=\"row mt-4\" id=\"statsSection\">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Students by Department</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Department</th>
+                                                <th>Count</th>
+                                                <th>Percentage</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for dept in departments %}
+                                            <tr>
+                                                <td>{{ dept.dept_name }}</td>
+                                                <td><span class="badge bg-info">{{ dept.student_count }}</span></td>
+                                                <td>
+                                                    <div class="progress" style="height: 20px;">
+                                                        <div class="progress-bar" role="progressbar"
+                                                            style="width: {{ (dept.student_count / student_count * 100)|int }}%">
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Students by Division</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Division</th>
+                                                <th>Count</th>
+                                                <th>Percentage</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for dept in departments %}
+                                            {% for div in dept.divisions %}
+                                            <tr>
+                                                <td>{{ div.division_name }}</td>
+                                                <td><span class="badge bg-warning">{{ div.student_count }}</span></td>
+                                                <td>
+                                                    <div class="progress" style="height: 20px;">
+                                                        <div class="progress-bar bg-warning" role="progressbar"
+                                                            style="width: {{ (div.student_count / student_count * 100)|int }}%">
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Details Modal -->
+<div class="modal fade" id="studentDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Student Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="studentDetailsContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Modal -->
+<div class="modal fade" id="attendanceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Student Attendance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="attendanceContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/college-dashboard.js') }}"></script>
+<script>
+    function showStudentView() {
+        const selectedDept = document.getElementById('studentDeptFilter').value;
+
+        if (selectedDept) {
+            // Show department-wise card view
+            document.getElementById('deptStudentsSection').style.display = 'block';
+            document.getElementById('tableViewSection').style.display = 'none';
+            document.getElementById('statsSection').style.display = 'none';
+            document.getElementById('selectDeptMsg').style.display = 'none';
+
+            // Update title
+            const deptName = document.querySelector(`#studentDeptFilter [value=\"${selectedDept}\"]`).textContent;
+            document.getElementById('studentTitle').textContent = deptName + ' - Students';
+            document.getElementById('studentSubtitle').textContent = 'Students organized by division in ' + deptName;
+
+            // Hide other departments
+            document.querySelectorAll('.dept-students-section').forEach(section => {
+                section.style.display = section.dataset.deptId === selectedDept ? 'block' : 'none';
+            });
+        } else {
+            // Show table view
+            document.getElementById('deptStudentsSection').style.display = 'none';
+            document.getElementById('tableViewSection').style.display = 'block';
+            document.getElementById('statsSection').style.display = 'block';
+            document.getElementById('selectDeptMsg').style.display = 'none';
+
+            // Reset title
+            document.getElementById('studentTitle').textContent = 'Student Directory';
+            document.getElementById('studentSubtitle').textContent = 'Manage all students across departments';
+        }
+    }
+
+    function viewDivisionStudents(divId) {
+        console.log('View students for division:', divId);
+        // Filter students by division
+    }
+
+    function filterStudents() {
+        const deptFilter = document.getElementById('studentDeptFilter').value;
+        const divFilter = document.getElementById('studentDivFilter').value;
+        const searchText = document.getElementById('studentSearch').value.toLowerCase();
+
+        const rows = document.querySelectorAll('.student-row');
+
+        rows.forEach(row => {
+            const deptId = row.dataset.deptId;
+            const divId = row.dataset.divId;
+            const name = row.dataset.name;
+            const roll = row.dataset.roll;
+
+            const deptMatch = !deptFilter || deptId === deptFilter;
+            const divMatch = !divFilter || divId === divFilter;
+            const searchMatch = name.includes(searchText) || roll.includes(searchText);
+
+            row.style.display = (deptMatch && divMatch && searchMatch) ? 'table-row' : 'none';
+        });
+    }
+
+    function viewStudentDetails(studentId) {
+        console.log('View details for student:', studentId);
+        const modal = new bootstrap.Modal(document.getElementById('studentDetailsModal'));
+        modal.show();
+    }
+
+    function viewAttendance(studentId) {
+        console.log('View attendance for student:', studentId);
+        const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+        modal.show();
+    }
+
+    // Handle division filter updates based on department selection
+    document.getElementById('studentDeptFilter').addEventListener('change', function () {
+        const selectedDept = this.value;
+        const divSelect = document.getElementById('studentDivFilter');
+        const options = divSelect.querySelectorAll('option');
+
+        options.forEach(option => {
+            if (option.value === '') {
+                option.style.display = 'block';
+            } else {
+                option.style.display = (!selectedDept || option.dataset.dept === selectedDept) ? 'block' : 'none';
+            }
+        });
+        divSelect.value = '';
+    });
+</script>
+{% endblock %}

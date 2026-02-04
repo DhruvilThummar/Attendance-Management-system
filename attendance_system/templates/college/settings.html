@@ -1,0 +1,220 @@
+{% extends 'college/cbase.html' %}
+
+{% block title %}College Settings - College Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    {% include 'college/components/sidebar.html' %}
+
+    <div class="main-content">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+            <div class="container-fluid">
+                <span class="navbar-brand">
+                    <i class="fas fa-cog me-2"></i>Settings
+                </span>
+            </div>
+        </nav>
+
+        <div class="dashboard-content">
+            <div class="container-fluid p-4">
+                <!-- Page Header -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h1 class="page-title">College Settings</h1>
+                        <p class="text-muted">Manage college configuration and preferences</p>
+                    </div>
+                </div>
+
+                <!-- Settings Tabs -->
+                <div class="row">
+                    <div class="col-12">
+                        <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="general-tab" data-bs-toggle="tab"
+                                    data-bs-target="#general" type="button" role="tab" aria-controls="general"
+                                    aria-selected="true">
+                                    <i class="fas fa-sliders-h me-2"></i>General Settings
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="academic-tab" data-bs-toggle="tab"
+                                    data-bs-target="#academic" type="button" role="tab" aria-controls="academic"
+                                    aria-selected="false">
+                                    <i class="fas fa-graduation-cap me-2"></i>Academic Settings
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="notification-tab" data-bs-toggle="tab"
+                                    data-bs-target="#notification" type="button" role="tab" aria-controls="notification"
+                                    aria-selected="false">
+                                    <i class="fas fa-bell me-2"></i>Notifications
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Tab Content -->
+                        <div class="tab-content mt-4" id="settingsTabContent">
+                            <!-- General Settings Tab -->
+                            <div class="tab-pane fade show active" id="general" role="tabpanel"
+                                aria-labelledby="general-tab">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <form>
+                                            <div class="row mb-4">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">College Name</label>
+                                                    <input type="text" class="form-control"
+                                                        value="{% if college %}{{ college.college_name }}{% endif %}"
+                                                        placeholder="Enter college name">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">College Code</label>
+                                                    <input type="text" class="form-control"
+                                                        placeholder="Enter college code">
+                                                </div>
+                                            </div>
+
+                                            <div class="row mb-4">
+                                                <div class="col-md-12">
+                                                    <label class="form-label">College Address</label>
+                                                    <textarea class="form-control" rows="3"
+                                                        placeholder="Enter college address"></textarea>
+                                                </div>
+                                            </div>
+
+                                            <div class="row mb-4">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Email</label>
+                                                    <input type="email" class="form-control"
+                                                        placeholder="college@example.com">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Phone</label>
+                                                    <input type="tel" class="form-control"
+                                                        placeholder="Enter phone number">
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex gap-2">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-save me-2"></i>Save Changes
+                                                </button>
+                                                <button type="reset" class="btn btn-secondary">
+                                                    <i class="fas fa-redo me-2"></i>Reset
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Academic Settings Tab -->
+                            <div class="tab-pane fade" id="academic" role="tabpanel" aria-labelledby="academic-tab">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <form>
+                                            <div class="row mb-4">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Academic Year</label>
+                                                    <input type="text" class="form-control" placeholder="2024-2025">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Semester Type</label>
+                                                    <select class="form-select">
+                                                        <option>Odd Semester</option>
+                                                        <option>Even Semester</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="row mb-4">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Attendance Threshold (%)</label>
+                                                    <input type="number" class="form-control" value="75"
+                                                        placeholder="Enter threshold">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Academic Calendar</label>
+                                                    <input type="file" class="form-control">
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex gap-2">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-save me-2"></i>Save Changes
+                                                </button>
+                                                <button type="reset" class="btn btn-secondary">
+                                                    <i class="fas fa-redo me-2"></i>Reset
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Notifications Tab -->
+                            <div class="tab-pane fade" id="notification" role="tabpanel"
+                                aria-labelledby="notification-tab">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <form>
+                                            <div class="mb-4">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="emailNotif"
+                                                        checked>
+                                                    <label class="form-check-label" for="emailNotif">
+                                                        Email Notifications
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-4">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="smsNotif"
+                                                        checked>
+                                                    <label class="form-check-label" for="smsNotif">
+                                                        SMS Notifications
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-4">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="attendanceNotif">
+                                                    <label class="form-check-label" for="attendanceNotif">
+                                                        Attendance Alerts
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-4">
+                                                <label class="form-label">Notification Email</label>
+                                                <input type="email" class="form-control"
+                                                    placeholder="Enter notification email">
+                                            </div>
+
+                                            <div class="d-flex gap-2">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-save me-2"></i>Save Changes
+                                                </button>
+                                                <button type="reset" class="btn btn-secondary">
+                                                    <i class="fas fa-redo me-2"></i>Reset
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

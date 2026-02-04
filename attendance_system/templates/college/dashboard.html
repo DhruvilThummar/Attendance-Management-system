@@ -1,0 +1,169 @@
+{% extends 'college/cbase.html' %}
+
+{% block title %}College Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Sidebar Navigation -->
+    {% include 'college/components/sidebar.html' %}
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Top Navigation Bar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+            <div class="container-fluid">
+                <span class="navbar-brand">
+                    <i class="fas fa-university me-2"></i>College Management Dashboard
+                </span>
+                <div class="ms-auto">
+                    <span class="me-3">Welcome, Admin</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <div class="container-fluid p-4">
+                <!-- Welcome Section -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h1 class="page-title">Dashboard</h1>
+                        <p class="text-muted">Manage departments, divisions, faculty, and view analytics</p>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h5>Departments</h5>
+                                <h3>{{ departments|length }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon"
+                                style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                <i class="fas fa-door-open"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h5>Divisions</h5>
+                                <h3>{{ divisions|length }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon"
+                                style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h5>Faculty</h5>
+                                <h3>{{ faculty_count }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon"
+                                style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h5>Students</h5>
+                                <h3>{{ student_count }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="quick-actions">
+                            <h5 class="mb-3">Quick Actions</h5>
+                            <div class="action-buttons">
+                                <a href="/college/departments" class="action-btn btn-primary">
+                                    <i class="fas fa-building me-2"></i>Manage Departments
+                                </a>
+                                <a href="/college/divisions" class="action-btn btn-info">
+                                    <i class="fas fa-door-open me-2"></i>Manage Divisions
+                                </a>
+                                <a href="/college/faculty" class="action-btn btn-success">
+                                    <i class="fas fa-chalkboard-teacher me-2"></i>View Faculty
+                                </a>
+                                <a href="/college/students" class="action-btn btn-warning">
+                                    <i class="fas fa-user-graduate me-2"></i>View Students
+                                </a>
+                                <a href="/college/attendance-analytics" class="action-btn btn-danger">
+                                    <i class="fas fa-chart-bar me-2"></i>Attendance Analytics
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Department Summary -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Recent Departments</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Department Name</th>
+                                                <th>HOD</th>
+                                                <th>Divisions</th>
+                                                <th>Faculty</th>
+                                                <th>Students</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for dept in departments[:5] %}
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ dept.dept_name }}</strong>
+                                                </td>
+                                                <td>{{ dept.hod_name or 'Not Assigned' }}</td>
+                                                <td><span class="badge bg-primary">{{ dept.divisions_count }}</span>
+                                                </td>
+                                                <td><span class="badge bg-info">{{ dept.faculty_count }}</span></td>
+                                                <td><span class="badge bg-warning">{{ dept.student_count }}</span></td>
+                                                <td>
+                                                    <a href="/college/departments"
+                                                        class="btn btn-sm btn-outline-primary">View</a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/college-dashboard.js') }}"></script>
+{% endblock %}

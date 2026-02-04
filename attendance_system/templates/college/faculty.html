@@ -1,0 +1,266 @@
+{% extends 'college/cbase.html' %}
+
+{% block title %}Faculty - College Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    {% include 'college/components/sidebar.html' %}
+
+    <div class="main-content">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+            <div class="container-fluid">
+                <span class="navbar-brand">
+                    <i class="fas fa-chalkboard-teacher me-2"></i>Faculty Management
+                </span>
+            </div>
+        </nav>
+
+        <div class="dashboard-content">
+            <div class="container-fluid p-4">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h1 class="page-title">Faculty Directory</h1>
+                    </div>
+                </div>
+
+                <!-- Filter Options -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text">Filter by Department</span>
+                            <select class="form-select" id="facultyDeptFilter" onchange="filterFaculty()">
+                                <option value="">All Departments</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.dept_id }}">{{ dept.dept_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="facultySearch" placeholder="Search by name..."
+                                onkeyup="filterFaculty()">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Faculty Grid -->
+                <div class="row mb-4">
+                    {% for faculty in faculty_list %}
+                    <div class="col-md-6 col-lg-4 mb-3 faculty-card-container" data-dept-id="{{ faculty.dept_id }}"
+                        data-name="{{ faculty.name.lower() }}">
+                        <div class="faculty-card">
+                            <div class="faculty-image">
+                                <img src="https://via.placeholder.com/300" alt="{{ faculty.name }}">
+                                {% if faculty.is_hod %}
+                                <span class="hod-badge">
+                                    <i class="fas fa-crown"></i> HOD
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="faculty-content">
+                                <h5 class="faculty-name">{{ faculty.name }}</h5>
+                                <p class="faculty-id">{{ faculty.faculty_id }}</p>
+                                <div class="faculty-details">
+                                    <div class="detail-row">
+                                        <span class="label">Department:</span>
+                                        <span class="value">{{ faculty.dept_name }}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="label">Specialization:</span>
+                                        <span class="value">{{ faculty.specialization or 'N/A' }}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="label">Email:</span>
+                                        <span class="value">{{ faculty.email }}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="label">Phone:</span>
+                                        <span class="value">{{ faculty.phone }}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="label">Subjects:</span>
+                                        <span class="value">
+                                            {% if faculty.subjects %}
+                                            {% for subject in faculty.subjects %}
+                                            <span class="badge bg-info">{{ subject }}</span>
+                                            {% endfor %}
+                                            {% else %}
+                                            <span class="text-muted">No subjects assigned</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="faculty-actions">
+                                <button class="btn btn-sm btn-outline-primary"
+                                    onclick="viewFacultyDetails({{ faculty.faculty_id }})">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button class="btn btn-sm btn-outline-info"
+                                    onclick="editFaculty({{ faculty.faculty_id }})">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Faculty Table -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Faculty List</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Faculty Name</th>
+                                                <th>Faculty ID</th>
+                                                <th>Department</th>
+                                                <th>Specialization</th>
+                                                <th>Email</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for faculty in faculty_list %}
+                                            <tr class="faculty-row" data-dept-id="{{ faculty.dept_id }}"
+                                                data-name="{{ faculty.name.lower() }}">
+                                                <td>
+                                                    <strong>{{ faculty.name }}</strong>
+                                                    {% if faculty.is_hod %}<span
+                                                        class="badge bg-warning ms-2">HOD</span>{% endif %}
+                                                </td>
+                                                <td>{{ faculty.faculty_id }}</td>
+                                                <td>{{ faculty.dept_name }}</td>
+                                                <td>{{ faculty.specialization or 'N/A' }}</td>
+                                                <td>{{ faculty.email }}</td>
+                                                <td><span class="badge bg-success">Active</span></td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary"
+                                                        onclick="viewFacultyDetails({{ faculty.faculty_id }})">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-info"
+                                                        onclick="editFaculty({{ faculty.faculty_id }})">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HOD Assignments Section -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">HOD Assignments</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Department</th>
+                                                <th>HOD Name</th>
+                                                <th>Faculty ID</th>
+                                                <th>Email</th>
+                                                <th>Phone</th>
+                                                <th>Since</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for faculty in faculty_list %}
+                                            {% if faculty.is_hod %}
+                                            <tr>
+                                                <td><strong>{{ faculty.dept_name }}</strong></td>
+                                                <td>{{ faculty.name }}</td>
+                                                <td>{{ faculty.faculty_id }}</td>
+                                                <td>{{ faculty.email }}</td>
+                                                <td>{{ faculty.phone }}</td>
+                                                <td>{{ faculty.appointed_date or 'N/A' }}</td>
+                                            </tr>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Faculty Details Modal -->
+<div class="modal fade" id="facultyDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Faculty Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="facultyDetailsContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/college-dashboard.js') }}"></script>
+<script>
+    function filterFaculty() {
+        const deptFilter = document.getElementById('facultyDeptFilter').value.toLowerCase();
+        const searchText = document.getElementById('facultySearch').value.toLowerCase();
+
+        const facultyCards = document.querySelectorAll('.faculty-card-container');
+        const facultyRows = document.querySelectorAll('.faculty-row');
+
+        facultyCards.forEach(card => {
+            const deptId = card.dataset.deptId;
+            const name = card.dataset.name;
+            const showCard = (!deptFilter || deptId === deptFilter) && name.includes(searchText);
+            card.style.display = showCard ? 'block' : 'none';
+        });
+
+        facultyRows.forEach(row => {
+            const deptId = row.dataset.deptId;
+            const name = row.dataset.name;
+            const showRow = (!deptFilter || deptId === deptFilter) && name.includes(searchText);
+            row.style.display = showRow ? 'table-row' : 'none';
+        });
+    }
+
+    function viewFacultyDetails(facultyId) {
+        console.log('View details for faculty:', facultyId);
+        const modal = new bootstrap.Modal(document.getElementById('facultyDetailsModal'));
+        modal.show();
+    }
+
+    function editFaculty(facultyId) {
+        console.log('Edit faculty:', facultyId);
+    }
+</script>
+{% endblock %}

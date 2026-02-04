@@ -1,0 +1,399 @@
+{% extends 'college/cbase.html' %}
+
+{% block title %}Attendance Analytics - College Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    {% include 'college/components/sidebar.html' %}
+
+    <div class="main-content">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+            <div class="container-fluid">
+                <span class="navbar-brand">
+                    <i class="fas fa-chart-bar me-2"></i>Attendance Analytics
+                </span>
+            </div>
+        </nav>
+
+        <div class="dashboard-content">
+            <div class="container-fluid p-4">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h1 class="page-title">Attendance Analytics & Reports</h1>
+                    </div>
+                </div>
+
+                <!-- Filter Options -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label">Department</label>
+                            <select class="form-select" id="analyticsDeptFilter" onchange="updateAnalytics()">
+                                <option value="">All Departments</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.dept_id }}">{{ dept.dept_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label">Division</label>
+                            <select class="form-select" id="analyticsDivFilter" onchange="updateAnalytics()">
+                                <option value="">All Divisions</option>
+                                {% for dept in departments %}
+                                {% for div in dept.divisions %}
+                                <option value="{{ div.div_id }}" data-dept="{{ dept.dept_id }}">{{ div.division_name }}
+                                </option>
+                                {% endfor %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label">Month</label>
+                            <input type="month" class="form-control" id="analyticsMonth" onchange="updateAnalytics()">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label">&nbsp;</label>
+                            <button class="btn btn-primary w-100" onclick="generateReport()">
+                                <i class="fas fa-file-export me-2"></i>Export Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overall Statistics -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h5>Present</h5>
+                                <h3>{{ stats.present_count }}</h3>
+                                <p class="stat-percentage">{{ stats.present_percentage }}%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon"
+                                style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h5>Absent</h5>
+                                <h3>{{ stats.absent_count }}</h3>
+                                <p class="stat-percentage">{{ stats.absent_percentage }}%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon"
+                                style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h5>Late</h5>
+                                <h3>{{ stats.late_count }}</h3>
+                                <p class="stat-percentage">{{ stats.late_percentage }}%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon"
+                                style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h5>Total Days</h5>
+                                <h3>{{ stats.total_days }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row 1 -->
+                <div class="row mb-4">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Attendance Distribution (Overall)</h5>
+                            </div>
+                            <div class="card-body">
+                                <div style="position: relative; height: 300px;">
+                                    <canvas id="attendanceChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Department-wise Attendance</h5>
+                            </div>
+                            <div class="card-body">
+                                <div style="position: relative; height: 300px;">
+                                    <canvas id="deptAttendanceChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row 2 -->
+                <div class="row mb-4">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Division-wise Attendance</h5>
+                            </div>
+                            <div class="card-body">
+                                <div style="position: relative; height: 300px;">
+                                    <canvas id="divAttendanceChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Daily Attendance Trend</h5>
+                            </div>
+                            <div class="card-body">
+                                <div style="position: relative; height: 300px;">
+                                    <canvas id="trendChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Table -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Detailed Attendance Records</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Department</th>
+                                                <th>Division</th>
+                                                <th>Present</th>
+                                                <th>Absent</th>
+                                                <th>Late</th>
+                                                <th>Total Students</th>
+                                                <th>Present %</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for record in attendance_records %}
+                                            <tr>
+                                                <td>{{ record.date }}</td>
+                                                <td>{{ record.dept_name }}</td>
+                                                <td>{{ record.div_name }}</td>
+                                                <td><span class="badge bg-success">{{ record.present }}</span></td>
+                                                <td><span class="badge bg-danger">{{ record.absent }}</span></td>
+                                                <td><span class="badge bg-warning">{{ record.late }}</span></td>
+                                                <td>{{ record.total }}</td>
+                                                <td>
+                                                    <div class="progress" style="height: 20px;">
+                                                        <div class="progress-bar bg-success" role="progressbar"
+                                                            style="width: {{ record.present_percentage }}%">
+                                                            {{ record.present_percentage }}%
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/college-dashboard.js') }}"></script>
+<script>
+    let charts = {};
+
+    function initializeCharts() {
+        // Attendance Distribution Chart
+        const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+        charts.attendance = new Chart(attendanceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Present', 'Absent', 'Late'],
+                datasets: [{
+                    data: [{{ stats.present_count }}, {{ stats.absent_count }}, {{ stats.late_count }}],
+    backgroundColor: ['#51cf66', '#ff6b6b', '#ffd93d'],
+        borderColor: '#fff',
+            borderWidth: 2
+            }]
+        },
+    options: {
+        responsive: true,
+            maintainAspectRatio: false,
+                plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+    });
+
+    // Department-wise Attendance
+    const deptCtx = document.getElementById('deptAttendanceChart').getContext('2d');
+    charts.dept = new Chart(deptCtx, {
+        type: 'bar',
+        data: {
+            labels: {% raw %}{{ dept_labels | tojson }}{% endraw %},
+        datasets: [{
+            label: 'Present %',
+            data: {% raw %}{{ dept_present | tojson }}{% endraw %},
+        backgroundColor: '#51cf66'
+            }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        },
+        plugins: {
+            legend: {
+                display: true
+            }
+        }
+    }
+    });
+
+    // Division-wise Attendance
+    const divCtx = document.getElementById('divAttendanceChart').getContext('2d');
+    charts.div = new Chart(divCtx, {
+        type: 'bar',
+        data: {
+            labels: {% raw %}{{ div_labels | tojson }}{% endraw %},
+        datasets: [{
+            label: 'Present %',
+            data: {% raw %}{{ div_present | tojson }}{% endraw %},
+        backgroundColor: '#4dabf7'
+            }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        },
+        plugins: {
+            legend: {
+                display: true
+            }
+        }
+    }
+    });
+
+    // Trend Chart
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    charts.trend = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: {% raw %}{{ trend_dates | tojson }}{% endraw %},
+        datasets: [{
+            label: 'Attendance %',
+            data: {% raw %}{{ trend_values | tojson }}{% endraw %},
+        borderColor: '#667eea',
+        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4
+            }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        },
+        plugins: {
+            legend: {
+                display: true
+            }
+        }
+    }
+    });
+}
+
+    function updateAnalytics() {
+        const dept = document.getElementById('analyticsDeptFilter').value;
+        const div = document.getElementById('analyticsDivFilter').value;
+        const month = document.getElementById('analyticsMonth').value;
+
+        console.log('Update analytics:', { dept, div, month });
+        // Update charts with new data
+    }
+
+    function generateReport() {
+        const dept = document.getElementById('analyticsDeptFilter').value;
+        const div = document.getElementById('analyticsDivFilter').value;
+        const month = document.getElementById('analyticsMonth').value;
+
+        console.log('Generate report:', { dept, div, month });
+        // Generate and download CSV/PDF report
+    }
+
+    // Initialize charts on page load
+    document.addEventListener('DOMContentLoaded', initializeCharts);
+
+    // Update division filter based on department
+    document.getElementById('analyticsDeptFilter').addEventListener('change', function () {
+        const selectedDept = this.value;
+        const divSelect = document.getElementById('analyticsDivFilter');
+        const options = divSelect.querySelectorAll('option');
+
+        options.forEach(option => {
+            if (option.value === '') {
+                option.style.display = 'block';
+            } else {
+                option.style.display = (!selectedDept || option.dataset.dept === selectedDept) ? 'block' : 'none';
+            }
+        });
+        divSelect.value = '';
+    });
+</script>
+{% endblock %}
