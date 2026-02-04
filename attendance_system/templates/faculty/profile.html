@@ -1,0 +1,229 @@
+{% extends 'faculty/fbase.html' %}
+
+{% block title %}Faculty Profile{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center">
+                <div class="avatar-upload">
+                    {% if user.avatar %}
+                    <img src="{{ url_for('static', filename='uploads/' + user.avatar) }}" alt="Profile"
+                        class="profile-avatar" id="avatarPreview">
+                    {% else %}
+                    <div class="profile-avatar-placeholder">
+                        {{ user.name[0].upper() }}
+                    </div>
+                    {% endif %}
+                    <label for="avatarInput" class="avatar-edit-btn">
+                        <i class="fas fa-camera"></i>
+                    </label>
+                    <input type="file" id="avatarInput" accept="image/*">
+                </div>
+            </div>
+            <div class="col-md-9">
+                <h1 class="profile-name">{{ user.name }}</h1>
+                <p class="profile-role">
+                    <i class="fas fa-chalkboard-teacher me-2"></i>Faculty
+                    {% if faculty.short_name %}
+                    <span class="ms-2">({{ faculty.short_name }})</span>
+                    {% endif %}
+                    {% if user.is_approved %}
+                    <span class="badge badge-custom badge-approved ms-2">Approved</span>
+                    {% else %}
+                    <span class="badge badge-custom badge-pending ms-2">Pending Approval</span>
+                    {% endif %}
+                </p>
+                <div class="mt-3">
+                    <button class="btn btn-light edit-profile-btn me-2" id="editProfileBtn">
+                        <i class="fas fa-edit me-2"></i>Edit Profile
+                    </button>
+                    <button class="btn btn-light change-password-btn" id="changePasswordBtn">
+                        <i class="fas fa-key me-2"></i>Change Password
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Personal Information -->
+        <div class="col-md-6">
+            <div class="profile-card">
+                <h2 class="profile-card-title">
+                    <i class="fas fa-user me-2"></i>Personal Information
+                </h2>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-id-card"></i>Faculty ID</span>
+                    <span class="info-value">{{ faculty.faculty_id }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-signature"></i>Short Name</span>
+                    <span class="info-value">{{ faculty.short_name or 'Not set' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-envelope"></i>Email</span>
+                    <span class="info-value">{{ user.email }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-phone"></i>Mobile</span>
+                    <span class="info-value">{{ user.mobile or 'Not provided' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-calendar"></i>Joined</span>
+                    <span class="info-value">{{ user.created_at.strftime('%B %d, %Y') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic Information -->
+        <div class="col-md-6">
+            <div class="profile-card">
+                <h2 class="profile-card-title">
+                    <i class="fas fa-graduation-cap me-2"></i>Academic Information
+                </h2>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-university"></i>College</span>
+                    <span class="info-value">{{ college.college_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-building"></i>Department</span>
+                    <span class="info-value">{{ department.dept_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-book"></i>Subjects Teaching</span>
+                    <span class="info-value">{{ teaching_stats.total_subjects or 0 }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-users"></i>Mentoring Students</span>
+                    <span class="info-value">{{ teaching_stats.mentoring_count or 0 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teaching Statistics -->
+    <div class="row">
+        <div class="col-12">
+            <div class="profile-card">
+                <h2 class="profile-card-title">
+                    <i class="fas fa-chart-line me-2"></i>Teaching Overview
+                </h2>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ teaching_stats.lectures_conducted or 0 }}</div>
+                        <div class="stat-label">Lectures Conducted</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ teaching_stats.total_subjects or 0 }}</div>
+                        <div class="stat-label">Subjects</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ teaching_stats.proxy_taken or 0 }}</div>
+                        <div class="stat-label">Proxy Lectures</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ teaching_stats.mentoring_count or 0 }}</div>
+                        <div class="stat-label">Mentees</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ user.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="short_name" class="form-label">Short Name</label>
+                        <input type="text" class="form-control" id="short_name" name="short_name"
+                            value="{{ faculty.short_name or '' }}" maxlength="50">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}"
+                            required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="mobile" class="form-label">Mobile Number</label>
+                        <input type="tel" class="form-control" id="mobile" name="mobile" value="{{ user.mobile or '' }}"
+                            pattern="[0-9]{10}">
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="changePasswordForm">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password"
+                            required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required
+                            minlength="8">
+                        <small id="passwordStrength" class="form-text"></small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                            required>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Change Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+{% endblock %}
