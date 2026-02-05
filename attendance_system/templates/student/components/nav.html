@@ -1,21 +1,29 @@
-<!-- student navigation bar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark text-light">
-    <div class="container-fluid text-light">
-        <a class="navbar-brand" href="/studentdashboard">
-            <img src="/static/img/logos/attendify.svg" alt="Attendify logo" width="28" height="28" class="me-2" />
-            Attend<span class="text-danger">ify</span>
+<!-- student navigation bar - Modern Design -->
+<nav class="navbar navbar-expand-lg navbar-modern fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center" href="/studentdashboard">
+            <img src="/static/img/logos/attendify.svg" alt="Attendify logo" width="32" height="32" class="me-2" />
+            <span class="brand-text">Attend<span class="text-danger">ify</span></span>
         </a>
-        <button class="nav navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav1"
-            aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarStudent"
+            aria-controls="navbarStudent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="nav collapse navbar-collapse justify-content-end" id="nav1">
-            <div class="navbar-nav">
-                <a class=" nav-link active" aria-current="page" href="/studentdashboard">Dashboard</a>
-                <a class="nav-link" href="/about">About</a>
-                <a class="nav-link" href="/contact">Contact</a>
-                <a class="nav-link" href="/student/profile">Profile</a>
-            </div>
+        <div class="collapse navbar-collapse" id="navbarStudent">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/studentdashboard">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/about">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/contact">Contact</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/student/profile">Profile</a>
+                </li>
+            </ul>
         </div>
     </div>
 </nav>
