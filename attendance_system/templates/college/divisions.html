@@ -24,7 +24,7 @@
                 <!-- Department Not Selected Message -->
                 <div id="noDeptMsg" class="alert alert-info" role="alert">
                     <i class="fas fa-info-circle me-2"></i>
-                    <strong>Select a Department:</strong> Please select a department from the dropdown in the sidebar to
+                    <strong>Select a Department:</strong> Please select a department from the dropdown in the navbar to
                     view and manage divisions.
                 </div>
 
@@ -318,7 +318,7 @@
         document.getElementById('noDeptMsg').style.display = 'none';
     }
 
-    // Listen for department selection from sidebar
+    // Listen for department selection from navbar
     window.addEventListener('departmentSelected', function (event) {
         checkAndShowDivisions();
     });
