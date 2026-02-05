@@ -1,7 +1,8 @@
 """
-Main routes - Home, About, Contact, Profile Test
+Main routes - Home, About, Contact
 """
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
+from services.data_helper import DataHelper
 
 main_bp = Blueprint('main', __name__)
 
@@ -9,23 +10,22 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route("/")
 def home():
     """Home page"""
-    return render_template("home.html")
+    college = DataHelper.get_college()
+    return render_template("home.html", college=college)
 
 
 @main_bp.route("/about")
 def about():
     """About page"""
-    return render_template("about.html")
+    college = DataHelper.get_college()
+    return render_template("about.html", college=college)
 
 
-@main_bp.route("/contact")
+@main_bp.route("/contact", methods=['GET', 'POST'])
 def contact():
     """Contact page"""
-    return render_template("contact.html")
-
-
-@main_bp.route("/profiles")
-@main_bp.route("/profile-test")
-def profile_test():
-    """Profile test page"""
-    return render_template("profile_test.html")
+    if request.method == 'POST':
+        # TODO: Handle contact form submission
+        pass
+    college = DataHelper.get_college()
+    return render_template("contact.html", college=college)

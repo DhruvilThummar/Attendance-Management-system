@@ -1,19 +1,23 @@
 """
-HOD (Head of Department) routes
+HOD (Head of Department) routes - Dashboard and Profile
 """
 from flask import Blueprint, render_template
+from services.data_helper import DataHelper
 
 hod_bp = Blueprint('hod', __name__, url_prefix='/hod')
-
-def get_mock_data():
-    from app import mock_users, mock_faculty, mock_college, mock_department, mock_dept_stats
-    return mock_users, mock_faculty, mock_college, mock_department, mock_dept_stats
 
 
 @hod_bp.route("/dashboard")
 def hdashboard():
     """HOD Dashboard"""
-    return render_template("hod/hbase.html", title="HOD Dashboard")
+    departments = DataHelper.get_departments()
+    faculty = DataHelper.get_faculty()
+    attendance_data = DataHelper.get_attendance_records()
+    return render_template("hod/hbase.html",
+                          title="HOD Dashboard",
+                          departments=departments,
+                          faculty=faculty,
+                          attendance_data=attendance_data)
 
 
 @hod_bp.route("")
@@ -25,11 +29,9 @@ def hod_redirect():
 @hod_bp.route("/profile")
 def hod_profile():
     """HOD Profile"""
-    mock_users, mock_faculty, mock_college, mock_department, mock_dept_stats = get_mock_data()
+    faculty = DataHelper.get_faculty()
+    college = DataHelper.get_college()
     return render_template("hod/profile.html",
-                         title="HOD Profile",
-                         user=mock_users['hod'],
-                         faculty=mock_faculty,
-                         college=mock_college,
-                         department=mock_department,
-                         dept_stats=mock_dept_stats)
+                          title="HOD Profile",
+                          faculty=faculty,
+                          college=college)
