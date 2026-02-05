@@ -1,0 +1,207 @@
+{% extends 'faculty/fbase.html' %}
+
+{% block title %}Attendance Reports{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/faculty.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="main-content">
+        <div class="container p-4">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h1 class="page-title">Attendance Reports</h1>
+                    <p class="text-muted">Generate and view detailed attendance records</p>
+                </div>
+            </div>
+
+            <!-- Report Filters -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Report Type</label>
+                            <select class="form-select" id="reportType" title="Select Report Type">
+                                <option value="individual">Individual Student</option>
+                                <option value="monthly">Monthly Summary</option>
+                                <option value="weekly">Weekly Summary</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="reportPeriod">Month/Week</label>
+                            <input type="text" class="form-control" id="reportPeriod" placeholder="YYYY-MM"
+                                title="Select Period (YYYY-MM)">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Search Student (Name or Roll No)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="studentSearch" placeholder="Ex: 101 or Raj"
+                                    title="Search Student">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-premium w-100" onclick="generateReport()">
+                                <i class="fas fa-file-download me-2"></i>Generate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Summary Table -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold">Student Attendance Overview</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Roll No</th>
+                                    <th>Name</th>
+                                    <th>Total Lectures</th>
+                                    <th>Presence</th>
+                                    <th>Percentage</th>
+                                    <th class="pe-4 text-end">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportTableBody">
+                                {% for student in students %}
+                                <tr>
+                                    <td class="ps-4 fw-bold text-primary">{{ student.roll_no }}</td>
+                                    <td>{{ student.name }}</td>
+                                    <td>45</td>
+                                    <td>{{ (45 * student.attendance / 100)|int }}</td>
+                                    <td>
+                                        <span
+                                            class="badge {{ 'bg-success' if student.attendance >= 75 else 'bg-danger' }}">
+                                            {{ student.attendance }}%
+                                        </span>
+                                    </td>
+                                    <td class="pe-4 text-end">
+                                        <button class="btn btn-sm btn-premium-light" title="View Detailed Report"
+                                            onclick="viewDetailedReport({{ student.id }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Report Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">Student Detailed Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content loaded via JS -->
+            </div>
+            <div class="modal-footer border-0 p-4">
+                <button type="button" class="btn btn-premium-light px-4" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-premium px-4" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i>Print Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function generateReport() {
+        const type = document.getElementById('reportType').value;
+        alert(`Generating ${type} report for the selected period...`);
+    }
+
+    function viewDetailedReport(id) {
+        const students = JSON.parse('{{ students|tojson|safe }}');
+        const student = students.find(s => s.id == id);
+        const modalBody = document.getElementById('modalBody');
+        const modalTitle = document.getElementById('modalTitle');
+
+        modalTitle.textContent = `Detailed Report: ${student.name} (${student.roll_no})`;
+
+        modalBody.innerHTML = `
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p class="mb-1 text-muted">Current Attendance</p>
+                    <h2 class="fw-bold">${student.attendance}%</h2>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="mb-1 text-muted">Status</p>
+                    <span class="badge ${student.attendance >= 75 ? 'bg-success' : 'bg-danger'} fs-6">
+                        ${student.attendance >= 75 ? 'Eligible' : 'De-barred'}
+                    </span>
+                </div>
+            </div>
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm bg-gradient-success text-white">
+                        <div class="card-body p-4">
+                            <h6 class="text-uppercase mb-2 opacity-75">Best Performance</h6>
+                            <h2 class="mb-0">CSE-A</h2>
+                            <p class="mb-0 mt-2 small">92% Attendance</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm bg-gradient-danger text-white">
+                        <div class="card-body p-4">
+                            <h6 class="text-uppercase mb-2 opacity-75">Lowest Participation</h6>
+                            <h2 class="mb-0">CSE-C</h2>
+                            <p class="mb-0 mt-2 small">75% Attendance</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm border">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Subject</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>2024-01-15</td><td>Web Tech</td><td><span class="text-success">PRESENT</span></td></tr>
+                        <tr><td>2024-01-14</td><td>Database</td><td><span class="text-danger">ABSENT</span></td></tr>
+                        <tr><td>2024-01-13</td><td>Web Tech</td><td><span class="text-success">PRESENT</span></td></tr>
+                        <tr><td>2024-01-12</td><td>Operating Systems</td><td><span class="text-success">PRESENT</span></td></tr>
+                        <tr><td>2024-01-11</td><td>Web Tech</td><td><span class="text-success">PRESENT</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        new bootstrap.Modal(document.getElementById('reportModal')).show();
+    }
+
+    document.getElementById('studentSearch').addEventListener('input', function () {
+        const query = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#reportTableBody tr');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+    });
+</script>
+{% endblock %}

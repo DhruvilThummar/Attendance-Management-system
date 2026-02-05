@@ -1,0 +1,206 @@
+/* Faculty Specific Styles */
+.timetable-card {
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    background: white;
+}
+
+.timetable-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+}
+
+.lecture-time-badge {
+    background: rgba(102, 126, 234, 0.1);
+    color: #4c51bf;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    display: inline-block;
+}
+
+.lecture-status-completed {
+    border-left: 4px solid #48bb78;
+}
+
+.lecture-status-pending {
+    border-left: 4px solid #ed8936;
+}
+
+.proxy-banner {
+    background: linear-gradient(1353deg, #feb47b 0%, #ff7e5f 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+/* Attendance Entry Styles */
+.student-attendance-row {
+    transition: background-color 0.2s;
+}
+
+.student-attendance-row:hover {
+    background-color: #f8fafc;
+}
+
+.bg-gradient-indigo {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.text-indigo {
+    color: #4c51bf !important;
+}
+
+.btn-outline-indigo {
+    color: #4c51bf;
+    border-color: #4c51bf;
+}
+
+.btn-outline-indigo:hover {
+    background-color: #4c51bf;
+    color: white;
+}
+
+/* Profile Summary Card (Dashboard) */
+.profile-summary-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 2rem;
+}
+
+.profile-summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+}
+
+.profile-summary-header {
+    background: linear-gradient(135deg, #ffffff 0%, #000000 20%, #6a07077f 60%, #e9caca9d 10%, #000000 100%);
+    color: white;
+    padding: 2.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.avatar-placeholder-lg {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, #ffffff 0%, #000000 33%, #550707 66%, #000000 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.profile-summary-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.5px;
+}
+
+.profile-summary-role {
+    font-size: 1rem;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+.progress-h-xs {
+    height: 8px;
+}
+
+.bg-success-soft {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.bg-danger-soft {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.bg-gradient-indigo {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-premium {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.btn-premium:disabled {
+    background: #e2e8f0;
+    color: #a0aec0;
+    box-shadow: none;
+    transform: none;
+}
+
+.btn-premium-light {
+    background: white;
+    color: #4c51bf;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    padding: 0.75rem 1.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.btn-premium-light:hover {
+    background: #f7fafc;
+    color: #434190;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.attendance-toggle {
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.attendance-toggle.present {
+    background-color: #c6f6d5;
+    color: #22543d;
+}
+
+.attendance-toggle.absent {
+    background-color: #fed7d7;
+    color: #822727;
+}
+
+/* Chart Container Customization */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}

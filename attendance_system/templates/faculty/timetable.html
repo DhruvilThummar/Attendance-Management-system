@@ -1,0 +1,141 @@
+{% extends 'faculty/fbase.html' %}
+
+{% block title %}Weekly Timetable{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/faculty.css') }}">
+<style>
+    .timetable-grid {
+        display: grid;
+        grid-template-columns: 100px repeat(6, 1fr);
+        gap: 1px;
+        background-color: #e5e7eb;
+        border: 1px solid #e5e7eb;
+    }
+
+    .grid-header {
+        background-color: #f9fafb;
+        padding: 1rem;
+        font-weight: 700;
+        text-align: center;
+        color: #374151;
+    }
+
+    .grid-cell {
+        background-color: white;
+        padding: 1rem;
+        min-height: 100px;
+    }
+
+    .time-cell {
+        background-color: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .lecture-item {
+        background-color: #ebf4ff;
+        border-left: 3px solid #3b82f6;
+        padding: 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="main-content">
+        <div class="container p-4">
+            <div class="row mb-4">
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="page-title">Weekly Timetable</h1>
+                        <p class="text-muted">Overview of your lecture schedule for the current semester</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="timetable-grid">
+                    <!-- Header -->
+                    <div class="grid-header">Time</div>
+                    <div class="grid-header">MON</div>
+                    <div class="grid-header">TUE</div>
+                    <div class="grid-header">WED</div>
+                    <div class="grid-header">THU</div>
+                    <div class="grid-header">FRI</div>
+                    <div class="grid-header">SAT</div>
+
+                    <!-- Row 1: 09:00 - 10:00 -->
+                    <div class="grid-cell time-cell">09:00 AM</div>
+                    <div class="grid-cell">
+                        <div class="lecture-item">
+                            <strong>Web Tech</strong><br>CSE-A | R401
+                        </div>
+                    </div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell">
+                        <div class="lecture-item">
+                            <strong>Web Tech</strong><br>CSE-A | R401
+                        </div>
+                    </div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell">
+                        <div class="lecture-item">
+                            <strong>Web Tech</strong><br>CSE-A | R401
+                        </div>
+                    </div>
+                    <div class="grid-cell"></div>
+
+                    <div class="grid-cell time-cell">10:00 AM</div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell">
+                        <div class="lecture-item lecture-item-dbms">
+                            <strong>DBMS</strong><br>CSE-B | R402
+                        </div>
+                    </div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell">
+                        <div class="lecture-item lecture-item-dbms">
+                            <strong>DBMS</strong><br>CSE-B | R402
+                        </div>
+                    </div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell">
+                        <div class="lecture-item lecture-item-dbms">
+                            <strong>DBMS</strong><br>CSE-B | R402
+                        </div>
+                    </div>
+
+                    <!-- Row 3: 11:15 - 12:15 -->
+                    <div class="grid-cell time-cell">11:15 AM</div>
+                    <div class="grid-cell">
+                        <div class="lecture-item lecture-item-os">
+                            <strong>OS</strong><br>CSE-A | R401
+                        </div>
+                    </div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell">
+                        <div class="lecture-item lecture-item-os">
+                            <strong>OS</strong><br>CSE-A | R401
+                        </div>
+                    </div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell">
+                        <div class="lecture-item lecture-item-os">
+                            <strong>OS</strong><br>CSE-A | R401
+                        </div>
+                    </div>
+                    <div class="grid-cell"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

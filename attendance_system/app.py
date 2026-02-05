@@ -273,8 +273,127 @@ def hod_profile():
 
 # ========== faculty routes -============
 @app.route("/facultydashboard")
-def fdashboard():    
-    return render_template("faculty/fbase.html", title="Faculty Dashboard")
+def fdashboard():
+    # Today's Timetable Mock Data
+    today = datetime.now().strftime('%A').upper()[:3] # MON, TUE, etc.
+    timetable = [
+        {
+            'timetable_id': 1,
+            'subject_name': 'Web Technologies',
+            'subject_code': 'CS301',
+            'division_name': 'CSE-A',
+            'start_time': '09:00 AM',
+            'end_time': '10:00 AM',
+            'room_no': '401',
+            'is_completed': True
+        },
+        {
+            'timetable_id': 2,
+            'subject_name': 'Database Management',
+            'subject_code': 'CS302',
+            'division_name': 'CSE-B',
+            'start_time': '10:00 AM',
+            'end_time': '11:00 AM',
+            'room_no': '402',
+            'is_completed': False
+        },
+        {
+            'timetable_id': 3,
+            'subject_name': 'Operating Systems',
+            'subject_code': 'CS303',
+            'division_name': 'CSE-A',
+            'start_time': '11:15 AM',
+            'end_time': '12:15 PM',
+            'room_no': '401',
+            'is_completed': False
+        }
+    ]
+
+    # Proxy Lectures Mock Data
+    proxies = [
+        {
+            'proxy_id': 1,
+            'subject_name': 'Data Structures',
+            'division_name': 'ECE-A',
+            'lecture_date': datetime.now().strftime('%Y-%m-%d'),
+            'lecture_no': 4,
+            'original_faculty': 'Dr. Rajesh Kumar',
+            'status': 'PENDING'
+        }
+    ]
+
+    stats = {
+        'total_lectures': 4,
+        'completed': 1,
+        'remaining': 3,
+        'proxy_pending': 1
+    }
+
+    return render_template("faculty/dashboard.html", 
+                         title="Faculty Dashboard",
+                         user=mock_users['faculty'],
+                         faculty=mock_faculty,
+                         department=mock_department,
+                         teaching_stats=mock_teaching_stats,
+                         timetable=timetable,
+                         proxies=proxies,
+                         stats=stats,
+                         datetime=datetime)
+
+@app.route("/faculty/attendance")
+def faculty_attendance():
+    # For now, show a selection of divisions/subjects
+    divisions = [
+        {'div_id': 1, 'division_name': 'CSE-A', 'subjects': [{'id': 1, 'name': 'Web Technologies'}, {'id': 2, 'name': 'Operating Systems'}]},
+        {'div_id': 2, 'division_name': 'CSE-B', 'subjects': [{'id': 3, 'name': 'Database Management'}]}
+    ]
+    return render_template("faculty/attendance.html", 
+                         title="Attendance Management",
+                         user=mock_users['faculty'],
+                         divisions=divisions,
+                         datetime=datetime)
+
+@app.route("/faculty/analytics")
+def faculty_analytics():
+    # Mock analytics data
+    class_wise_attendance = [
+        {'division': 'CSE-A', 'percentage': 85},
+        {'division': 'CSE-B', 'percentage': 78},
+        {'division': 'ECE-A', 'percentage': 92},
+    ]
+    day_wise_attendance = [
+        {'day': 'Monday', 'percentage': 88},
+        {'day': 'Tuesday', 'percentage': 82},
+        {'day': 'Wednesday', 'percentage': 85},
+        {'day': 'Thursday', 'percentage': 80},
+        {'day': 'Friday', 'percentage': 84},
+        {'day': 'Saturday', 'percentage': 75},
+    ]
+    return render_template("faculty/analytics.html", 
+                         title="Attendance Analytics",
+                         user=mock_users['faculty'],
+                         class_stats=class_wise_attendance,
+                         day_stats=day_wise_attendance)
+
+@app.route("/faculty/reports")
+def faculty_reports():
+    # Mock individual student report data
+    students = [
+        {'id': 1, 'roll_no': '101', 'name': 'Raj Kumar', 'attendance': 92},
+        {'id': 2, 'roll_no': '102', 'name': 'Priya Singh', 'attendance': 88},
+        {'id': 3, 'roll_no': '103', 'name': 'Amit Verma', 'attendance': 75},
+    ]
+    return render_template("faculty/reports.html", 
+                         title="Attendance Reports",
+                         user=mock_users['faculty'],
+                         students=students,
+                         datetime=datetime)
+
+@app.route("/faculty/timetable")
+def faculty_timetable():
+    return render_template("faculty/timetable.html", 
+                         title="Weekly Timetable",
+                         user=mock_users['faculty'])
 
 @app.route("/faculty/profile")
 def faculty_profile():    
@@ -284,7 +403,8 @@ def faculty_profile():
                          faculty=mock_faculty,
                          college=mock_college,
                          department=mock_department,
-                         teaching_stats=mock_teaching_stats)
+                         teaching_stats=mock_teaching_stats,
+                         datetime=datetime)
 
 
 # ========== student routes -============

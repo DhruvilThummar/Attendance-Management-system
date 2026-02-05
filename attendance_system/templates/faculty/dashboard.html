@@ -1,0 +1,180 @@
+{% extends 'faculty/fbase.html' %}
+
+{% block title %}Faculty Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/faculty.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="main-content">
+        <div class="container p-4">
+            <!-- Welcome Section -->
+            <div class="row mb-4 align-items-stretch">
+                <div class="col-lg-8 mb-4 mb-lg-0">
+                    <div class="card border-0 shadow-sm h-100 bg-white p-4">
+                        <div class="d-flex flex-column h-100 justify-content-center">
+                            <h1 class="page-title mb-2">Welcome, {{ user.name }}!</h1>
+                            <p class="text-muted mb-0">Today is {{ datetime.now().strftime('%A, %d %B %Y') }}</p>
+                            <hr class="my-4 opacity-10">
+                            <p class="mb-0">You have <span class="fw-bold text-primary">{{ stats.remaining }}</span>
+                                lectures remaining today. Keep up the great work!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    {% include 'faculty/components/profile_card.html' %}
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-gradient-indigo">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h5>Total Lectures</h5>
+                            <h3>{{ stats.total_lectures }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-gradient-rose">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h5>Completed</h5>
+                            <h3>{{ stats.completed }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-gradient-azure">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h5>Remaining</h5>
+                            <h3>{{ stats.remaining }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-gradient-sunset">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h5>Proxy Pending</h5>
+                            <h3>{{ stats.proxy_pending }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Timetable and Proxy (Side by Side) -->
+            <div class="row">
+                <!-- Today's Timetable -->
+                <div class="col-lg-7 col-md-12 mb-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold">Today's Timetable</h5>
+                            <button class="btn btn-sm btn-premium-light shadow-sm">
+                                <i class="fas fa-calendar-week me-1"></i>Full Week
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% for lecture in timetable %}
+                            <div
+                                class="timetable-card p-3 lecture-status-{{ 'completed' if lecture.is_completed else 'pending' }}">
+                                <div class="row align-items-center">
+                                    <div class="col-auto">
+                                        <div class="lecture-time-badge">
+                                            {{ lecture.start_time }}
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <h6 class="mb-1 fw-bold">{{ lecture.subject_name }} ({{ lecture.subject_code }})
+                                        </h6>
+                                        <p class="mb-0 text-muted small">
+                                            <i class="fas fa-users me-1"></i>Division: {{ lecture.division_name }} |
+                                            <i class="fas fa-map-marker-alt ms-2 me-1"></i>Room: {{ lecture.room_no }}
+                                        </p>
+                                    </div>
+                                    <div class="col-auto text-end">
+                                        {% if lecture.is_completed %}
+                                        <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">
+                                            <i class="fas fa-check me-1"></i>Completed
+                                        </span>
+                                        {% else %}
+                                        <a href="/faculty/attendance" class="btn btn-sm btn-premium px-3">
+                                            Mark Attendance
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Proxy Lectures -->
+                <div class="col-lg-5 col-md-12 mb-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold">Proxy Requests</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if proxies %}
+                            {% for proxy in proxies %}
+                            <div class="p-3 mb-3 border rounded-3 bg-light">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="fw-bold mb-0 text-primary">{{ proxy.subject_name }}</h6>
+                                    <span class="badge bg-warning text-dark">{{ proxy.status }}</span>
+                                </div>
+                                <p class="small text-muted mb-2">
+                                    Requested by: <strong>{{ proxy.original_faculty }}</strong>
+                                </p>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <div class="small text-muted"><i class="fas fa-door-open me-1"></i>Div: {{
+                                            proxy.division_name }}</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="small text-muted"><i class="fas fa-list-ol me-1"></i>Lecture: {{
+                                            proxy.lecture_no }}</div>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-premium flex-grow-1 py-2">Accept</button>
+                                    <button
+                                        class="btn btn-sm btn-premium-light flex-grow-1 py-2 text-danger">Decline</button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-info-circle text-muted mb-3 fs-3"></i>
+                                <p class="text-muted">No pending proxy requests for today.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add any dashboard specific JS here
+</script>
+{% endblock %}

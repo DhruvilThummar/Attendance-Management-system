@@ -1,0 +1,82 @@
+<div class="profile-summary-card overflow-hidden">
+    <div class="profile-summary-header">
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0 me-3">
+                {% if user.avatar %}
+                <img src="{{ url_for('static', filename='uploads/' + user.avatar) }}" alt="Profile"
+                    class="rounded-circle border border-3 border-white shadow-sm" width="90" height="90">
+                {% else %}
+                <div class="avatar-placeholder-lg">
+                    {{ user.name[0].upper() }}
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex-grow-1">
+                <h4 class="profile-summary-name mb-1">{{ user.name }}</h4>
+                <p class="profile-summary-role mb-0">
+                    <i class="fas fa-chalkboard-teacher me-2"></i>{{ faculty.short_name or 'Faculty' }}
+                </p>
+                <div class="mt-2">
+                    <span class="badge bg-white text-dark rounded-pill px-3">
+                        <i class="fas fa-building me-1"></i>{{ department.dept_name }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="p-4 bg-white">
+        <div class="row text-center g-3">
+            <div class="col-4">
+                <div class="p-2 border rounded-3 bg-light">
+                    <div class="h5 mb-0 fw-bold text-dark">{{ teaching_stats.lectures_conducted or 0 }}</div>
+                    <div class="small text-muted">Lectures</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="p-2 border rounded-3 bg-light">
+                    <div class="h5 mb-0 fw-bold text-success">{{ teaching_stats.total_subjects or 0 }}</div>
+                    <div class="small text-muted">Subjects</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="p-2 border rounded-3 bg-light">
+                    <div class="h5 mb-0 fw-bold text-danger">{{ teaching_stats.proxy_taken or 0 }}</div>
+                    <div class="small text-muted">Proxies</div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4">
+            <a href="/faculty/profile" class="btn btn-premium-light w-100">
+                <i class="fas fa-user-circle me-2"></i>View Full Profile
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-indigo {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .text-indigo {
+        color: #4c51bf !important;
+    }
+
+    .btn-outline-indigo {
+        color: #4c51bf;
+        border-color: #4c51bf;
+    }
+
+    .btn-outline-indigo:hover {
+        background-color: #4c51bf;
+        color: white;
+    }
+
+    .profile-summary-card {
+        transition: transform 0.2s;
+    }
+
+    .profile-summary-card:hover {
+        transform: translateY(-5px);
+    }
+</style>

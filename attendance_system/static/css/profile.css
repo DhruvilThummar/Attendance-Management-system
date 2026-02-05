@@ -6,79 +6,98 @@
 }
 
 .profile-header {
-    background: linear-gradient(135deg, #000000 0%, #ffffff 70%, #000000 10%, #040e3b 30%, #ffffff 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #000000 20%, #6a07077f 60%, #e9caca9d 10%, #000000 100%);
     color: white;
-    border-radius: 15px;
-    padding: 2rem;
+    border-radius: 20px;
+    padding: 3rem 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    border-color: #000000;
+    box-shadow: 0 10px 30px rgba(118, 75, 162, 0.2);
 }
 
 .profile-avatar {
-    width: 120px;
-    height: 120px;
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
-    border: 5px solid white;
+    border: 6px solid rgba(255, 255, 255, 0.3);
     object-fit: cover;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .profile-avatar-placeholder {
-    width: 120px;
-    height: 120px;
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
-    border: 5px solid white;
-    background: linear-gradient(135deg, #ffffff 0%, #f5576c64 50%, #0b5220 100%);
+    border: 6px solid rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg,
+            #ffffff 0%,
+            #000000 33%,
+            #550707 66%,
+            #000000 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 3rem;
+    font-size: 4rem;
     font-weight: bold;
     color: white;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
 }
 
 .profile-name {
-    font-size: 2rem;
-    font-weight: 600;
+    font-size: 2.5rem;
+    font-weight: 700;
     margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
 }
 
 .profile-role {
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     opacity: 0.9;
-    font-weight: 300;
+    font-weight: 400;
 }
 
 .profile-card {
     background: white;
-    border-radius: 15px;
-    padding: 2rem;
+    border-radius: 20px;
+    padding: 2.5rem;
     margin-bottom: 2rem;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profile-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
 }
 
 .profile-card-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-    color: #333;
-    border-bottom: 3px solid #667eea;
-    padding-bottom: 0.5rem;
-    display: inline-block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: #1a202c;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.profile-card-title i {
+    width: 40px;
+    height: 40px;
+    background: #ebf4ff;
+    color: #4c51bf;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.1rem;
 }
 
 .info-row {
     display: flex;
-    padding: 1rem 0;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid #f7fafc;
 }
 
 .info-row:last-child {
@@ -87,48 +106,55 @@
 
 .info-label {
     font-weight: 600;
-    color: #666;
-    min-width: 150px;
+    color: #718096;
+    min-width: 160px;
     display: flex;
     align-items: center;
+    font-size: 0.95rem;
 }
 
 .info-label i {
-    margin-right: 0.5rem;
-    color: #667eea;
+    margin-right: 0.75rem;
+    color: #a0aec0;
+    width: 20px;
+    text-align: center;
 }
 
 .info-value {
-    color: #333;
+    color: #2d3748;
     flex: 1;
+    font-weight: 500;
+}
+
+.edit-profile-btn,
+.change-password-btn {
+    padding: 0.75rem 1.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.2s;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .edit-profile-btn {
-    background: linear-gradient(-135deg, #ffffff6f 0%, #071c7069 50%, #667eea71 10%, #0b522060 30%, #ffffff76 100%);
-    border: none;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    background: white;
+    color: #000000;
 }
 
 .edit-profile-btn:hover {
+    background: #f7fafc;
+    color: #000000;
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
 }
 
 .change-password-btn {
-    background: linear-gradient(-135deg, #ffffff40 0%, #f616f655 50%, #f5576c63 10%, #00000041 30%, #224d0458 100%);
-    border: none;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 15px rgba(245, 87, 108, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
 }
 
 .change-password-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
 }
 
 .badge-custom {
@@ -233,8 +259,10 @@
 /* Success Message */
 .alert-custom {
     border-radius: 10px;
-    border: none;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    color: white;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
 }
 
 /* File Upload Preview */

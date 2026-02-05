@@ -1,0 +1,279 @@
+{% extends 'faculty/fbase.html' %}
+
+{% block title %}Mark Attendance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/faculty.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="main-content">
+        <div class="container p-4">
+            <!-- Header Section -->
+            <div class="row mb-4">
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="page-title">Attendance Management</h1>
+                        <p class="text-muted">Fill daily attendance records or edit past entries</p>
+                    </div>
+                    <div class="btn-group shadow-sm rounded-pill overflow-hidden">
+                        <button class="btn btn-white active px-4" id="modeEntry">New Entry</button>
+                        <button class="btn btn-white px-4" id="modeEdit">Edit Record</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selection Filters -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Division</label>
+                            <select class="form-select" id="divisionSelect" title="Select Division">
+                                <option value="">-- Select Division --</option>
+                                {% for div in divisions %}
+                                <option value="{{ div.div_id }}">{{ div.division_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Subject</label>
+                            <select class="form-select" id="subjectSelect" title="Select Subject">
+                                <option value="">-- Select Subject --</option>
+                                <!-- Populated dynamically based on division -->
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Lecture Date</label>
+                            <input type="date" class="form-control" id="attendanceDate"
+                                value="{{ datetime.now().strftime('%Y-%m-%d') }}" title="Select Date">
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-premium-light w-100" onclick="openAttendanceModal()"
+                                id="btnOpenModal" disabled>
+                                <i class="fas fa-list-check me-2"></i>Mark Attendance
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Modal -->
+            <div class="modal fade" id="attendanceModal" tabindex="-1" aria-labelledby="attendanceModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header bg-gradient-indigo text-white p-4">
+                            <div>
+                                <h5 class="modal-title fw-bold" id="attendanceModalLabel">
+                                    <span id="modeDisplay">New Entry</span> - <span id="selectedDivisionText"></span>
+                                </h5>
+                                <p class="mb-0 small opacity-75" id="selectedSubjectText"></p>
+                            </div>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-0">
+                            <div class="bg-light p-3 d-flex justify-content-between align-items-center border-bottom">
+                                <span class="text-muted small">Mark absentees using the toggle buttons</span>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-xs btn-outline-danger rounded-pill py-1 px-3"
+                                        onclick="markAllAbsent()">
+                                        Mark All Absent
+                                    </button>
+                                    <button class="btn btn-xs btn-outline-success rounded-pill py-1 px-3"
+                                        onclick="markAllPresent()">
+                                        All Present
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-responsive" style="max-height: 400px;">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="bg-light sticky-top">
+                                        <tr>
+                                            <th class="ps-4">Roll No</th>
+                                            <th>Student Name</th>
+                                            <th class="text-center">Status</th>
+                                            <th class="pe-4 text-end">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentListBody">
+                                        <!-- Populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light p-3">
+                            <button type="button" class="btn btn-link text-muted text-decoration-none me-auto"
+                                data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-premium px-5" onclick="saveAttendance()">
+                                <i class="fas fa-save me-2"></i>Save Attendance
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-search text-muted" style="font-size: 4rem;"></i>
+                </div>
+                <h4>Select Division and Subject</h4>
+                <p class="text-muted">Choose the criteria above to load student names.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const mockStudents = [
+        { id: 1, roll: '101', name: 'Raj Kumar', status: 'PRESENT' },
+        { id: 2, roll: '102', name: 'Priya Singh', status: 'PRESENT' },
+        { id: 3, roll: '103', name: 'Amit Verma', status: 'PRESENT' },
+        { id: 4, roll: '104', name: 'Neha Sharma', status: 'PRESENT' },
+        { id: 5, roll: '105', name: 'Vikram Singh', status: 'PRESENT' },
+    ];
+
+    // Read division data from script tag to avoid linter errors
+    const divisionData = JSON.parse('{{ divisions|tojson|safe }}');
+
+    let currentMode = 'entry';
+
+    document.getElementById('modeEntry').addEventListener('click', function () {
+        setMode('entry');
+    });
+
+    document.getElementById('modeEdit').addEventListener('click', function () {
+        setMode('edit');
+    });
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('modeEntry').classList.toggle('active', mode === 'entry');
+        document.getElementById('modeEdit').classList.toggle('active', mode === 'edit');
+        document.getElementById('modeDisplay').innerText = mode === 'entry' ? 'New Entry' : 'Edit Record';
+
+        checkSelection();
+    }
+
+    document.getElementById('divisionSelect').addEventListener('change', function () {
+        const divId = this.value;
+        const subjectSelect = document.getElementById('subjectSelect');
+        subjectSelect.innerHTML = '<option value="">-- Select Subject --</option>';
+
+        if (divId) {
+            const selectedDiv = divisionData.find(d => d.div_id == divId);
+            if (selectedDiv) {
+                selectedDiv.subjects.forEach(sub => {
+                    const opt = document.createElement('option');
+                    opt.value = sub.id;
+                    opt.textContent = sub.name;
+                    subjectSelect.appendChild(opt);
+                });
+            }
+        }
+        checkSelection();
+    });
+
+    document.getElementById('subjectSelect').addEventListener('change', checkSelection);
+
+    function checkSelection() {
+        const divId = document.getElementById('divisionSelect').value;
+        const subjectId = document.getElementById('subjectSelect').value;
+        const btn = document.getElementById('btnOpenModal');
+
+        if (divId && subjectId) {
+            btn.disabled = false;
+        } else {
+            btn.disabled = true;
+        }
+    }
+
+    function openAttendanceModal() {
+        loadStudents();
+        const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+        modal.show();
+    }
+
+    function loadStudents() {
+        const listBody = document.getElementById('studentListBody');
+        listBody.innerHTML = '';
+
+        const divSelect = document.getElementById('divisionSelect');
+        const subSelect = document.getElementById('subjectSelect');
+        const divId = divSelect.value;
+        const devData = divisionData.find(d => d.div_id == divId);
+
+        document.getElementById('selectedDivisionText').innerText = devData ? devData.division_name : '';
+        document.getElementById('selectedSubjectText').innerText = subSelect.options[subSelect.selectedIndex].text;
+
+        mockStudents.forEach(student => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="ps-4 fw-medium text-muted">${student.roll}</td>
+                <td class="fw-bold">${student.name}</td>
+                <td class="text-center">
+                    <span id="badge-${student.id}" class="badge rounded-pill bg-success-soft text-success px-3 py-2">
+                        PRESENT
+                    </span>
+                </td>
+                <td class="pe-4 text-end">
+                    <button id="btn-${student.id}" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="toggleStudent(${student.id})">
+                        Mark Absent
+                    </button>
+                </td>
+            `;
+            listBody.appendChild(row);
+        });
+    }
+
+    function toggleStudent(id) {
+        const badge = document.getElementById(`badge-${id}`);
+        const btn = document.getElementById(`btn-${id}`);
+
+        if (badge.innerText === 'PRESENT') {
+            badge.innerText = 'ABSENT';
+            badge.classList.remove('bg-success-soft', 'text-success');
+            badge.classList.add('bg-danger-soft', 'text-danger');
+            btn.innerText = 'Mark Present';
+            btn.classList.remove('btn-outline-danger');
+            btn.classList.add('btn-outline-success');
+        } else {
+            badge.innerText = 'PRESENT';
+            badge.classList.remove('bg-danger-soft', 'text-danger');
+            badge.classList.add('bg-success-soft', 'text-success');
+            btn.innerText = 'Mark Absent';
+            btn.classList.remove('btn-outline-success');
+            btn.classList.add('btn-outline-danger');
+        }
+    }
+
+    function markAllAbsent() {
+        mockStudents.forEach(student => {
+            const badge = document.getElementById(`badge-${student.id}`);
+            if (badge.innerText === 'PRESENT') {
+                toggleStudent(student.id);
+            }
+        });
+    }
+
+    function markAllPresent() {
+        mockStudents.forEach(student => {
+            const badge = document.getElementById(`badge-${student.id}`);
+            if (badge.innerText === 'ABSENT') {
+                toggleStudent(student.id);
+            }
+        });
+    }
+
+    function saveAttendance() {
+        const action = currentMode === 'entry' ? 'Saved' : 'Updated';
+        alert(`Attendance ${action} Successfully!`);
+    }
+</script>
+{% endblock %}

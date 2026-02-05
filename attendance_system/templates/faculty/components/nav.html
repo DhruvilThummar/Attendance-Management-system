@@ -10,14 +10,58 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarFaculty">
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="/facultydashboard">Dashboard</a>
+                    <a class="nav-link active" aria-current="page" href="/facultydashboard">
+                        <i class="fas fa-home me-1"></i>Dashboard
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/faculty/profile">Profile</a>
+                    <a class="nav-link" href="/faculty/attendance">
+                        <i class="fas fa-calendar-check me-1"></i>Attendance
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/faculty/analytics">
+                        <i class="fas fa-chart-line me-1"></i>Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/faculty/reports">
+                        <i class="fas fa-file-alt me-1"></i>Reports
+                    </a>
+                </li>
+            </ul>
+            <ul class="navbar-nav align-items-center">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
+                        data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle fs-5 me-2"></i>
+                        <span>{{ user.name if user else 'Faculty' }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark shadow">
+                        <li><a class="dropdown-item" href="/faculty/profile"><i
+                                    class="fas fa-id-card me-2"></i>Profile</a></li>
+                        <li>
+                            <hr class="dropdown-divider border-secondary">
+                        </li>
+                        <li><a class="dropdown-item text-danger" href="/logout"><i
+                                    class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    </ul>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
+
+<script>
+    // Handle Navbar scrolled effect
+    window.addEventListener('scroll', function () {
+        const nav = document.querySelector('.navbar-modern');
+        if (window.scrollY > 50) {
+            nav.classList.add('scrolled');
+        } else {
+            nav.classList.remove('scrolled');
+        }
+    });
+</script>
