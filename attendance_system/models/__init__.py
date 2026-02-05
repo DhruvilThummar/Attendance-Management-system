@@ -4,7 +4,8 @@ Models package for Attendance Management System
 
 from .user import User, Role
 from .college import College
-from .department import Department, Division
+from .department import Department
+from .division import Division
 from .faculty import Faculty
 from .student import Student
 from .parent import Parent
