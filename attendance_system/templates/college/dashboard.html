@@ -9,20 +9,10 @@
 {% block content %}
 <div class="dashboard-container">
     <div class="main-content">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-            <div class="container-fluid">
-                <span class="navbar-brand">
-                    <i class="fas fa-university me-2"></i>College Management Dashboard
-                </span>
-                <div class="ms-auto">
-                    <span class="me-3">Welcome, Admin</span>
-                </div>
-            </div>
-        </nav>
 
         <!-- Dashboard Content -->
         <div class="dashboard-content">
-            <div class="container-fluid p-4">
+            <div class="container p-4">
                 <!-- Welcome Section -->
                 <div class="row mb-4">
                     <div class="col-12">
@@ -35,9 +25,8 @@
                 <div class="row mb-4">
                     <div class="col-md-3 mb-3">
                         <div class="stat-card">
-                            <div class="stat-icon"
-                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                <i class="fas fa-building"></i>
+                            <div class="stat-icon bg-gradient-indigo">
+                                <i class="fas fa-building" title="Departments Icon"></i>
                             </div>
                             <div class="stat-content">
                                 <h5>Departments</h5>
@@ -47,9 +36,8 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <div class="stat-card">
-                            <div class="stat-icon"
-                                style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                                <i class="fas fa-door-open"></i>
+                            <div class="stat-icon bg-gradient-rose">
+                                <i class="fas fa-door-open" title="Divisions Icon"></i>
                             </div>
                             <div class="stat-content">
                                 <h5>Divisions</h5>
@@ -59,9 +47,8 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <div class="stat-card">
-                            <div class="stat-icon"
-                                style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                                <i class="fas fa-chalkboard-teacher"></i>
+                            <div class="stat-icon bg-gradient-azure">
+                                <i class="fas fa-chalkboard-teacher" title="Faculty Icon"></i>
                             </div>
                             <div class="stat-content">
                                 <h5>Faculty</h5>
@@ -71,9 +58,8 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <div class="stat-card">
-                            <div class="stat-icon"
-                                style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-                                <i class="fas fa-user-graduate"></i>
+                            <div class="stat-icon bg-gradient-sunset">
+                                <i class="fas fa-user-graduate" title="Students Icon"></i>
                             </div>
                             <div class="stat-content">
                                 <h5>Students</h5>
@@ -109,40 +95,39 @@
                     </div>
                 </div>
 
-                <!-- Department Summary -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Recent Departments</h5>
+                <!-- Students Summary Tables (Side by Side) -->
+                <div class="row mb-4">
+                    <!-- Students by Department -->
+                    <div class="col-lg-6 col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Students by Department</h5>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body p-0">
                                 <div class="table-responsive">
-                                    <table class="table table-hover">
+                                    <table class="table table-hover mb-0">
                                         <thead class="table-light">
                                             <tr>
-                                                <th>Department Name</th>
-                                                <th>HOD</th>
-                                                <th>Divisions</th>
-                                                <th>Faculty</th>
-                                                <th>Students</th>
-                                                <th>Actions</th>
+                                                <th>Department</th>
+                                                <th>Count</th>
+                                                <th>Percentage</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for dept in departments[:5] %}
-                                            <tr>
+                                            {% for dept in departments %}
+                                            <tr class="dept-stats-row" data-dept-id="{{ dept.dept_id }}">
+                                                <td><strong>{{ dept.dept_name }}</strong></td>
+                                                <td><span class="badge bg-info">{{ dept.student_count }}</span></td>
                                                 <td>
-                                                    <strong>{{ dept.dept_name }}</strong>
-                                                </td>
-                                                <td>{{ dept.hod_name or 'Not Assigned' }}</td>
-                                                <td><span class="badge bg-primary">{{ dept.divisions_count }}</span>
-                                                </td>
-                                                <td><span class="badge bg-info">{{ dept.faculty_count }}</span></td>
-                                                <td><span class="badge bg-warning">{{ dept.student_count }}</span></td>
-                                                <td>
-                                                    <a href="/college/departments"
-                                                        class="btn btn-sm btn-outline-primary">View</a>
+                                                    {% set dept_pct = (dept.student_count/student_count*100)|int if
+                                                    student_count > 0 else 0 %}
+                                                    <div class="progress progress-modern student-progress-container"
+                                                        title="{{ dept.student_count }} students ({{ dept_pct }}%)">
+                                                        <div class="progress-bar bg-info sync-progress"
+                                                            role="progressbar" data-now="{{ dept_pct }}"
+                                                            aria-valuemin="0" aria-valuemax="100"
+                                                            aria-label="{{ dept.dept_name }} percentage"></div>
+                                                    </div>
                                                 </td>
                                             </tr>
                                             {% endfor %}
@@ -152,6 +137,93 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Students by Division -->
+                    <div class="col-lg-6 col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Students by Division</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Division</th>
+                                                <th>Count</th>
+                                                <th>Percentage</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for dept in departments %}
+                                            {% for div in dept.divisions %}
+                                            <tr class="student-stats-row" data-dept-id="{{ dept.dept_id }}"
+                                                data-div-id="{{ div.div_id }}">
+                                                <td><strong>{{ div.division_name }}</strong> ({{ dept.dept_name }})</td>
+                                                <td><span class="badge bg-warning">{{ div.student_count }}</span></td>
+                                                <td>
+                                                    {% set div_pct = (div.student_count/student_count*100)|int if
+                                                    student_count > 0 else 0 %}
+                                                    <div class="progress progress-modern student-progress-container-sm"
+                                                        title="{{ div.student_count }} students ({{ div_pct }}%)">
+                                                        <div class="progress-bar bg-warning sync-progress"
+                                                            role="progressbar" data-now="{{ div_pct }}"
+                                                            aria-valuemin="0" aria-valuemax="100"
+                                                            aria-label="{{ div.division_name }} percentage">
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Division Overview Cards (Side by Side) -->
+                <div class="row" id="divisionCardsRow">
+                    {% for dept in departments %}
+                    {% for div in dept.divisions %}
+                    <div class="col-lg-6 col-md-6 mb-4 dashboard-div-card-container" data-dept-id="{{ dept.dept_id }}"
+                        data-div-id="{{ div.div_id }}">
+                        <div class="division-card h-100">
+                            <div class="division-header bg-gradient-rose">
+                                <h4 class="div-name-text">{{ div.division_name }}</h4>
+                                <p class="division-code">{{ div.division_code }}</p>
+                            </div>
+                            <div class="division-body">
+                                <div class="div-info-row">
+                                    <span class="info-label">Department:</span>
+                                    <span>{{ dept.dept_name }}</span>
+                                </div>
+                                <div class="div-info-row">
+                                    <span class="info-label">Capacity:</span>
+                                    <span class="badge bg-info">{{ div.capacity }}</span>
+                                </div>
+                                <div class="div-info-row">
+                                    <span class="info-label">Current Students:</span>
+                                    <span class="badge bg-warning">{{ div.student_count }}</span>
+                                </div>
+                                <div class="div-info-row">
+                                    <span class="info-label">Class Teacher:</span>
+                                    <span>{{ div.class_teacher or 'Not Assigned' }}</span>
+                                </div>
+                            </div>
+                            <div class="division-footer">
+                                <a href="/college/divisions/{{ div.div_id }}/details"
+                                    class="btn btn-sm btn-outline-info w-100"
+                                    title="View division {{ div.division_name }} details">
+                                    <i class="fas fa-eye me-1"></i>View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -161,4 +233,38 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/college-dashboard.js') }}"></script>
+<script>
+    function syncDashboard() {
+        const selectedDept = localStorage.getItem('selectedDept');
+        const selectedDiv = localStorage.getItem('selectedDiv');
+
+        // 1. Filter Recent Departments and Dept Stats
+        document.querySelectorAll('.dept-summary-row, .dept-stats-row').forEach(row => {
+            const deptId = row.dataset.deptId;
+            row.style.display = (!selectedDept || deptId === selectedDept) ? 'table-row' : 'none';
+        });
+
+        // 2. Filter Student Stats by Division
+        document.querySelectorAll('.student-stats-row').forEach(row => {
+            const deptId = row.dataset.deptId;
+            const divId = row.dataset.divId;
+            const deptMatch = !selectedDept || deptId === selectedDept;
+            const divMatch = !selectedDiv || divId === selectedDiv;
+            row.style.display = (deptMatch && divMatch) ? 'table-row' : 'none';
+        });
+
+        // 3. Filter Division Cards
+        document.querySelectorAll('.dashboard-div-card-container').forEach(card => {
+            const deptId = card.dataset.deptId;
+            const divId = card.dataset.divId;
+            const deptMatch = !selectedDept || deptId === selectedDept;
+            const divMatch = !selectedDiv || divId === selectedDiv;
+            card.style.display = (deptMatch && divMatch) ? 'block' : 'none';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', syncDashboard);
+    window.addEventListener('departmentSelected', syncDashboard);
+    window.addEventListener('divisionSelected', syncDashboard);
+</script>
 {% endblock %}

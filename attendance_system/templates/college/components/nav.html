@@ -21,7 +21,7 @@
                 </li>
 
                 <!-- Divisions Dropdown -->
-                <li class="nav-item dropdown dept-specific" style="display:none;">
+                <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                         aria-expanded="false">
                         <i class="fas fa-door-open me-1"></i>Divisions
@@ -34,7 +34,7 @@
                     </ul>
                 </li>
 
-                <li class="nav-item dept-specific" style="display:none;">
+                <li class="nav-item">
                     <a class="nav-link" href="/college/faculty">
                         <i class="fas fa-chalkboard-teacher me-1"></i>Faculty
                     </a>
@@ -47,7 +47,7 @@
                 </li>
 
                 <!-- Students Dropdown -->
-                <li class="nav-item dropdown dept-specific" style="display:none;">
+                <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                         aria-expanded="false">
                         <i class="fas fa-user-graduate me-1"></i>Students
@@ -60,27 +60,29 @@
                     </ul>
                 </li>
 
-                <li class="nav-item dept-specific" style="display:none;">
+                <li class="nav-item">
                     <a class="nav-link" href="/college/attendance-analytics">
                         <i class="fas fa-chart-bar me-1"></i>Attendance
                     </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="/about">About</a>
                 </li>
             </ul>
 
             <!-- Department Selector & Actions -->
             <div class="d-flex align-items-center">
-                <!-- Department Selector -->
-                <div class="nav-dept-selector me-3">
+                <!-- Global Filter Selectors -->
+                <div class="nav-filters d-flex gap-2 me-3">
                     <select id="deptSelector" class="form-select form-select-sm bg-dark text-light border-secondary"
-                        onchange="selectDepartment()">
-                        <option value="">-- Select Department --</option>
+                        onchange="handleGlobalDeptChange()" title="Select Department">
+                        <option value="">-- All Departments --</option>
                         <option value="1">CSE - Computer Science</option>
                         <option value="2">ECE - Electronics</option>
                         <option value="3">ME - Mechanical</option>
+                    </select>
+
+                    <select id="divSelector" class="form-select form-select-sm bg-dark text-light border-secondary"
+                        onchange="handleGlobalDivChange()" title="Select Division">
+                        <option value="">-- All Divisions --</option>
+                        <!-- Options will be populated dynamically -->
                     </select>
                 </div>
 
@@ -110,47 +112,93 @@
 </nav>
 
 <script>
-    function selectDepartment() {
+    const divisionsData = {
+        '1': [{ id: 'A', name: 'Div A' }, { id: 'B', name: 'Div B' }, { id: 'C', name: 'Div C' }],
+        '2': [{ id: 'D', name: 'Div D' }, { id: 'E', name: 'Div E' }],
+        '3': [{ id: 'F', name: 'Div F' }, { id: 'G', name: 'Div G' }]
+    };
+
+    const deptNames = {
+        '1': 'CSE - Computer Science',
+        '2': 'ECE - Electronics',
+        '3': 'ME - Mechanical'
+    };
+
+    function handleGlobalDeptChange() {
         const selector = document.getElementById('deptSelector');
         const deptId = selector.value;
-        const deptNames = {
-            '1': 'CSE - Computer Science',
-            '2': 'ECE - Electronics',
-            '3': 'ME - Mechanical'
-        };
+        const divSelector = document.getElementById('divSelector');
 
         if (deptId) {
             localStorage.setItem('selectedDept', deptId);
             localStorage.setItem('selectedDeptName', deptNames[deptId]);
-
-            // Show department-specific menu items
-            document.querySelectorAll('.dept-specific').forEach(el => {
-                el.style.display = 'block';
-            });
-
-            // Dispatch custom event for pages to listen
-            window.dispatchEvent(new CustomEvent('departmentSelected', {
-                detail: { deptId: deptId, deptName: deptNames[deptId] }
-            }));
+            updateDivisionOptions(deptId);
         } else {
             localStorage.removeItem('selectedDept');
             localStorage.removeItem('selectedDeptName');
+            localStorage.removeItem('selectedDiv');
+            divSelector.innerHTML = '<option value="">-- All Divisions --</option>';
+        }
 
-            // Hide department-specific menu items
-            document.querySelectorAll('.dept-specific').forEach(el => {
-                el.style.display = 'none';
+        // Always clear division when department changes to ensure fresh start
+        localStorage.removeItem('selectedDiv');
+        divSelector.value = "";
+
+        // Dispatch events
+        window.dispatchEvent(new CustomEvent('departmentSelected', {
+            detail: { deptId: deptId, deptName: deptNames[deptId] || '' }
+        }));
+        window.dispatchEvent(new CustomEvent('divisionSelected', {
+            detail: { divId: '' }
+        }));
+    }
+
+    function handleGlobalDivChange() {
+        const divSelector = document.getElementById('divSelector');
+        const divId = divSelector.value;
+
+        if (divId) {
+            localStorage.setItem('selectedDiv', divId);
+        } else {
+            localStorage.removeItem('selectedDiv');
+        }
+
+        window.dispatchEvent(new CustomEvent('divisionSelected', {
+            detail: { divId: divId }
+        }));
+    }
+
+    function updateDivisionOptions(deptId) {
+        const divSelector = document.getElementById('divSelector');
+        let optionsHtml = '<option value="">-- All Divisions --</option>';
+
+        if (deptId && divisionsData[deptId]) {
+            divisionsData[deptId].forEach(div => {
+                optionsHtml += `<option value="${div.id}">${div.name}</option>`;
             });
+        }
+        divSelector.innerHTML = optionsHtml;
+
+        // Restore division if it belongs to this department
+        const storedDiv = localStorage.getItem('selectedDiv');
+        if (storedDiv && divisionsData[deptId] && divisionsData[deptId].some(d => d.id === storedDiv)) {
+            divSelector.value = storedDiv;
         }
     }
 
-    // Load stored department on page load
+    // Load stored filters on page load
     document.addEventListener('DOMContentLoaded', function () {
-        const stored = localStorage.getItem('selectedDept');
-        if (stored) {
-            const deptSelector = document.getElementById('deptSelector');
-            if (deptSelector) {
-                deptSelector.value = stored;
-                selectDepartment();
+        const storedDept = localStorage.getItem('selectedDept');
+        const storedDiv = localStorage.getItem('selectedDiv');
+
+        const deptSelector = document.getElementById('deptSelector');
+        const divSelector = document.getElementById('divSelector');
+
+        if (storedDept && deptSelector) {
+            deptSelector.value = storedDept;
+            updateDivisionOptions(storedDept);
+            if (storedDiv && divSelector) {
+                divSelector.value = storedDiv;
             }
         }
     });

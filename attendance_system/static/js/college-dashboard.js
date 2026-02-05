@@ -20,6 +20,9 @@ function initializeDashboard() {
     // Initialize tooltips
     initializeTooltips();
 
+    // Sync progress bars
+    syncProgressBars();
+
     // Load initial data
     loadDashboardData();
 }
@@ -40,11 +43,20 @@ function setupEventListeners() {
         divForm.addEventListener('submit', handleDivisionSubmit);
     }
 
-    // Sidebar collapse on mobile
-    const sidebar = document.querySelector('.sidebar');
-    if (sidebar) {
-        setupSidebarToggle();
+    // Faculty Form
+    const facultyForm = document.getElementById('facultyForm');
+    if (facultyForm) {
+        facultyForm.addEventListener('submit', handleFacultySubmit);
     }
+
+    // Student Form
+    const studentForm = document.getElementById('studentForm');
+    if (studentForm) {
+        studentForm.addEventListener('submit', handleStudentSubmit);
+    }
+
+    // Mobile collapse adjustment if needed
+    // (Sidebar has been removed, so toggle logic is redundant)
 }
 
 /**
@@ -203,6 +215,95 @@ function submitDivision(data) {
 }
 
 /**
+ * Handle Faculty Form Submit
+ */
+function handleFacultySubmit(e) {
+    e.preventDefault();
+
+    const formData = {
+        name: document.getElementById('facultyName').value,
+        email: document.getElementById('facultyEmail').value,
+        dept_id: document.getElementById('facultyDept').value,
+        phone: document.getElementById('facultyPhone').value,
+        specialization: document.getElementById('facultySpecialization').value,
+        short_name: document.getElementById('facultyShortName').value,
+        is_hod: document.getElementById('isHod').checked
+    };
+
+    console.log('Submitting faculty:', formData);
+
+    if (!formData.name || !formData.email || !formData.dept_id) {
+        showAlert('Please fill in all required fields', 'error');
+        return;
+    }
+
+    submitFaculty(formData);
+}
+
+/**
+ * Submit Faculty
+ */
+function submitFaculty(data) {
+    showLoadingSpinner();
+
+    setTimeout(() => {
+        hideLoadingSpinner();
+        showAlert('Faculty saved successfully!', 'success');
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addFacultyModal'));
+        if (modal) {
+            modal.hide();
+        }
+
+        location.reload();
+    }, 1000);
+}
+
+/**
+ * Handle Student Form Submit
+ */
+function handleStudentSubmit(e) {
+    e.preventDefault();
+
+    const formData = {
+        name: document.getElementById('studentName').value,
+        email: document.getElementById('studentEmail').value,
+        roll_number: document.getElementById('studentRoll').value,
+        phone: document.getElementById('studentPhone').value,
+        dept_id: document.getElementById('studentDept').value,
+        div_id: document.getElementById('studentDiv').value
+    };
+
+    console.log('Submitting student:', formData);
+
+    if (!formData.name || !formData.email || !formData.roll_number || !formData.dept_id || !formData.div_id) {
+        showAlert('Please fill in all required fields', 'error');
+        return;
+    }
+
+    submitStudent(formData);
+}
+
+/**
+ * Submit Student
+ */
+function submitStudent(data) {
+    showLoadingSpinner();
+
+    setTimeout(() => {
+        hideLoadingSpinner();
+        showAlert('Student saved successfully!', 'success');
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addStudentModal'));
+        if (modal) {
+            modal.hide();
+        }
+
+        location.reload();
+    }, 1000);
+}
+
+/**
  * Show Alert Message
  */
 function showAlert(message, type = 'info') {
@@ -253,19 +354,7 @@ function hideLoadingSpinner() {
     });
 }
 
-/**
- * Setup Sidebar Toggle
- */
-function setupSidebarToggle() {
-    const sidebar = document.querySelector('.sidebar');
-    const toggleBtn = document.querySelector('.navbar-toggler');
 
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-        });
-    }
-}
 
 /**
  * Filter Functions
@@ -380,9 +469,61 @@ function viewFacultyDetails(facultyId) {
     loadFacultyDetails(facultyId);
 }
 
-function editFaculty(facultyId) {
+function editFaculty(facultyId, name = '', email = '', deptId = '', phone = '', specialization = '', shortName = '', isHod = false) {
     console.log('Edit faculty:', facultyId);
-    // Open edit modal
+
+    document.getElementById('facultyName').value = name;
+    document.getElementById('facultyEmail').value = email;
+    document.getElementById('facultyDept').value = deptId;
+    document.getElementById('facultyPhone').value = phone;
+    document.getElementById('facultySpecialization').value = specialization;
+    document.getElementById('facultyShortName').value = shortName;
+    document.getElementById('isHod').checked = isHod;
+
+    document.querySelector('#addFacultyModal .modal-title').textContent = 'Edit Faculty';
+
+    const modal = new bootstrap.Modal(document.getElementById('addFacultyModal'));
+    modal.show();
+}
+
+function deleteFaculty(facultyId) {
+    if (confirm('Are you sure you want to delete this faculty member?')) {
+        console.log('Deleting faculty:', facultyId);
+        showLoadingSpinner();
+        setTimeout(() => {
+            hideLoadingSpinner();
+            showAlert('Faculty member deleted successfully!', 'success');
+            location.reload();
+        }, 1000);
+    }
+}
+
+function editStudent(studentId, name = '', email = '', roll = '', phone = '', deptId = '', divId = '') {
+    console.log('Edit student:', studentId);
+
+    document.getElementById('studentName').value = name;
+    document.getElementById('studentEmail').value = email;
+    document.getElementById('studentRoll').value = roll;
+    document.getElementById('studentPhone').value = phone;
+    document.getElementById('studentDept').value = deptId;
+    document.getElementById('studentDiv').value = divId;
+
+    document.querySelector('#addStudentModal .modal-title').textContent = 'Edit Student';
+
+    const modal = new bootstrap.Modal(document.getElementById('addStudentModal'));
+    modal.show();
+}
+
+function deleteStudent(studentId) {
+    if (confirm('Are you sure you want to delete this student?')) {
+        console.log('Deleting student:', studentId);
+        showLoadingSpinner();
+        setTimeout(() => {
+            hideLoadingSpinner();
+            showAlert('Student deleted successfully!', 'success');
+            location.reload();
+        }, 1000);
+    }
 }
 
 function viewStudentDetails(studentId) {
@@ -617,13 +758,33 @@ window.editDivision = editDivision;
 window.deleteDivision = deleteDivision;
 window.viewFacultyDetails = viewFacultyDetails;
 window.editFaculty = editFaculty;
+window.deleteFaculty = deleteFaculty;
 window.viewStudentDetails = viewStudentDetails;
+window.editStudent = editStudent;
+window.deleteStudent = deleteStudent;
 window.viewAttendance = viewAttendance;
 window.filterByDept = filterByDept;
 window.filterFaculty = filterFaculty;
 window.filterStudents = filterStudents;
 window.updateAnalytics = updateAnalytics;
 window.generateReport = generateReport;
+window.syncProgressBars = syncProgressBars;
+
+/**
+ * Sync Progress Bars
+ * Updates width and aria-valuenow from data-now attribute
+ * to satisfy template linters and ensure accessibility.
+ */
+function syncProgressBars() {
+    const bars = document.querySelectorAll('.sync-progress');
+    bars.forEach(bar => {
+        const val = bar.getAttribute('data-now');
+        if (val !== null) {
+            bar.style.width = val + '%';
+            bar.setAttribute('aria-valuenow', val);
+        }
+    });
+}
 
 // Department Selection and Persistence
 function selectDepartment() {
