@@ -19,6 +19,51 @@
                 </div>
             </div>
 
+            <!-- Download All Reports Section -->
+            <div class="card border-0 shadow-sm mb-4 bg-gradient-light">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="fw-bold mb-3"><i class="fas fa-download me-2 text-primary"></i>Download
+                                Department Attendance Reports</h5>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Select Department</label>
+                                    <select class="form-select" id="departmentSelect" title="Select Department">
+                                        <option value="">-- Select Department --</option>
+                                        <option value="1">Computer Science & Engineering</option>
+                                        <option value="2">Electronics Engineering</option>
+                                        <option value="3">Mechanical Engineering</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Report Period</label>
+                                    <input type="month" class="form-control" id="reportMonth"
+                                        value="{{ datetime.now().strftime('%Y-%m') }}" title="Select Month">
+                                </div>
+                                <div class="col-md-4 d-flex gap-2 align-items-end">
+                                    <button class="btn btn-success flex-grow-1" onclick="downloadWeeklyReport()"
+                                        title="Download Weekly Report">
+                                        <i class="fas fa-calendar-week me-1"></i>Weekly
+                                    </button>
+                                    <button class="btn btn-primary flex-grow-1" onclick="downloadMonthlyReport()"
+                                        title="Download Monthly Report">
+                                        <i class="fas fa-calendar-alt me-1"></i>Monthly
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="bg-white p-3 rounded-3 shadow-sm">
+                                <i class="fas fa-file-csv text-primary mb-2" style="font-size: 2.5rem;"></i>
+                                <p class="text-muted mb-0 small">Export as CSV</p>
+                                <p class="fw-bold mb-0">All Students</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Report Filters -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body p-4">
@@ -128,6 +173,44 @@
     function generateReport() {
         const type = document.getElementById('reportType').value;
         alert(`Generating ${type} report for the selected period...`);
+    }
+
+    function downloadWeeklyReport() {
+        const dept = document.getElementById('departmentSelect').value;
+        const month = document.getElementById('reportMonth').value;
+
+        if (!dept) {
+            alert('Please select a department first!');
+            return;
+        }
+
+        if (!month) {
+            alert('Please select a month!');
+            return;
+        }
+
+        // Trigger download
+        const url = `/faculty/download-report?type=weekly&dept=${dept}&month=${month}`;
+        window.location.href = url;
+    }
+
+    function downloadMonthlyReport() {
+        const dept = document.getElementById('departmentSelect').value;
+        const month = document.getElementById('reportMonth').value;
+
+        if (!dept) {
+            alert('Please select a department first!');
+            return;
+        }
+
+        if (!month) {
+            alert('Please select a month!');
+            return;
+        }
+
+        // Trigger download
+        const url = `/faculty/download-report?type=monthly&dept=${dept}&month=${month}`;
+        window.location.href = url;
     }
 
     function viewDetailedReport(id) {

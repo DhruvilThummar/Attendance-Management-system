@@ -1,6 +1,9 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, send_file, request
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+import csv
+import io
+from calendar import monthcalendar, month_name
 
 load_dotenv()
 app = Flask(__name__)
@@ -849,6 +852,187 @@ def college_settings():
                          title="College Settings",
                          college=mock_college,
                          user=mock_users['college_admin'])
+
+
+# ==================== HELPER FUNCTIONS FOR REPORT GENERATION ====================
+
+def generate_sample_attendance_data(dept_id, year, month, report_type):
+    """Generate sample attendance data for students in a department"""
+    
+    # Department to students mapping
+    dept_students = {
+        '1': [  # CSE Department
+            {'roll_no': '101', 'name': 'Raj Kumar', 'enrollment': 'EN2023001'},
+            {'roll_no': '102', 'name': 'Priya Singh', 'enrollment': 'EN2023002'},
+            {'roll_no': '103', 'name': 'Amit Verma', 'enrollment': 'EN2023003'},
+            {'roll_no': '104', 'name': 'Anjali Sharma', 'enrollment': 'EN2023004'},
+            {'roll_no': '105', 'name': 'Rohan Patel', 'enrollment': 'EN2023005'},
+        ],
+        '2': [  # ECE Department
+            {'roll_no': '201', 'name': 'Neha Gupta', 'enrollment': 'EN2023006'},
+            {'roll_no': '202', 'name': 'Vikram Singh', 'enrollment': 'EN2023007'},
+            {'roll_no': '203', 'name': 'Sakshi Kumar', 'enrollment': 'EN2023008'},
+            {'roll_no': '204', 'name': 'Arjun Nair', 'enrollment': 'EN2023009'},
+        ],
+        '3': [  # ME Department
+            {'roll_no': '301', 'name': 'Deepak Verma', 'enrollment': 'EN2023010'},
+            {'roll_no': '302', 'name': 'Kavya Reddy', 'enrollment': 'EN2023011'},
+            {'roll_no': '303', 'name': 'Nikhil Sharma', 'enrollment': 'EN2023012'},
+        ]
+    }
+    
+    students = dept_students.get(str(dept_id), [])
+    
+    # Get calendar for the month
+    if report_type == 'monthly':
+        cal = monthcalendar(year, month)
+        start_date = datetime(year, month, 1)
+        end_date = datetime(year, month, cal[-1][-1])
+    else:  # weekly
+        # Get week containing current date
+        today = datetime(year, month, 1)
+        start_date = today - timedelta(days=today.weekday())
+        end_date = start_date + timedelta(days=6)
+    
+    data = []
+    current_date = start_date
+    
+    while current_date <= end_date:
+        # Skip weekends
+        if current_date.weekday() < 5:  # Monday to Friday
+            for student in students:
+                # Generate random attendance (85% present)
+                import random
+                is_present = random.random() < 0.85
+                
+                data.append({
+                    'date': current_date.strftime('%Y-%m-%d'),
+                    'roll_no': student['roll_no'],
+                    'name': student['name'],
+                    'enrollment': student['enrollment'],
+                    'status': 'PRESENT' if is_present else 'ABSENT'
+                })
+        
+        current_date += timedelta(days=1)
+    
+    return data, students
+
+
+def create_attendance_csv(dept_id, year, month, report_type):
+    """Create CSV file for attendance report"""
+    
+    attendance_data, students = generate_sample_attendance_data(dept_id, year, month, report_type)
+    
+    # Calculate summary stats
+    summary = {}
+    for student in students:
+        roll = student['roll_no']
+        student_records = [r for r in attendance_data if r['roll_no'] == roll]
+        total = len(student_records)
+        present = len([r for r in student_records if r['status'] == 'PRESENT'])
+        percentage = (present / total * 100) if total > 0 else 0
+        
+        summary[roll] = {
+            'name': student['name'],
+            'enrollment': student['enrollment'],
+            'total': total,
+            'present': present,
+            'absent': total - present,
+            'percentage': round(percentage, 2)
+        }
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Header
+    dept_names = {
+        '1': 'Computer Science & Engineering',
+        '2': 'Electronics Engineering',
+        '3': 'Mechanical Engineering'
+    }
+    
+    period_type = 'Monthly' if report_type == 'monthly' else 'Weekly'
+    period_str = f"{month_name[month]} {year}" if report_type == 'monthly' else f"Week of {(datetime(year, month, 1) - timedelta(days=(datetime(year, month, 1).weekday()))).strftime('%Y-%m-%d')}"
+    
+    writer.writerow(['ATTENDANCE REPORT'])
+    writer.writerow([f"{period_type} Report - {period_str}"])
+    writer.writerow([f"Department: {dept_names.get(str(dept_id), 'Unknown')}"])
+    writer.writerow([f"Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"])
+    writer.writerow([])
+    
+    # Summary Table
+    writer.writerow(['STUDENT ATTENDANCE SUMMARY'])
+    writer.writerow(['Roll No', 'Name', 'Enrollment No', 'Total Lectures', 'Present', 'Absent', 'Percentage', 'Status'])
+    
+    for roll_no, data in summary.items():
+        status = 'ELIGIBLE' if data['percentage'] >= 75 else 'DE-BARRED'
+        writer.writerow([
+            roll_no,
+            data['name'],
+            data['enrollment'],
+            data['total'],
+            data['present'],
+            data['absent'],
+            f"{data['percentage']}%",
+            status
+        ])
+    
+    writer.writerow([])
+    writer.writerow(['DETAILED DAILY ATTENDANCE'])
+    writer.writerow(['Date', 'Roll No', 'Name', 'Status'])
+    
+    for record in sorted(attendance_data, key=lambda x: (x['date'], x['roll_no'])):
+        writer.writerow([
+            record['date'],
+            record['roll_no'],
+            record['name'],
+            record['status']
+        ])
+    
+    # Convert to bytes
+    output.seek(0)
+    return output.getvalue()
+
+
+@app.route("/faculty/download-report")
+def download_report():
+    """Download attendance report as CSV"""
+    
+    report_type = request.args.get('type', 'monthly')
+    dept_id = request.args.get('dept', '1')
+    month_str = request.args.get('month', datetime.now().strftime('%Y-%m'))
+    
+    try:
+        year, month = map(int, month_str.split('-'))
+    except:
+        year, month = datetime.now().year, datetime.now().month
+    
+    # Generate CSV content
+    csv_content = create_attendance_csv(dept_id, year, month, report_type)
+    
+    # Create file-like object
+    output = io.BytesIO()
+    output.write(csv_content.encode('utf-8'))
+    output.seek(0)
+    
+    # Department names for filename
+    dept_names = {
+        '1': 'CSE',
+        '2': 'ECE',
+        '3': 'ME'
+    }
+    
+    dept_name = dept_names.get(str(dept_id), 'Unknown')
+    period_str = f"{month_name[month]}_{year}" if report_type == 'monthly' else f"Week_{year}_{month:02d}"
+    filename = f"Attendance_{dept_name}_{report_type.capitalize()}_{period_str}.csv"
+    
+    return send_file(
+        output,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=filename
+    )
 
 
 if __name__ == "__main__":
