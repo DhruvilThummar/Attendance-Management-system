@@ -1,0 +1,183 @@
+{% extends 'hod/hbase.html' %}
+
+{% block title %}Faculty Directory{% endblock %}
+
+{% block extra_css %}
+<style>
+    .faculty-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+    }
+
+    .faculty-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .faculty-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 32px;
+        margin: 0 auto;
+    }
+
+    .badge-subject {
+        display: inline-block;
+        margin: 2px;
+        font-size: 0.8rem;
+    }
+
+    .designation-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="main-content">
+        <div class="container-fluid p-4">
+            <!-- Header -->
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-9">
+                    <h1 class="page-title mb-0">Faculty Directory</h1>
+                    <p class="text-muted">{{ context.department.dept_name }}</p>
+                </div>
+                <div class="col-md-3 text-end">
+                    <div class="badge bg-secondary p-2">{{ faculty_cards | length }} Faculty Members</div>
+                </div>
+            </div>
+
+            <!-- Faculty Cards Grid -->
+            <div class="row g-4">
+                {% for faculty in faculty_cards %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="faculty-card card border-0 p-4 text-center">
+                        <!-- Avatar -->
+                        <div class="faculty-avatar mb-3">
+                            {{ faculty.short_name[0:1].upper() }}
+                        </div>
+
+                        <!-- Faculty Name -->
+                        <h5 class="fw-bold mb-1">{{ faculty.full_name or faculty.short_name }}</h5>
+                        <div class="designation mb-3">
+                            <span class="badge designation-badge text-white">{{ faculty.designation }}</span>
+                        </div>
+
+                        <!-- Faculty Info -->
+                        <div class="info-section text-start text-muted small mb-3">
+                            <div class="mb-2">
+                                <i class="fas fa-id-card me-2 text-primary"></i>
+                                <strong>ID:</strong> {{ faculty.faculty_id }}
+                            </div>
+                            <div class="mb-2">
+                                <i class="fas fa-code me-2 text-info"></i>
+                                <strong>Code:</strong> {{ faculty.short_name }}
+                            </div>
+                            <div class="mb-2">
+                                <i class="fas fa-calendar-alt me-2 text-warning"></i>
+                                <strong>Lectures/Week:</strong> {{ faculty.lectures_per_week }}
+                            </div>
+                        </div>
+
+                        <!-- Subjects Taught -->
+                        <div class="subjects-section text-start mb-3">
+                            <strong class="d-block mb-2 small text-dark">Subjects:</strong>
+                            <div>
+                                {% if faculty.subjects %}
+                                {% for subject in faculty.subjects %}
+                                <span class="badge badge-subject bg-light text-dark">{{ subject }}</span>
+                                {% endfor %}
+                                {% else %}
+                                <span class="text-secondary small">No subjects assigned</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Divisions Taught -->
+                        <div class="divisions-section text-start">
+                            <strong class="d-block mb-2 small text-dark">Divisions:</strong>
+                            <div>
+                                {% if faculty.divisions %}
+                                {% for division in faculty.divisions %}
+                                <span class="badge badge-subject bg-info">{{ division }}</span>
+                                {% endfor %}
+                                {% else %}
+                                <span class="text-secondary small">No divisions assigned</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Table View (Alternative) -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light py-3">
+                            <h5 class="mb-0"><i class="fas fa-table me-2"></i>Faculty Summary Table</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Designation</th>
+                                            <th>Code</th>
+                                            <th>Lectures/Week</th>
+                                            <th>Subjects</th>
+                                            <th>Divisions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for faculty in faculty_cards %}
+                                        <tr>
+                                            <td><strong>{{ faculty.full_name or faculty.short_name }}</strong></td>
+                                            <td>{{ faculty.designation }}</td>
+                                            <td><code>{{ faculty.short_name }}</code></td>
+                                            <td>
+                                                <span class="badge bg-info">{{ faculty.lectures_per_week }}</span>
+                                            </td>
+                                            <td>
+                                                {% for subject in faculty.subjects %}
+                                                <small class="badge bg-light text-dark">{{ subject }}</small>
+                                                {% endfor %}
+                                            </td>
+                                            <td>
+                                                {% for division in faculty.divisions %}
+                                                <small class="badge bg-warning text-dark">{{ division }}</small>
+                                                {% endfor %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('Faculty Directory Page Loaded');
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,355 @@
+{% extends 'hod/hbase.html' %}
+
+{% block title %}Timetable Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timetable-container {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .division-tabs {
+        display: flex;
+        border-bottom: 2px solid #f0f0f0;
+        overflow-x: auto;
+    }
+
+    .division-tab {
+        padding: 12px 20px;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s;
+        white-space: nowrap;
+    }
+
+    .division-tab.active {
+        border-bottom-color: #0d6efd;
+        color: #0d6efd;
+        font-weight: bold;
+    }
+
+    .timetable-day-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .timetable-entry {
+        background: white;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-left: 4px solid #0d6efd;
+        border-radius: 5px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .timetable-entry:hover {
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .time-slot {
+        display: inline-block;
+        background: #0d6efd;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+
+    .add-entry-form {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+
+    .day-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="main-content">
+        <div class="container-fluid p-4">
+            <!-- Header -->
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-9">
+                    <h1 class="page-title mb-0">Timetable Management</h1>
+                    <p class="text-muted">{{ context.department.dept_name }}</p>
+                </div>
+                <div class="col-md-3 text-end">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEntryModal">
+                        <i class="fas fa-plus me-2"></i>Add Entry
+                    </button>
+                </div>
+            </div>
+
+            <!-- Add Timetable Entry Form -->
+            <div class="add-entry-form">
+                <h5 class="mb-3"><i class="fas fa-calendar-plus me-2"></i>Add New Timetable Entry</h5>
+                <form id="addTimetableForm">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <label for="division_id" class="form-label small">Division</label>
+                            <select class="form-control form-control-sm" id="division_id" name="division_id" required>
+                                <option>Select Division...</option>
+                                {% for div in divisions %}
+                                <option value="{{ div.division_id }}">{{ div.division_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="subject_id" class="form-label small">Subject</label>
+                            <select class="form-control form-control-sm" id="subject_id" name="subject_id" required>
+                                <option>Select Subject...</option>
+                                {% for subject in subjects %}
+                                <option value="{{ subject.subject_id }}">{{ subject.subject_code }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="faculty_id" class="form-label small">Faculty</label>
+                            <select class="form-control form-control-sm" id="faculty_id" name="faculty_id" required>
+                                <option>Select Faculty...</option>
+                                {% for member in faculty_members %}
+                                <option value="{{ member.faculty_id }}">{{ member.short_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label for="day" class="form-label small">Day</label>
+                            <select class="form-control form-control-sm" id="day" name="day" required>
+                                <option>Select Day</option>
+                                <option>Monday</option>
+                                <option>Tuesday</option>
+                                <option>Wednesday</option>
+                                <option>Thursday</option>
+                                <option>Friday</option>
+                                <option>Saturday</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label for="start_time" class="form-label small">Start</label>
+                            <input type="time" class="form-control form-control-sm" id="start_time" name="start_time"
+                                required>
+                        </div>
+                        <div class="col-md-1">
+                            <label for="end_time" class="form-label small">End</label>
+                            <input type="time" class="form-control form-control-sm" id="end_time" name="end_time"
+                                required>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="room_no" class="form-label small">Room</label>
+                            <input type="text" class="form-control form-control-sm" id="room_no" name="room_no"
+                                placeholder="B-201">
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-sm btn-success w-100">Add</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Timetable Display -->
+            <div class="timetable-container">
+                <!-- Division Tabs -->
+                <div class="division-tabs">
+                    {% for overview in timetable_overview %}
+                    <div class="division-tab active" data-division-id="{{ overview.division_id }}">
+                        {{ overview.division_name }}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Timetable Content -->
+                <div class="p-4">
+                    {% if timetable_overview %}
+                    {% for overview in timetable_overview %}
+                    <div class="division-content" data-division-id="{{ overview.division_id }}" style="display: none;">
+                        <h5 class="mb-4">{{ overview.division_name }} - Weekly Schedule</h5>
+
+                        {% set entries_by_day = {} %}
+                        {% for entry in overview.entries %}
+                        {% if entry.day not in entries_by_day %}
+                        {% set _ = entries_by_day.update({entry.day: []}) %}
+                        {% endif %}
+                        {% set _ = entries_by_day[entry.day].append(entry) %}
+                        {% endfor %}
+
+                        {% for day in timetable_days %}
+                        {% if entries_by_day.get(day) %}
+                        <div class="timetable-day-section">
+                            <div class="day-header">{{ day }}</div>
+                            {% for entry in entries_by_day[day] | sort(attribute='start_time') %}
+                            <div class="timetable-entry">
+                                <div class="row align-items-center">
+                                    <div class="col-md-3">
+                                        <span class="time-slot">{{ entry.start_time }} - {{ entry.end_time }}</span>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="fw-bold">{{ entry.subject_name }}</div>
+                                        <div class="text-muted small">Code: {{ entry.subject_code }}</div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-secondary">
+                                            <i class="fas fa-chalkboard-teacher me-1"></i>{{ entry.faculty_id }}<br>
+                                            <i class="fas fa-map-marker-alt me-1"></i>{{ entry.room_no }}
+                                        </small>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <button class="btn btn-sm btn-outline-warning me-1"
+                                            data-entry-id="{{ entry.entry_id }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger"
+                                            data-entry-id="{{ entry.entry_id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>No timetable entries found. Add entries to get started.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light py-3">
+                            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Timetable Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Total Divisions:</h6>
+                                    <p class="fw-bold text-primary">{{ timetable_overview | length }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Working Days:</h6>
+                                    <p class="fw-bold text-success">{{ timetable_days | join(', ') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Entry Modal (Alternative) -->
+<div class="modal fade" id="addEntryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Timetable Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Use the form at the top of the page to add timetable entries.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize first division tab
+        const firstTab = document.querySelector('.division-tab');
+        if (firstTab) {
+            showDivisionContent(firstTab.dataset.divisionId);
+        }
+
+        // Tab switching
+        document.querySelectorAll('.division-tab').forEach(tab => {
+            tab.addEventListener('click', function () {
+                document.querySelectorAll('.division-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.division-content').forEach(c => c.style.display = 'none');
+                this.classList.add('active');
+                showDivisionContent(this.dataset.divisionId);
+            });
+        });
+
+        // Form submission
+        document.getElementById('addTimetableForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const data = {
+                division_id: parseInt(formData.get('division_id')),
+                subject_id: parseInt(formData.get('subject_id')),
+                faculty_id: parseInt(formData.get('faculty_id')),
+                day: formData.get('day'),
+                start_time: formData.get('start_time'),
+                end_time: formData.get('end_time'),
+                room_no: formData.get('room_no'),
+                mode: 'Lecture'
+            };
+
+            fetch('/hod/timetable/entry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('Timetable entry added successfully!');
+                        location.reload();
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Failed to add timetable entry');
+                });
+        });
+
+        // Delete buttons
+        document.querySelectorAll('.btn-outline-danger').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const entryId = this.dataset.entryId;
+                if (confirm('Delete this timetable entry?')) {
+                    fetch(`/hod/timetable/entry/${entryId}`, { method: 'DELETE' })
+                        .then(res => res.json())
+                        .then(() => {
+                            alert('Entry deleted!');
+                            location.reload();
+                        })
+                        .catch(err => console.error('Error deleting entry:', err));
+                }
+            });
+        });
+
+        function showDivisionContent(divisionId) {
+            const content = document.querySelector(`.division-content[data-division-id="${divisionId}"]`);
+            if (content) content.style.display = 'block';
+        }
+    });
+</script>
+{% endblock %}

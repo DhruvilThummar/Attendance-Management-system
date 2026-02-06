@@ -1,0 +1,316 @@
+{% extends "student/sbase.html" %}
+
+{% block title %}My Attendance - Detailed Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-light rounded px-3 py-2">
+            <li class="breadcrumb-item"><a href="/student/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active">Detailed Attendance</li>
+        </ol>
+    </nav>
+
+    <!-- Student Info Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <div class="avatar-lg bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                style="width: 80px; height: 80px; font-size: 2rem;">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h3 class="card-title mb-1">{{ context.student.name }}</h3>
+                            <p class="text-muted mb-3">
+                                <strong>Enrollment:</strong> {{ context.student.enrollment_no }} |
+                                <strong>Division:</strong> {{ context.student.division_name }} |
+                                <strong>Semester:</strong> {{ context.student.semester }}
+                            </p>
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-info">Semester {{ context.student.semester }}</span>
+                                <span class="badge bg-light text-dark">Active</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <a href="/student/dashboard" class="btn btn-outline-primary">Back to Dashboard</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Period Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs border-bottom" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="overall-tab" data-bs-toggle="tab"
+                        data-bs-target="#overall-content" type="button" role="tab" aria-controls="overall-content"
+                        aria-selected="true">
+                        <i class="bi bi-graph-up"></i> Overall Attendance
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="weekly-tab" data-bs-toggle="tab" data-bs-target="#weekly-content"
+                        type="button" role="tab" aria-controls="weekly-content" aria-selected="false">
+                        <i class="bi bi-calendar-week"></i> Weekly Analytics
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly-content"
+                        type="button" role="tab" aria-controls="monthly-content" aria-selected="false">
+                        <i class="bi bi-calendar-month"></i> Monthly Analytics
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="subjects-tab" data-bs-toggle="tab" data-bs-target="#subjects-content"
+                        type="button" role="tab" aria-controls="subjects-content" aria-selected="false">
+                        <i class="bi bi-book-half"></i> Subject-wise
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <!-- Overall Attendance -->
+        <div class="tab-pane fade show active" id="overall-content" role="tabpanel" aria-labelledby="overall-tab">
+            <div class="row">
+                <div class="col-lg-8 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light border-bottom">
+                            <h5 class="card-title mb-0">Overall Attendance Percentage</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center py-4">
+                                <div class="display-1 fw-bold text-primary mb-3">
+                                    {{ overall_attendance.percentage }}%
+                                </div>
+                                <div class="progress bg-light mb-3" style="height: 30px;">
+                                    <div class="progress-bar {% if overall_attendance.percentage >= 85 %}bg-success{% elif overall_attendance.percentage >= 75 %}bg-warning{% else %}bg-danger{% endif %}"
+                                        style="width: {{ overall_attendance.percentage }}%;">
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="bi bi-check-circle"></i> {{ overall_attendance.attended_lectures }} of {{
+                                    overall_attendance.total_lectures }} lectures attended
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light border-bottom">
+                            <h5 class="card-title mb-0">Status Overview</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center py-3">
+                                {% if overall_attendance.percentage >= 85 %}
+                                <i class="bi bi-check-circle-fill display-1 text-success"></i>
+                                <p class="mt-3 fw-bold">Excellent Attendance</p>
+                                <small class="text-muted">Keep up the great work!</small>
+                                {% elif overall_attendance.percentage >= 75 %}
+                                <i class="bi bi-exclamation-circle-fill display-1 text-warning"></i>
+                                <p class="mt-3 fw-bold">Good Attendance</p>
+                                <small class="text-muted">Maintain current pace</small>
+                                {% else %}
+                                <i class="bi bi-x-circle-fill display-1 text-danger"></i>
+                                <p class="mt-3 fw-bold">Low Attendance</p>
+                                <small class="text-muted">Improve immediately</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Analytics -->
+        <div class="tab-pane fade" id="weekly-content" role="tabpanel" aria-labelledby="weekly-tab">
+            <div class="row">
+                {% if weekly_data %}
+                {% for week in weekly_data %}
+                <div class="col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title text-muted">{{ week.week }}</h6>
+                            <p class="small text-secondary mb-3">{{ week.start_date }}</p>
+
+                            <div class="text-center mb-3">
+                                <h3 class="fw-bold text-info">{{ week.average_percentage }}%</h3>
+                            </div>
+
+                            <div class="progress mb-3" style="height: 20px;">
+                                <div class="progress-bar bg-info" style="width: {{ week.average_percentage }}%;">
+                                </div>
+                            </div>
+
+                            <small class="text-muted">
+                                <i class="bi bi-file-text"></i> {{ week.records_count }} records
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info">No weekly data available</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Monthly Analytics -->
+        <div class="tab-pane fade" id="monthly-content" role="tabpanel" aria-labelledby="monthly-tab">
+            <div class="row">
+                {% if monthly_data %}
+                {% for month in monthly_data %}
+                <div class="col-md-4 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title text-muted">{{ month.month }}</h6>
+
+                            <div class="text-center mb-3">
+                                <h3 class="fw-bold text-warning">{{ month.average_percentage }}%</h3>
+                            </div>
+
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-warning" style="width: {{ month.average_percentage }}%;">
+                                </div>
+                            </div>
+
+                            <small class="text-muted mt-3 d-block">
+                                <i class="bi bi-calendar"></i> {{ month.records_count }} records
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info">No monthly data available</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Subject-wise Analysis -->
+        <div class="tab-pane fade" id="subjects-content" role="tabpanel" aria-labelledby="subjects-tab">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light border-bottom">
+                            <h5 class="card-title mb-0">Subject-wise Attendance Breakdown</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Subject Name</th>
+                                            <th>Subject Code</th>
+                                            <th>Attendance %</th>
+                                            <th>Status</th>
+                                            <th>Lectures</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if subject_wise_data %}
+                                        {% for subject in subject_wise_data %}
+                                        <tr>
+                                            <td class="fw-bold">{{ subject.subject_name }}</td>
+                                            <td>{{ subject.subject_code if subject.subject_code else '-' }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="progress flex-grow-1 me-2" style="height: 20px;">
+                                                        <div class="progress-bar {% if subject.attendance_percentage >= 85 %}bg-success{% elif subject.attendance_percentage >= 75 %}bg-warning{% else %}bg-danger{% endif %}"
+                                                            style="width: {{ subject.attendance_percentage }}%;">
+                                                        </div>
+                                                    </div>
+                                                    <strong>{{ subject.attendance_percentage }}%</strong>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span
+                                                    class="badge {% if subject.status == 'Good' %}bg-success{% elif subject.status == 'Average' %}bg-warning{% else %}bg-danger{% endif %}">
+                                                    {{ subject.status }}
+                                                </span>
+                                            </td>
+                                            <td>{{ subject.attended_lectures }}/{{ subject.total_lectures }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-3">No subject data
+                                                available</td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts Section -->
+    {% if alerts %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm border-left border-danger">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-exclamation-triangle-fill text-danger"></i> Attendance Alerts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        {% for alert in alerts %}
+                        <li class="mb-3 pb-3 border-bottom">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ alert.subject_name }}</strong>
+                                    <p class="text-muted small mb-0">{{ alert.message }}</p>
+                                </div>
+                                <span class="badge bg-danger">{{ alert.attendance_percentage }}%</span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-success alert-dismissible fade show border-0" role="alert">
+                <i class="bi bi-check-circle-fill"></i> No alerts - Keep maintaining good attendance!
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .border-left {
+        border-left: 4px solid;
+    }
+
+    .border-danger {
+        border-color: #dc3545 !important;
+    }
+</style>
+{% endblock %}

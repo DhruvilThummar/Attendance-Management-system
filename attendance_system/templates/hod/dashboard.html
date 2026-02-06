@@ -1,0 +1,329 @@
+{% extends 'hod/hbase.html' %}
+
+{% block title %}HOD Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
+<style>
+    .stat-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .division-attendance-card {
+        border-left: 4px solid #0d6efd;
+        background: white;
+    }
+
+    .attendance-bar {
+        height: 20px;
+        border-radius: 5px;
+        background: linear-gradient(90deg, #198754 0%, #0dcaf0 50%, #dc3545 100%);
+    }
+
+    .timetable-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="main-content">
+        <div class="container-fluid p-4">
+            <!-- Welcome Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h1 class="page-title">Welcome, {{ context.user.name }}!</h1>
+                    <p class="text-muted">Managing: <strong>{{ context.department.dept_name }}</strong></p>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-gradient-indigo">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h5>Faculty</h5>
+                            <h3>{{ stats.total_faculty }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-gradient-rose">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h5>Students</h5>
+                            <h3>{{ stats.total_students }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-gradient-azure">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h5>Subjects</h5>
+                            <h3>{{ stats.total_subjects }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-gradient-sunset">
+                            <i class="fas fa-door-open"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h5>Divisions</h5>
+                            <h3>{{ stats.total_divisions }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="quick-actions">
+                        <h5 class="mb-3">Quick Actions</h5>
+                        <div class="action-buttons">
+                            <a href="/hod/faculty" class="action-btn btn-primary">
+                                <i class="fas fa-chalkboard-teacher me-2"></i>View Faculty
+                            </a>
+                            <a href="/hod/subjects" class="action-btn btn-info">
+                                <i class="fas fa-book me-2"></i>Manage Subjects
+                            </a>
+                            <a href="/hod/timetable" class="action-btn btn-success">
+                                <i class="fas fa-calendar-alt me-2"></i>Timetable
+                            </a>
+                            <a href="/hod/attendance" class="action-btn btn-warning">
+                                <i class="fas fa-chart-bar me-2"></i>Attendance
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Summary by Division -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light py-3">
+                            <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Division Attendance Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for div_summary in attendance_summary %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="division-attendance-card p-3 rounded">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="fw-bold mb-0">{{ div_summary.division_name }}</h6>
+                                            <span class="badge bg-info">{{ div_summary.student_count }} Students</span>
+                                        </div>
+                                        <div class="attendance-bar mb-2"></div>
+                                        <div class="row text-center small">
+                                            <div class="col-6">
+                                                <div class="text-muted">Average Attendance</div>
+                                                <div class="fw-bold text-primary">{{ div_summary.average_percentage }}%
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="text-muted">Low Attendance</div>
+                                                <div class="fw-bold text-danger">{{ div_summary.low_attendance }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-secondary">Subjects:</small>
+                                            <ul class="small list-unstyled mb-0">
+                                                {% for subject in div_summary.subject_breakdown %}
+                                                <li><span class="badge bg-light text-dark">{{ subject.subject_name
+                                                        }}</span>
+                                                    <strong>{{ subject.average_percentage }}%</strong>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timetable Overview -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light py-3">
+                            <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Department Timetable Overview</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if timetable_overview %}
+                            <div class="timetable-grid">
+                                {% for overview in timetable_overview %}
+                                <div class="card border">
+                                    <div class="card-header bg-light py-2">
+                                        <h6 class="mb-0 fw-bold">{{ overview.division_name }}</h6>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <div class="small">
+                                            {% set entries_by_day = {} %}
+                                            {% for entry in overview.entries %}
+                                            {% if entry.day not in entries_by_day %}
+                                            {% set entries_by_day = entries_by_day | urlencode %}
+                                            {% set temp = entries_by_day.update({entry.day: []}) %}
+                                            {% set entries_by_day = entries_by_day | urlencode %}
+                                            {% endif %}
+                                            {% if entry.day in entries_by_day %}
+                                            {% set temp = entries_by_day[entry.day].append(entry) %}
+                                            {% endif %}
+                                            {% endfor %}
+                                            {% for entry in overview.entries | sorted(attribute='day') %}
+                                            <div class="mb-2 pb-2 border-bottom">
+                                                <div class="text-muted small">{{ entry.day }}</div>
+                                                <div class="fw-bold">{{ entry.subject_code }}</div>
+                                                <div class="text-secondary small">{{ entry.start_time }} - {{
+                                                    entry.end_time }} | {{ entry.faculty_id }}</div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-2"></i>No timetable entries found. <a
+                                    href="/hod/timetable">Create timetable entries</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Faculty Load Distribution -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light py-3">
+                            <h5 class="mb-0"><i class="fas fa-users me-2"></i>Faculty Members</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Code</th>
+                                            <th>Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for member in faculty %}
+                                        <tr>
+                                            <td><strong>{{ member.full_name or member.short_name }}</strong></td>
+                                            <td><code>{{ member.short_name }}</code></td>
+                                            <td><small class="badge bg-info">{{ member.designation }}</small></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Divisions Overview -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light py-3">
+                            <h5 class="mb-0"><i class="fas fa-door-open me-2"></i>Divisions</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Division</th>
+                                            <th>Sem</th>
+                                            <th>Capacity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for div in divisions %}
+                                        <tr>
+                                            <td><strong>{{ div.division_name }}</strong></td>
+                                            <td>{{ div.semester_id }}</td>
+                                            <td><span class="badge bg-success">{{ div.capacity }}</span></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Department Statistics -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light py-3">
+                            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Department Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="info-group">
+                                        <label class="text-muted small">Department</label>
+                                        <div class="fw-bold">{{ context.department.dept_name }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-group">
+                                        <label class="text-muted small">Dept Code</label>
+                                        <div class="fw-bold">{{ context.department.code or 'N/A' }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-group">
+                                        <label class="text-muted small">Overall Attendance</label>
+                                        <div class="fw-bold text-primary">{{ stats.avg_attendance }}%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Dashboard initialization
+        console.log('HOD Dashboard Loaded');
+    });
+</script>
+{% endblock %}

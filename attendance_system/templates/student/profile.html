@@ -127,25 +127,107 @@
                 </h2>
                 <div class="profile-stats">
                     <div class="stat-item">
-                        <div class="stat-value">{{ attendance_stats.total_lectures or 0 }}</div>
+                        <div class="stat-value">{{ attendance_summary.total_lectures or 0 }}</div>
                         <div class="stat-label">Total Lectures</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value">{{ attendance_stats.present or 0 }}</div>
+                        <div class="stat-value">{{ attendance_summary.attended_lectures or 0 }}</div>
                         <div class="stat-label">Present</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value">{{ attendance_stats.absent or 0 }}</div>
+                        <div class="stat-value">{{ attendance_summary.absent_lectures or 0 }}</div>
                         <div class="stat-label">Absent</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value">{{ '%.2f'|format(attendance_stats.percentage or 0) }}%</div>
+                        <div
+                            class="stat-value {% if attendance_summary.percentage >= 85 %}text-success{% elif attendance_summary.percentage >= 75 %}text-warning{% else %}text-danger{% endif %}">
+                            {{ '%.2f'|format(attendance_summary.percentage or 0) }}%
+                        </div>
                         <div class="stat-label">Attendance %</div>
                     </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <a href="/student/attendance" class="btn btn-primary">
+                        <i class="fas fa-chart-bar"></i> View Detailed Analytics
+                    </a>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Subject-wise Attendance -->
+    {% if subject_wise %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="profile-card">
+                <h2 class="profile-card-title">
+                    <i class="fas fa-book me-2"></i>Subject-wise Attendance
+                </h2>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Subject</th>
+                                <th>Code</th>
+                                <th>Attendance %</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for subject in subject_wise %}
+                            <tr>
+                                <td class="fw-bold">{{ subject.subject_name }}</td>
+                                <td>{{ subject.subject_code if subject.subject_code else '-' }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px; width: 150px;">
+                                        <div class="progress-bar {% if subject.attendance_percentage >= 85 %}bg-success{% elif subject.attendance_percentage >= 75 %}bg-warning{% else %}bg-danger{% endif %}"
+                                            style="width: {{ subject.attendance_percentage }}%;">
+                                            {{ subject.attendance_percentage }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge {% if subject.status == 'Good' %}bg-success{% elif subject.status == 'Average' %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ subject.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Alerts Section -->
+    {% if alerts %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="profile-card border-left border-danger">
+                <h2 class="profile-card-title">
+                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>Attendance Alerts
+                </h2>
+                <ul class="list-unstyled">
+                    {% for alert in alerts %}
+                    <li class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>{{ alert.subject_name }}</strong>
+                                <p class="text-muted small mb-0">{{ alert.message }}</p>
+                            </div>
+                            <span class="badge bg-danger">{{ alert.attendance_percentage }}%</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Edit Profile Modal -->
@@ -224,4 +306,17 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+<style>
+    .border-left {
+        border-left: 4px solid;
+    }
+
+    .border-danger {
+        border-color: #dc3545 !important;
+    }
+
+    .progress {
+        display: inline-block;
+    }
+</style>
 {% endblock %}

@@ -1,0 +1,301 @@
+{% extends "parent/pbase.html" %}
+
+{% block title %}Parent Dashboard - Attendance Overview{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 text-primary fw-bold">
+                <i class="bi bi-graph-up"></i> Children's Attendance Dashboard
+            </h1>
+            <p class="text-muted">Monitor attendance across all subjects and time periods</p>
+        </div>
+    </div>
+
+    <!-- Time Period Selection -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="btn-group" role="group" aria-label="Time Period Selection">
+                        <input type="radio" class="btn-check" name="period" id="period_overall" value="overall" checked>
+                        <label class="btn btn-outline-primary" for="period_overall">
+                            <i class="bi bi-graph-up"></i> Overall
+                        </label>
+
+                        <input type="radio" class="btn-check" name="period" id="period_weekly" value="weekly">
+                        <label class="btn btn-outline-primary" for="period_weekly">
+                            <i class="bi bi-calendar-week"></i> Weekly
+                        </label>
+
+                        <input type="radio" class="btn-check" name="period" id="period_monthly" value="monthly">
+                        <label class="btn btn-outline-primary" for="period_monthly">
+                            <i class="bi bi-calendar-month"></i> Monthly
+                        </label>
+                    </div>
+
+                    <!-- Subject Filter -->
+                    <div class="ms-3 d-inline-block">
+                        <label for="subject-filter" class="form-label me-2">Filter by Subject:</label>
+                        <select id="subject-filter" class="form-select d-inline-block w-auto">
+                            <option value="">All Subjects</option>
+                            {% for subject in subjects %}
+                            <option value="{{ subject.subject_id }}">{{ subject.subject_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts Section -->
+    {% if alerts %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning alert-dismissible fade show border-0 shadow-sm" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div>
+                        <strong>Attendance Alerts ({{ alerts|length }})</strong>
+                        <br>
+                        <small>{{ alerts|length }} subject(s) with low attendance across your children</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Children Attendance Cards -->
+    <div class="row">
+        {% if children_attendance %}
+        {% for child_data in children_attendance %}
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <!-- Card Header with Student Info -->
+                <div class="card-header bg-light border-bottom-0">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="card-title mb-1">
+                                <i class="bi bi-person-circle"></i> {{ child_data.student.name }}
+                            </h5>
+                            <small class="text-muted">
+                                Enrollment: {{ child_data.student.enrollment_no }} |
+                                Division: {{ child_data.student.division_name }}
+                            </small>
+                        </div>
+                        <span class="badge bg-secondary">{{ child_data.student.semester }} Sem</span>
+                    </div>
+                </div>
+
+                <!-- Card Body -->
+                <div class="card-body">
+                    <!-- Overall Attendance Percentage -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-bold mb-0">Overall Attendance</label>
+                            <span class="badge bg-success">{{ child_data.overall_attendance_pct }}%</span>
+                        </div>
+                        <div class="progress bg-light" style="height: 24px;">
+                            <div class="progress-bar {% if child_data.overall_attendance_pct >= 85 %}bg-success{% elif child_data.overall_attendance_pct >= 75 %}bg-warning{% else %}bg-danger{% endif %}"
+                                role="progressbar" style="width: {{ child_data.overall_attendance_pct }}%;"
+                                aria-valuenow="{{ child_data.overall_attendance_pct }}" aria-valuemin="0"
+                                aria-valuemax="100">
+                                {{ child_data.overall_attendance_pct }}%
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Time Period Stats -->
+                    {% if time_period == 'weekly' and child_data.weekly_attendance %}
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Weekly Breakdown</h6>
+                        <div class="smaller">
+                            {% for week in child_data.weekly_attendance %}
+                            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                <span>{{ week.week }}</span>
+                                <span class="badge bg-info">{{ week.average_percentage }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% elif time_period == 'monthly' and child_data.monthly_attendance %}
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Monthly Breakdown</h6>
+                        <div class="smaller">
+                            {% for month in child_data.monthly_attendance %}
+                            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                <span>{{ month.month }}</span>
+                                <span class="badge bg-info">{{ month.average_percentage }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Subject-wise Summary -->
+                    <h6 class="text-muted mt-4 mb-2">Subject-wise Attendance</h6>
+                    <div class="smaller">
+                        {% if child_data.subject_wise %}
+                        {% for subject in child_data.subject_wise[:3] %}
+                        <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                            <span>{{ subject.subject_name }}</span>
+                            <span
+                                class="badge {% if subject.status == 'Good' %}bg-success{% elif subject.status == 'Average' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ subject.attendance_percentage }}%
+                            </span>
+                        </div>
+                        {% endfor %}
+                        {% if child_data.subject_wise|length > 3 %}
+                        <div class="py-2 text-center">
+                            <small class="text-primary cursor-pointer"
+                                onclick="showSubjectDetails({{ child_data.student.student_id }})">
+                                View all subjects →
+                            </small>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <p class="text-muted small">No subject data available</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Card Footer -->
+                <div class="card-footer bg-light border-top-0">
+                    <div class="d-grid gap-2 d-sm-flex">
+                        <a href="/parent/attendance/{{ child_data.student.student_id }}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-eye"></i> View Details
+                        </a>
+                        <a href="/parent/profile" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-person"></i> Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm text-center py-5">
+                <div class="card-body">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <p class="text-muted mt-3">No children found. Please contact the administration.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Overall Statistics Row -->
+    {% if children_attendance %}
+    <div class="row mt-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-people-fill display-4 text-primary"></i>
+                    <h6 class="text-muted mt-2">Total Children</h6>
+                    <h4 class="fw-bold">{{ children_attendance|length }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-check-circle-fill display-4 text-success"></i>
+                    <h6 class="text-muted mt-2">Average Attendance</h6>
+                    <h4 class="fw-bold">
+                        {% set total_pct = children_attendance|map(attribute='overall_attendance_pct')|sum %}
+                        {% set avg_pct = (total_pct / children_attendance|length)|round(2) %}
+                        {{ avg_pct }}%
+                    </h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-exclamation-circle-fill display-4 text-warning"></i>
+                    <h6 class="text-muted mt-2">Alerts</h6>
+                    <h4 class="fw-bold">{{ alerts|length }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-event-fill display-4 text-info"></i>
+                    <h6 class="text-muted mt-2">Last Updated</h6>
+                    <h6 class="fw-bold">
+                        <span id="last-updated-time">Today</span>
+                    </h6>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript for Period Selection -->
+<script>
+    document.querySelectorAll('input[name="period"]').forEach(radio => {
+        radio.addEventListener('change', function () {
+            loadAttendanceData(this.value);
+        });
+    });
+
+    document.getElementById('subject-filter').addEventListener('change', function () {
+        const period = document.querySelector('input[name="period"]:checked').value;
+        loadAttendanceData(period, this.value);
+    });
+
+    function loadAttendanceData(period, subjectId = '') {
+        // In a real implementation, this would fetch data from the API
+        // For now, we'll just reload the page with the new parameters
+        const params = new URLSearchParams();
+        params.set('period', period);
+        if (subjectId) params.set('subject_id', subjectId);
+
+        // This would be replaced with a real fetch call in production
+        // window.location.search = params.toString();
+    }
+
+    function showSubjectDetails(studentId) {
+        window.location.href = `/parent/attendance/${studentId}?view=subjects`;
+    }
+
+    // Update last updated time
+    document.addEventListener('DOMContentLoaded', function () {
+        const now = new Date();
+        document.getElementById('last-updated-time').textContent = now.toLocaleDateString();
+    });
+</script>
+
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+    }
+
+    .cursor-pointer:hover {
+        text-decoration: underline;
+    }
+
+    .progress {
+        border-radius: 0.5rem;
+    }
+
+    .progress-bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}

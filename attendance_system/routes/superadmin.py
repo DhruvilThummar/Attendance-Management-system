@@ -1,5 +1,5 @@
 """
-Super Admin routes - Dashboard and Administration
+Super Admin routes - System-wide Dashboard and Administration
 """
 from flask import Blueprint, render_template, request, jsonify
 from services.data_helper import DataHelper
@@ -7,17 +7,43 @@ from services.data_helper import DataHelper
 superadmin_bp = Blueprint('superadmin', __name__, url_prefix='/superadmin')
 
 
+def _get_superadmin_context():
+    """Get superadmin user context"""
+    superadmin_user = DataHelper.get_user('superadmin')
+    return {'user': superadmin_user}
+
+
 @superadmin_bp.route("/dashboard")
 def sudashboard():
-    """Super Admin Dashboard"""
-    colleges = DataHelper.get_college()
-    users = DataHelper.get_users()
-    departments = DataHelper.get_departments()
-    return render_template("superadmin/sudashboard.html",
-                          title="Super Admin Dashboard",
+    """Super Admin Dashboard - System Overview"""
+    context = _get_superadmin_context()
+    
+    # Get system-wide statistics
+    colleges = DataHelper.get_all_colleges()
+    total_students = DataHelper.get_total_students_count()
+    total_faculty = DataHelper.get_total_faculty_count()
+    total_departments = DataHelper.get_total_departments_count()
+    
+    # Get recent activities
+    recent_registrations = DataHelper.get_recent_users(limit=5)
+    
+    # College-wise statistics
+    college_stats = []
+    for college in colleges:
+        stats = DataHelper.get_college_statistics(college['college_id'])
+        college_stats.append({
+            'college': college,
+            'stats': stats
+        })
+    
+    return render_template("superadmin/dashboard.html",
+                          context=context,
                           colleges=colleges,
-                          users=users,
-                          departments=departments)
+                          college_stats=college_stats,
+                          total_students=total_students,
+                          total_faculty=total_faculty,
+                          total_departments=total_departments,
+                          recent_registrations=recent_registrations)
 
 
 @superadmin_bp.route("")
@@ -26,28 +52,159 @@ def superadmin_redirect():
     return sudashboard()
 
 
+@superadmin_bp.route("/colleges")
+def colleges():
+    """View all colleges"""
+    context = _get_superadmin_context()
+    colleges_list = DataHelper.get_all_colleges()
+    
+    # Get detailed stats for each college
+    colleges_with_stats = []
+    for college in colleges_list:
+        stats = DataHelper.get_college_statistics(college['college_id'])
+        colleges_with_stats.append({
+            **college,
+            'stats': stats
+        })
+    
+    return render_template("superadmin/colleges.html",
+                          context=context,
+                          colleges=colleges_with_stats)
+
+
+@superadmin_bp.route("/college/<int:college_id>")
+def college_details(college_id):
+    """View specific college details"""
+    context = _get_superadmin_context()
+    college = DataHelper.get_college()
+    
+    # Get college data
+    departments = DataHelper.get_departments()
+    students = DataHelper.get_students()
+    faculty = DataHelper.get_faculty_members()
+    divisions = DataHelper.get_divisions()
+    
+    # Get statistics
+    stats = DataHelper.get_college_statistics(college_id)
+    
+    return render_template("superadmin/college_details.html",
+                          context=context,
+                          college=college,
+                          departments=departments,
+                          students=students,
+                          faculty=faculty,
+                          divisions=divisions,
+                          stats=stats)
+
+
+@superadmin_bp.route("/students")
+def students():
+    """View all students across all colleges"""
+    context = _get_superadmin_context()
+    all_students = DataHelper.get_students()
+    departments = DataHelper.get_departments()
+    divisions = DataHelper.get_divisions()
+    
+    return render_template("superadmin/students.html",
+                          context=context,
+                          students=all_students,
+                          departments=departments,
+                          divisions=divisions)
+
+
+@superadmin_bp.route("/departments")
+def departments():
+    """View all departments across all colleges"""
+    context = _get_superadmin_context()
+    all_departments = DataHelper.get_departments()
+    
+    # Get detailed stats for each department
+    departments_with_stats = []
+    for dept in all_departments:
+        dept_students = [s for s in DataHelper.get_students() if s.get('dept_id') == dept['dept_id']]
+        dept_faculty = [f for f in DataHelper.get_faculty_members() if f.get('dept_id') == dept['dept_id']]
+        
+        departments_with_stats.append({
+            **dept,
+            'student_count': len(dept_students),
+            'faculty_count': len(dept_faculty)
+        })
+    
+    return render_template("superadmin/departments.html",
+                          context=context,
+                          departments=departments_with_stats)
+
+
+@superadmin_bp.route("/faculty")
+def faculty():
+    """View all faculty across all colleges"""
+    context = _get_superadmin_context()
+    all_faculty = DataHelper.get_faculty_members()
+    departments = DataHelper.get_departments()
+    
+    return render_template("superadmin/faculty.html",
+                          context=context,
+                          faculty=all_faculty,
+                          departments=departments)
+
+
+@superadmin_bp.route("/users")
+def users():
+    """Manage all system users"""
+    context = _get_superadmin_context()
+    all_users = DataHelper.get_all_users_list()
+    
+    # Group users by role
+    users_by_role = {
+        'superadmin': [],
+        'college_admin': [],
+        'hod': [],
+        'faculty': [],
+        'student': [],
+        'parent': []
+    }
+    
+    for user in all_users:
+        role_id = user.get('role_id')
+        if role_id == 1:
+            users_by_role['superadmin'].append(user)
+        elif role_id == 2:
+            users_by_role['hod'].append(user)
+        elif role_id == 3:
+            users_by_role['faculty'].append(user)
+        elif role_id == 4:
+            users_by_role['student'].append(user)
+        elif role_id == 5:
+            users_by_role['parent'].append(user)
+    
+    return render_template("superadmin/users.html",
+                          context=context,
+                          users_by_role=users_by_role,
+                          total_users=len(all_users))
+
+
+@superadmin_bp.route("/analytics")
+def analytics():
+    """System-wide analytics and reports"""
+    context = _get_superadmin_context()
+    
+    # Get attendance analytics
+    attendance_overview = DataHelper.get_system_attendance_overview()
+    
+    # Department-wise performance
+    dept_performance = DataHelper.get_department_performance()
+    
+    return render_template("superadmin/analytics.html",
+                          context=context,
+                          attendance_overview=attendance_overview,
+                          dept_performance=dept_performance)
+
+
 @superadmin_bp.route("/profile")
 def superadmin_profile():
     """Super Admin Profile"""
-    users = DataHelper.get_users()
+    context = _get_superadmin_context()
+    
     return render_template("superadmin/profile.html",
                           title="Super Admin Profile",
-                          users=users)
-
-
-@superadmin_bp.route("/manage-colleges")
-def manage_colleges():
-    """Manage colleges"""
-    colleges = DataHelper.get_college()
-    return render_template("superadmin/manage_colleges.html",
-                          title="Manage Colleges",
-                          colleges=colleges)
-
-
-@superadmin_bp.route("/manage-users")
-def manage_users():
-    """Manage users"""
-    users = DataHelper.get_users()
-    return render_template("superadmin/manage_users.html",
-                          title="Manage Users",
-                          users=users)
+                          context=context)
