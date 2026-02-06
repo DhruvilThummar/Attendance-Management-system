@@ -1,7 +1,148 @@
 /**
  * Register Page JavaScript
- * Handles registration form submission and validation
+ * Handles role selection and modal-based registration
  */
+
+// Role ID mapping
+const roleMapping = {
+    'ADMIN': 1,
+    'HOD': 2,
+    'FACULTY': 3,
+    'STUDENT': 4,
+    'PARENT': 5
+};
+
+// Role display names
+const roleNames = {
+    'ADMIN': 'College Admin',
+    'HOD': 'Head of Department',
+    'FACULTY': 'Faculty Member',
+    'STUDENT': 'Student',
+    'PARENT': 'Parent/Guardian'
+};
+
+/**
+ * Open registration modal for selected role
+ */
+function openRegisterModal(roleName) {
+    // Set role title
+    document.getElementById('roleTitle').textContent = roleNames[roleName];
+
+    // Set hidden role_id field
+    document.getElementById('role_id').value = roleMapping[roleName];
+
+    // Clear previous form data
+    document.getElementById('registerForm').reset();
+    document.getElementById('role_id').value = roleMapping[roleName];
+
+    // Clear role-specific fields
+    document.getElementById('roleSpecificFields').innerHTML = '';
+
+    // Add role-specific fields if needed
+    addRoleSpecificFields(roleName);
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('registerModal'));
+    modal.show();
+}
+
+/**
+ * Add role-specific form fields
+ */
+function addRoleSpecificFields(roleName) {
+    const container = document.getElementById('roleSpecificFields');
+    let fieldsHTML = '';
+
+    switch (roleName) {
+        case 'STUDENT':
+            fieldsHTML = `
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-123"></i> Roll Number
+                    </label>
+                    <input type="text" class="form-control" name="roll_number" placeholder="Enter your roll number">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-calendar"></i> Academic Year
+                    </label>
+                    <select class="form-control" name="academic_year">
+                        <option value="">Select Year</option>
+                        <option value="1">First Year</option>
+                        <option value="2">Second Year</option>
+                        <option value="3">Third Year</option>
+                        <option value="4">Fourth Year</option>
+                    </select>
+                </div>
+            `;
+            break;
+
+        case 'FACULTY':
+            fieldsHTML = `
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-book"></i> Subject Specialization
+                    </label>
+                    <input type="text" class="form-control" name="specialization" placeholder="e.g., Computer Science">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-award"></i> Qualification
+                    </label>
+                    <input type="text" class="form-control" name="qualification" placeholder="e.g., M.Tech, Ph.D">
+                </div>
+            `;
+            break;
+
+        case 'HOD':
+            fieldsHTML = `
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-diagram-3"></i> Department
+                    </label>
+                    <input type="text" class="form-control" name="department" placeholder="Department name">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-award"></i> Qualification
+                    </label>
+                    <input type="text" class="form-control" name="qualification" placeholder="e.g., M.Tech, Ph.D">
+                </div>
+            `;
+            break;
+
+        case 'PARENT':
+            fieldsHTML = `
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-person"></i> Student Name
+                    </label>
+                    <input type="text" class="form-control" name="student_name" placeholder="Your child's name">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-123"></i> Student Roll Number
+                    </label>
+                    <input type="text" class="form-control" name="student_roll" placeholder="Student's roll number">
+                </div>
+            `;
+            break;
+
+        case 'ADMIN':
+            fieldsHTML = `
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-shield-check"></i> Admin Code
+                    </label>
+                    <input type="text" class="form-control" name="admin_code" placeholder="Enter admin authorization code">
+                    <small class="text-muted">Contact college to get admin code</small>
+                </div>
+            `;
+            break;
+    }
+
+    container.innerHTML = fieldsHTML;
+}
 
 document.addEventListener('DOMContentLoaded', function () {
     // Get form
@@ -60,6 +201,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 // JSON response from AJAX endpoint
                 const data = await response.json();
                 if (data.success) {
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('registerModal'));
+                    modal.hide();
+
+                    // Show success message and redirect
                     alert('✓ Registration successful!\nYour account is pending admin approval.\nPlease login after approval.');
                     window.location.href = '/login';
                 } else {
@@ -77,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Redirect to dashboard if already logged in
-    if (SessionManager.isLoggedIn()) {
+    if (typeof SessionManager !== 'undefined' && SessionManager.isLoggedIn()) {
         const roleRedirects = {
             'ADMIN': '/college/dashboard',
             'HOD': '/hod/dashboard',
@@ -92,12 +238,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-        case 'hod':
-document.getElementById('hodFields').style.display = 'block';
-initCollegeSearch('hodCollege', 'hodCollegeSuggestions');
-break;
-        case 'college_admin':
-document.getElementById('collegeAdminFields').style.display = 'block';
 break;
         case 'parent':
 document.getElementById('parentFields').style.display = 'block';
