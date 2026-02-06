@@ -1,0 +1,276 @@
+{% extends "superadmin/subase.html" %}
+
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-light rounded px-3 py-2">
+            <li class="breadcrumb-item"><a href="/superadmin/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active">Users</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 text-primary fw-bold">
+                <i class="bi bi-person-lines-fill"></i> User Management
+            </h1>
+            <p class="text-muted">View and manage all system users by role</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <h4 class="text-primary">{{ total_users }}</h4>
+                    <small class="text-muted">Total Users</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <h4 class="text-danger">{{ users_by_role.superadmin|length }}</h4>
+                    <small class="text-muted">Super Admins</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <h4 class="text-warning">{{ users_by_role.hod|length }}</h4>
+                    <small class="text-muted">HODs</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <h4 class="text-info">{{ users_by_role.faculty|length }}</h4>
+                    <small class="text-muted">Faculty</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <h4 class="text-success">{{ users_by_role.student|length }}</h4>
+                    <small class="text-muted">Students</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <h4 class="text-secondary">{{ users_by_role.parent|length }}</h4>
+                    <small class="text-muted">Parents</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Tables by Role -->
+
+    <!-- Students -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-people"></i> Students ({{ users_by_role.student|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Mobile</th>
+                                    <th>Joined</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users_by_role.student %}
+                                <tr>
+                                    <td class="fw-bold">{{ user.name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.mobile }}</td>
+                                    <td>{{ user.created_at.strftime('%b %d, %Y') if user.created_at else '-' }}</td>
+                                    <td>
+                                        <span
+                                            class="badge {% if user.is_approved %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ 'Approved' if user.is_approved else 'Pending' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Faculty -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-person-badge"></i> Faculty ({{ users_by_role.faculty|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Mobile</th>
+                                    <th>Joined</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users_by_role.faculty %}
+                                <tr>
+                                    <td class="fw-bold">{{ user.name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.mobile }}</td>
+                                    <td>{{ user.created_at.strftime('%b %d, %Y') if user.created_at else '-' }}</td>
+                                    <td>
+                                        <span
+                                            class="badge {% if user.is_approved %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ 'Approved' if user.is_approved else 'Pending' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HODs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-person-badge-fill"></i> HODs ({{ users_by_role.hod|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Mobile</th>
+                                    <th>Joined</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users_by_role.hod %}
+                                <tr>
+                                    <td class="fw-bold">{{ user.name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.mobile }}</td>
+                                    <td>{{ user.created_at.strftime('%b %d, %Y') if user.created_at else '-' }}</td>
+                                    <td>
+                                        <span class="badge bg-success">Approved</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parents -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-person-hearts"></i> Parents ({{ users_by_role.parent|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Mobile</th>
+                                    <th>Joined</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users_by_role.parent %}
+                                <tr>
+                                    <td class="fw-bold">{{ user.name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.mobile }}</td>
+                                    <td>{{ user.created_at.strftime('%b %d, %Y') if user.created_at else '-' }}</td>
+                                    <td>
+                                        <span
+                                            class="badge {% if user.is_approved %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ 'Approved' if user.is_approved else 'Pending' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

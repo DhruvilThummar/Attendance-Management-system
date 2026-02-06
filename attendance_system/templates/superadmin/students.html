@@ -1,0 +1,162 @@
+{% extends "superadmin/subase.html" %}
+
+{% block title %}All Students{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-light rounded px-3 py-2">
+            <li class="breadcrumb-item"><a href="/superadmin/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active">Students</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 text-primary fw-bold">
+                <i class="bi bi-people-fill"></i> All Students
+            </h1>
+            <p class="text-muted">View and manage all students across all colleges</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Filter by Department</label>
+                            <select class="form-select" id="filterDept">
+                                <option value="">All Departments</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.dept_id }}">{{ dept.dept_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Filter by Division</label>
+                            <select class="form-select" id="filterDiv">
+                                <option value="">All Divisions</option>
+                                {% for div in divisions %}
+                                <option value="{{ div.division_id }}">{{ div.division_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Search</label>
+                            <input type="text" class="form-control" id="searchStudent"
+                                placeholder="Search by name or enrollment...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-list-ul"></i> Student List ({{ students|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Enrollment No</th>
+                                    <th>Student Name</th>
+                                    <th>Department</th>
+                                    <th>Division</th>
+                                    <th>Semester</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if students %}
+                                {% for student in students %}
+                                <tr>
+                                    <td class="fw-bold">{{ student.enrollment_no }}</td>
+                                    <td>{{ student.name }}</td>
+                                    <td>{{ student.dept_name }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ student.division_name }}</span>
+                                    </td>
+                                    <td>{{ student.semester }}</td>
+                                    <td>{{ student.email }}</td>
+                                    <td>
+                                        <span class="badge bg-success">Active</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">No students found</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mt-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">{{ students|length }}</h3>
+                    <small class="text-muted">Total Students</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <h3 class="text-success">{{ departments|length }}</h3>
+                    <small class="text-muted">Departments</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <h3 class="text-info">{{ divisions|length }}</h3>
+                    <small class="text-muted">Divisions</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">{{ students|length }}</h3>
+                    <small class="text-muted">Active Students</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple client-side filtering
+    document.getElementById('searchStudent').addEventListener('input', function () {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
+</script>
+{% endblock %}

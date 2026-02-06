@@ -1,0 +1,179 @@
+{% extends "superadmin/subase.html" %}
+
+{% block title %}All Colleges{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-light rounded px-3 py-2">
+            <li class="breadcrumb-item"><a href="/superadmin/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active">Colleges</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 text-primary fw-bold">
+                        <i class="bi bi-building"></i> All Colleges
+                    </h1>
+                    <p class="text-muted">Manage and monitor all registered colleges</p>
+                </div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCollegeModal">
+                    <i class="bi bi-plus-circle"></i> Add College
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Colleges Grid -->
+    <div class="row">
+        {% if colleges %}
+        {% for college in colleges %}
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-building-fill"></i> {{ college.college_name }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- College Information -->
+                    <div class="mb-3">
+                        <p class="mb-2">
+                            <i class="bi bi-geo-alt-fill text-primary"></i>
+                            <strong>Address:</strong> {{ college.address }}
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi bi-envelope-fill text-primary"></i>
+                            <strong>Email:</strong> {{ college.email }}
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi bi-telephone-fill text-primary"></i>
+                            <strong>Phone:</strong> {{ college.phone }}
+                        </p>
+                        <p class="mb-0">
+                            <i class="bi bi-globe text-primary"></i>
+                            <strong>Website:</strong>
+                            <a href="{{ college.website }}" target="_blank">{{ college.website }}</a>
+                        </p>
+                    </div>
+
+                    <!-- Statistics -->
+                    <div class="row text-center mt-4 mb-3">
+                        <div class="col-3">
+                            <div class="stat-item">
+                                <h4 class="text-success">{{ college.stats.total_students }}</h4>
+                                <small class="text-muted">Students</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="stat-item">
+                                <h4 class="text-info">{{ college.stats.total_faculty }}</h4>
+                                <small class="text-muted">Faculty</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="stat-item">
+                                <h4 class="text-warning">{{ college.stats.total_departments }}</h4>
+                                <small class="text-muted">Departments</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="stat-item">
+                                <h4 class="text-primary">{{ college.stats.total_divisions }}</h4>
+                                <small class="text-muted">Divisions</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Badge -->
+                    <div class="text-center mb-3">
+                        <span
+                            class="badge {% if college.stats.average_attendance >= 85 %}bg-success{% elif college.stats.average_attendance >= 75 %}bg-warning{% else %}bg-danger{% endif %} fs-6 px-3 py-2">
+                            Average Attendance: {{ college.stats.average_attendance }}%
+                        </span>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex gap-2">
+                        <a href="/superadmin/college/{{ college.college_id }}" class="btn btn-sm btn-primary flex-fill">
+                            <i class="bi bi-eye"></i> View Details
+                        </a>
+                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                            data-bs-target="#editCollege{{ college.college_id }}">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm text-center py-5">
+                <div class="card-body">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <p class="text-muted mt-3">No colleges found. Add a new college to get started.</p>
+                    <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addCollegeModal">
+                        <i class="bi bi-plus-circle"></i> Add First College
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add College Modal -->
+<div class="modal fade" id="addCollegeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Add New College</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">College Name</label>
+                            <input type="text" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Website</label>
+                            <input type="url" class="form-control">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Address</label>
+                            <textarea class="form-control" rows="3" required></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Add College</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-item h4 {
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}

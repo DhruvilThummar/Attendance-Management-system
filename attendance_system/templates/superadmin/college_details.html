@@ -1,0 +1,248 @@
+{% extends "superadmin/subase.html" %}
+
+{% block title %}{{ college.college_name }} - Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-light rounded px-3 py-2">
+            <li class="breadcrumb-item"><a href="/superadmin/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/superadmin/colleges">Colleges</a></li>
+            <li class="breadcrumb-item active">{{ college.college_name }}</li>
+        </ol>
+    </nav>
+
+    <!-- College Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="h3 fw-bold text-primary mb-2">
+                                {{ college.college_name }}
+                            </h1>
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-geo-alt"></i> {{ college.address }}
+                            </p>
+                            <p class="mb-0">
+                                <span class="me-3">
+                                    <i class="bi bi-envelope"></i> {{ college.email }}
+                                </span>
+                                <span class="me-3">
+                                    <i class="bi bi-telephone"></i> {{ college.phone }}
+                                </span>
+                                {% if college.website %}
+                                <span>
+                                    <i class="bi bi-globe"></i> <a href="{{ college.website }}" target="_blank">{{
+                                        college.website }}</a>
+                                </span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <button class="btn btn-primary">
+                                <i class="bi bi-pencil"></i> Edit College
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-building display-4 text-primary"></i>
+                    <h3 class="mt-2 fw-bold">{{ stats.total_departments }}</h3>
+                    <p class="text-muted mb-0">Departments</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-people-fill display-4 text-success"></i>
+                    <h3 class="mt-2 fw-bold">{{ stats.total_students }}</h3>
+                    <p class="text-muted mb-0">Students</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-person-badge display-4 text-info"></i>
+                    <h3 class="mt-2 fw-bold">{{ stats.total_faculty }}</h3>
+                    <p class="text-muted mb-0">Faculty</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-grid-3x3 display-4 text-warning"></i>
+                    <h3 class="mt-2 fw-bold">{{ stats.total_divisions }}</h3>
+                    <p class="text-muted mb-0">Divisions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="text-muted">Average Attendance</h5>
+                    <h1
+                        class="display-4 fw-bold {% if stats.average_attendance >= 85 %}text-success{% elif stats.average_attendance >= 75 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ stats.average_attendance }}%
+                    </h1>
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar {% if stats.average_attendance >= 85 %}bg-success{% elif stats.average_attendance >= 75 %}bg-warning{% else %}bg-danger{% endif %}"
+                            style="width: {{ stats.average_attendance }}%;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Departments -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-building"></i> Departments
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for dept in departments %}
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="card border-primary h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title text-primary">{{ dept.name }}</h5>
+                                    <p class="text-muted mb-2">Code: {{ dept.dept_code }}</p>
+                                    <div class="d-flex justify-content-between">
+                                        <span>
+                                            <i class="bi bi-people"></i> {{ dept.student_count }} Students
+                                        </span>
+                                        <span>
+                                            <i class="bi bi-person-badge"></i> {{ dept.faculty_count }} Faculty
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-people-fill"></i> Students ({{ students|length }})
+                    </h5>
+                    <input type="text" id="studentSearch" class="form-control form-control-sm w-25"
+                        placeholder="Search students...">
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="studentTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Enrollment No</th>
+                                    <th>Department</th>
+                                    <th>Division</th>
+                                    <th>Semester</th>
+                                    <th>Email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr>
+                                    <td class="fw-bold">{{ student.name }}</td>
+                                    <td>{{ student.enrollment_no }}</td>
+                                    <td>{{ student.department }}</td>
+                                    <td>{{ student.division }}</td>
+                                    <td>{{ student.semester }}</td>
+                                    <td>{{ student.email }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Faculty -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-person-badge-fill"></i> Faculty ({{ faculty|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Department</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in faculty %}
+                                <tr>
+                                    <td class="fw-bold">{{ member.name }}</td>
+                                    <td>{{ member.department }}</td>
+                                    <td>{{ member.email }}</td>
+                                    <td>{{ member.mobile }}</td>
+                                    <td>
+                                        <span class="badge bg-success">Active</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Student search functionality
+    document.getElementById('studentSearch').addEventListener('keyup', function () {
+        const searchValue = this.value.toLowerCase();
+        const table = document.getElementById('studentTable');
+        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+        for (let row of rows) {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchValue) ? '' : 'none';
+        }
+    });
+</script>
+{% endblock %}

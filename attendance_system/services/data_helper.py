@@ -6,20 +6,191 @@ Currently uses mock data, can be easily switched to real database queries.
 """
 
 from collections import defaultdict
+from datetime import datetime
 
-from services.mock_data import MockDataService
+from sqlalchemy import case, func
+
+from models import (
+    AcademicCalendar,
+    Attendance,
+    AttendanceStatus,
+    College,
+    Department,
+    Division,
+    Faculty,
+    Lecture,
+    Parent,
+    ProxyLecture,
+    Role,
+    Semester,
+    Student,
+    Subject,
+    Timetable,
+    User,
+)
+from models.user import db
 
 
 class DataHelper:
     """Helper class to get data - works with both mock and real database"""
 
     DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    DAY_MAP = {
+        'MON': 'Monday',
+        'TUE': 'Tuesday',
+        'WED': 'Wednesday',
+        'THU': 'Thursday',
+        'FRI': 'Friday',
+        'SAT': 'Saturday'
+    }
+    DAY_REVERSE_MAP = {value: key for key, value in DAY_MAP.items()}
+    ROLE_MAP = {
+        'superadmin': 'ADMIN',
+        'college_admin': 'ADMIN',
+        'hod': 'HOD',
+        'faculty': 'FACULTY',
+        'student': 'STUDENT',
+        'parent': 'PARENT'
+    }
+
+    @staticmethod
+    def _safe_attr(obj, attr_name, default=''):
+        value = getattr(obj, attr_name, default)
+        return value if value is not None else default
+
+    @staticmethod
+    def _dept_code(dept_name):
+        if not dept_name:
+            return ''
+        cleaned = dept_name.replace('&', ' ').replace('-', ' ')
+        tokens = [token for token in cleaned.split() if token.strip()]
+        return ''.join(token[0] for token in tokens).upper()
+
+    @staticmethod
+    def _format_time(value):
+        if not value:
+            return ''
+        if hasattr(value, 'strftime'):
+            return value.strftime('%H:%M')
+        return str(value)
+
+    @staticmethod
+    def _user_dict(user):
+        if not user:
+            return None
+        return {
+            'user_id': user.user_id,
+            'college_id': user.college_id,
+            'name': user.name,
+            'email': user.email,
+            'mobile': user.mobile,
+            'role_id': user.role_id,
+            'is_approved': user.is_approved,
+            'created_at': user.created_at
+        }
+
+    @staticmethod
+    def _college_dict(college):
+        if not college:
+            return None
+        return {
+            'college_id': college.college_id,
+            'college_name': college.college_name,
+            'created_at': college.created_at,
+            'address': DataHelper._safe_attr(college, 'address', ''),
+            'email': DataHelper._safe_attr(college, 'email', ''),
+            'phone': DataHelper._safe_attr(college, 'phone', ''),
+            'website': DataHelper._safe_attr(college, 'website', '')
+        }
+
+    @staticmethod
+    def _department_dict(dept):
+        if not dept:
+            return None
+        hod_name = dept.hod_faculty.user.name if dept.hod_faculty and dept.hod_faculty.user else 'Not Assigned'
+        return {
+            'dept_id': dept.dept_id,
+            'college_id': dept.college_id,
+            'dept_name': dept.dept_name,
+            'dept_code': DataHelper._dept_code(dept.dept_name),
+            'hod_faculty_id': dept.hod_faculty_id,
+            'hod_name': hod_name
+        }
+
+    @staticmethod
+    def _division_dict(division):
+        if not division:
+            return None
+        return {
+            'division_id': division.division_id,
+            'dept_id': division.dept_id,
+            'division_name': division.division_name,
+            'semester_id': DataHelper._safe_attr(division, 'semester_id', None),
+            'capacity': DataHelper._safe_attr(division, 'capacity', None),
+            'class_teacher': DataHelper._safe_attr(division, 'class_teacher', None)
+        }
+
+    @staticmethod
+    def _faculty_dict(faculty):
+        if not faculty:
+            return None
+        user = faculty.user
+        return {
+            'faculty_id': faculty.faculty_id,
+            'user_id': faculty.user_id,
+            'dept_id': faculty.dept_id,
+            'short_name': faculty.short_name,
+            'full_name': user.name if user else '',
+            'designation': DataHelper._safe_attr(faculty, 'designation', 'Faculty'),
+            'name': user.name if user else '',
+            'email': user.email if user else '',
+            'mobile': user.mobile if user else '',
+            'phone': user.mobile if user else '',
+            'dept_name': faculty.department.dept_name if faculty.department else ''
+        }
+
+    @staticmethod
+    def _student_dict(student):
+        if not student:
+            return None
+        user = student.user
+        semester_no = student.semester.semester_no if student.semester else None
+        return {
+            'student_id': student.student_id,
+            'user_id': student.user_id,
+            'dept_id': student.dept_id,
+            'division_id': student.division_id,
+            'enrollment_no': student.enrollment_no,
+            'roll_no': student.roll_no,
+            'mentor_id': student.mentor_id,
+            'semester_id': student.semester_id,
+            'name': user.name if user else '',
+            'email': user.email if user else '',
+            'mobile': user.mobile if user else '',
+            'dept_name': student.department.dept_name if student.department else '',
+            'division_name': student.division.division_name if student.division else '',
+            'semester': semester_no
+        }
+
+    @staticmethod
+    def _subject_dict(subject):
+        if not subject:
+            return None
+        return {
+            'subject_id': subject.subject_id,
+            'dept_id': subject.dept_id,
+            'subject_name': subject.subject_name,
+            'subject_code': subject.subject_code,
+            'semester_id': subject.semester_id,
+            'credits': DataHelper._safe_attr(subject, 'credits', None)
+        }
 
     @staticmethod
     def get_user(user_type='student'):
         """Get user by type"""
-        users = MockDataService.get_users()
-        return users.get(user_type)
+        role_name = DataHelper.ROLE_MAP.get(user_type, 'STUDENT')
+        user = User.query.join(Role).filter(Role.role_name == role_name).order_by(User.user_id.asc()).first()
+        return DataHelper._user_dict(user)
 
     @staticmethod
     def get_hod_user():
@@ -29,86 +200,94 @@ class DataHelper:
     @staticmethod
     def get_college():
         """Get college data"""
-        return MockDataService.get_college()
+        college = College.query.order_by(College.college_id.asc()).first()
+        return DataHelper._college_dict(college)
 
     @staticmethod
     def get_departments():
         """Get all departments"""
-        return MockDataService.get_departments()
+        departments = Department.query.order_by(Department.dept_name.asc()).all()
+        return [DataHelper._department_dict(dept) for dept in departments]
 
     @staticmethod
     def get_department(dept_id):
         """Get specific department"""
-        departments = MockDataService.get_departments()
-        return next((d for d in departments if d['dept_id'] == dept_id), None)
+        dept = Department.query.get(dept_id)
+        return DataHelper._department_dict(dept)
 
     @staticmethod
     def get_department_by_hod(faculty_id):
         """Get department managed by the given HOD faculty"""
-        departments = MockDataService.get_departments()
-        return next((d for d in departments if d.get('hod_faculty_id') == faculty_id), None)
+        dept = Department.query.filter_by(hod_faculty_id=faculty_id).first()
+        return DataHelper._department_dict(dept)
 
     @staticmethod
     def get_divisions(dept_id=None):
         """Get divisions, optionally filtered by department"""
-        divisions = MockDataService.get_divisions()
+        query = Division.query
         if dept_id:
-            return [d for d in divisions if d['dept_id'] == dept_id]
-        return divisions
+            query = query.filter_by(dept_id=dept_id)
+        divisions = query.order_by(Division.division_name.asc()).all()
+        return [DataHelper._division_dict(division) for division in divisions]
 
     @staticmethod
     def get_division(division_id):
         """Get specific division"""
-        divisions = MockDataService.get_divisions()
-        return next((d for d in divisions if d['division_id'] == division_id), None)
+        division = Division.query.get(division_id)
+        return DataHelper._division_dict(division)
 
     @staticmethod
     def get_faculty(dept_id=None):
         """Get faculty members, optionally filtered by department"""
-        faculty = MockDataService.get_faculty()
+        query = Faculty.query
         if dept_id:
-            return [f for f in faculty if f['dept_id'] == dept_id]
-        return faculty
+            query = query.filter_by(dept_id=dept_id)
+        faculty_members = query.order_by(Faculty.faculty_id.asc()).all()
+        return [DataHelper._faculty_dict(member) for member in faculty_members]
+
+    @staticmethod
+    def get_faculty_members():
+        """Get all faculty members"""
+        return DataHelper.get_faculty()
 
     @staticmethod
     def get_faculty_member(faculty_id=None, user_id=None):
         """Get a specific faculty member by faculty or user id"""
-        faculty = MockDataService.get_faculty()
         if faculty_id is not None:
-            return next((f for f in faculty if f['faculty_id'] == faculty_id), None)
+            member = Faculty.query.get(faculty_id)
+            return DataHelper._faculty_dict(member)
         if user_id is not None:
-            return next((f for f in faculty if f['user_id'] == user_id), None)
+            member = Faculty.query.filter_by(user_id=user_id).first()
+            return DataHelper._faculty_dict(member)
         return None
 
     @staticmethod
     def get_students(division_id=None, dept_id=None):
         """Get students with optional filters"""
-        students = MockDataService.get_students()
-
+        query = Student.query
         if division_id:
-            students = [s for s in students if s['division_id'] == division_id]
+            query = query.filter_by(division_id=division_id)
         if dept_id:
-            students = [s for s in students if s['dept_id'] == dept_id]
-
-        return students
+            query = query.filter_by(dept_id=dept_id)
+        students = query.order_by(Student.student_id.asc()).all()
+        return [DataHelper._student_dict(student) for student in students]
 
     @staticmethod
     def get_student(student_id):
         """Get specific student"""
-        students = MockDataService.get_students()
-        return next((s for s in students if s['student_id'] == student_id), None)
+        student = Student.query.get(student_id)
+        return DataHelper._student_dict(student)
 
     @staticmethod
     def get_subjects(dept_id=None, semester_id=None):
         """Get subjects with optional filters"""
-        subjects = MockDataService.get_subjects()
-
+        query = Subject.query
         if dept_id:
-            subjects = [s for s in subjects if s['dept_id'] == dept_id]
+            query = query.filter_by(dept_id=dept_id)
         if semester_id:
-            subjects = [s for s in subjects if s['semester_id'] == semester_id]
-
-        return subjects
+            query = query.filter_by(semester_id=semester_id)
+        subjects = query.order_by(Subject.subject_name.asc()).all()
+        return [DataHelper._subject_dict(subject) for subject in subjects]
 
     @staticmethod
     def get_subjects_grouped_by_semester(dept_id):
@@ -134,22 +313,135 @@ class DataHelper:
     @staticmethod
     def get_semesters():
         """Get all semesters"""
-        return MockDataService.get_semesters()
+        semesters = Semester.query.order_by(Semester.semester_no.asc()).all()
+        return [
+            {
+                'semester_id': semester.semester_id,
+                'semester_no': semester.semester_no,
+                'academic_year': semester.academic_year
+            }
+            for semester in semesters
+        ]
 
     @staticmethod
     def get_lectures(dept_id=None, faculty_id=None, day=None):
         """Get lecture schedule"""
-        return MockDataService.get_lectures(dept_id=dept_id, faculty_id=faculty_id, day=day)
+        query = Timetable.query
+        if dept_id:
+            query = query.join(Subject).filter(Subject.dept_id == dept_id)
+        if faculty_id:
+            query = query.filter(Timetable.faculty_id == faculty_id)
+        if day:
+            day_code = DataHelper.DAY_REVERSE_MAP.get(day, day)
+            query = query.filter(Timetable.day_of_week == day_code)
+
+        entries = []
+        for entry in query.all():
+            entries.append({
+                'lecture_id': entry.timetable_id,
+                'dept_id': entry.subject.dept_id if entry.subject else None,
+                'division_id': entry.division_id,
+                'division_name': entry.division.division_name if entry.division else '',
+                'subject_id': entry.subject_id,
+                'subject_name': entry.subject.subject_name if entry.subject else '',
+                'subject_code': entry.subject.subject_code if entry.subject else '',
+                'faculty_id': entry.faculty_id,
+                'start_time': DataHelper._format_time(entry.start_time),
+                'end_time': DataHelper._format_time(entry.end_time),
+                'room_no': entry.room_no,
+                'is_completed': False,
+                'day': DataHelper.DAY_MAP.get(entry.day_of_week, entry.day_of_week)
+            })
+        return entries
 
     @staticmethod
     def get_proxy_requests():
         """Get proxy lecture requests"""
-        return MockDataService.get_proxy_requests()
+        proxies = ProxyLecture.query.order_by(ProxyLecture.assigned_at.desc()).all()
+        requests = []
+        for proxy in proxies:
+            requests.append({
+                'proxy_id': proxy.proxy_id,
+                'subject_name': proxy.subject.subject_name if proxy.subject else '',
+                'division_name': proxy.lecture.timetable.division.division_name
+                if proxy.lecture and proxy.lecture.timetable and proxy.lecture.timetable.division else '',
+                'status': proxy.status.title() if proxy.status else 'Pending',
+                'original_faculty': proxy.original_faculty.user.name
+                if proxy.original_faculty and proxy.original_faculty.user else '',
+                'lecture_no': proxy.lecture_no
+            })
+        return requests
 
     @staticmethod
     def get_attendance_records(dept_id=None, division_id=None, subject_id=None):
         """Get attendance records"""
-        return MockDataService.get_attendance_records(dept_id=dept_id, division_id=division_id, subject_id=subject_id)
+        total_case = func.count(Attendance.attendance_id)
+        present_case = func.sum(case((Attendance.status_id == 1, 1), else_=0))
+        last_updated = func.max(Attendance.marked_at)
+
+        query = db.session.query(
+            Student.student_id,
+            User.name.label('student_name'),
+            Student.dept_id,
+            Department.dept_name.label('dept_name'),
+            Student.division_id,
+            Division.division_name,
+            Subject.subject_id,
+            Subject.subject_name,
+            Subject.subject_code,
+            total_case.label('total_lectures'),
+            present_case.label('attended_lectures'),
+            last_updated.label('last_updated')
+        ).join(Student, Attendance.student_id == Student.student_id) \
+            .join(User, Student.user_id == User.user_id) \
+            .join(Lecture, Attendance.lecture_id == Lecture.lecture_id) \
+            .join(Timetable, Lecture.timetable_id == Timetable.timetable_id) \
+            .join(Subject, Timetable.subject_id == Subject.subject_id) \
+            .join(Division, Student.division_id == Division.division_id) \
+            .join(Department, Student.dept_id == Department.dept_id) \
+            .group_by(
+                Student.student_id,
+                User.name,
+                Student.dept_id,
+                Department.dept_name,
+                Student.division_id,
+                Division.division_name,
+                Subject.subject_id,
+                Subject.subject_name,
+                Subject.subject_code
+            )
+
+        if dept_id:
+            query = query.filter(Student.dept_id == dept_id)
+        if division_id:
+            query = query.filter(Student.division_id == division_id)
+        if subject_id:
+            query = query.filter(Subject.subject_id == subject_id)
+
+        records = []
+        for idx, row in enumerate(query.all(), start=1):
+            total_lectures = row.total_lectures or 0
+            attended_lectures = row.attended_lectures or 0
+            percentage = round((attended_lectures / total_lectures) * 100, 2) if total_lectures else 0.0
+            status = 'Good' if percentage >= 85 else 'Average' if percentage >= 75 else 'Warning'
+
+            records.append({
+                'record_id': idx,
+                'dept_id': row.dept_id,
+                'division_id': row.division_id,
+                'division_name': row.division_name,
+                'subject_id': row.subject_id,
+                'subject_name': row.subject_name,
+                'subject_code': row.subject_code,
+                'student_id': row.student_id,
+                'student_name': row.student_name,
+                'total_lectures': total_lectures,
+                'attended_lectures': attended_lectures,
+                'attendance_percentage': percentage,
+                'status': status,
+                'last_updated': row.last_updated
+            })
+        return records
 
     @staticmethod
     def get_division_attendance_summary(dept_id):
@@ -242,7 +534,35 @@ class DataHelper:
     @staticmethod
     def get_timetable(dept_id=None, division_id=None, day=None):
         """Get timetable entries"""
-        entries = MockDataService.get_timetable(dept_id=dept_id, division_id=division_id, day=day)
+        query = Timetable.query
+        if dept_id:
+            query = query.join(Subject).filter(Subject.dept_id == dept_id)
+        if division_id:
+            query = query.filter(Timetable.division_id == division_id)
+        if day:
+            day_code = DataHelper.DAY_REVERSE_MAP.get(day, day)
+            query = query.filter(Timetable.day_of_week == day_code)
+
+        entries = []
+        for entry in query.all():
+            entries.append({
+                'entry_id': entry.timetable_id,
+                'dept_id': entry.subject.dept_id if entry.subject else None,
+                'division_id': entry.division_id,
+                'division_name': entry.division.division_name if entry.division else '',
+                'day': DataHelper.DAY_MAP.get(entry.day_of_week, entry.day_of_week),
+                'start_time': DataHelper._format_time(entry.start_time),
+                'end_time': DataHelper._format_time(entry.end_time),
+                'subject_id': entry.subject_id,
+                'subject_name': entry.subject.subject_name if entry.subject else '',
+                'subject_code': entry.subject.subject_code if entry.subject else '',
+                'faculty_id': entry.faculty_id,
+                'faculty_name': entry.faculty.user.name if entry.faculty and entry.faculty.user else '',
+                'room_no': entry.room_no or '',
+                'mode': 'Lecture',
+                'semester_id': entry.subject.semester_id if entry.subject else None
+            })
+
         day_priority = {day_name: idx for idx, day_name in enumerate(DataHelper.DAY_ORDER)}
         return sorted(
             entries,
@@ -301,8 +621,32 @@ class DataHelper:
         if not faculty:
             raise ValueError('Invalid faculty')
 
-        normalized = {
-            'entry_id': entry_data.get('entry_id'),
+        day_code = DataHelper.DAY_REVERSE_MAP.get(entry_data['day'], entry_data['day'])
+        start_time = datetime.strptime(entry_data['start_time'], '%H:%M').time()
+        end_time = datetime.strptime(entry_data['end_time'], '%H:%M').time()
+
+        if entry_data.get('entry_id'):
+            timetable_entry = Timetable.query.get(entry_data['entry_id'])
+            if not timetable_entry:
+                raise ValueError('Invalid timetable entry')
+        else:
+            timetable_entry = Timetable()
+
+        timetable_entry.subject_id = subject['subject_id']
+        timetable_entry.faculty_id = faculty['faculty_id']
+        timetable_entry.division_id = division['division_id']
+        timetable_entry.day_of_week = day_code
+        timetable_entry.lecture_no = entry_data.get('lecture_no', timetable_entry.lecture_no or 1)
+        timetable_entry.room_no = entry_data.get('room_no')
+        timetable_entry.start_time = start_time
+        timetable_entry.end_time = end_time
+        timetable_entry.building_block = entry_data.get('building_block')
+
+        db.session.add(timetable_entry)
+        db.session.commit()
+
+        return {
+            'entry_id': timetable_entry.timetable_id,
             'dept_id': division['dept_id'],
             'division_id': division['division_id'],
             'division_name': division['division_name'],
@@ -319,23 +663,25 @@ class DataHelper:
             'semester_id': subject.get('semester_id')
         }
 
-        return MockDataService.save_timetable_entry(normalized)
-
     @staticmethod
     def delete_timetable_entry(entry_id):
         """Delete a timetable entry"""
-        return MockDataService.delete_timetable_entry(entry_id)
+        timetable_entry = Timetable.query.get(entry_id)
+        if not timetable_entry:
+            return False
+        db.session.delete(timetable_entry)
+        db.session.commit()
+        return True
 
     @staticmethod
     def get_parent_children(user_id):
         """Get all children (students) for a parent with full details"""
-        parents = MockDataService.get_parents()
-        parent_records = [p for p in parents if p.get('user_id') == user_id]
+        parent_records = Parent.query.filter_by(user_id=user_id).all()
         
         # Get full student details for each child
         children_details = []
         for record in parent_records:
-            student_id = record.get('student_id')
+            student_id = record.student_id
             student = DataHelper.get_student(student_id)
             if student:
                 children_details.append({
@@ -470,71 +816,62 @@ class DataHelper:
     @staticmethod
     def get_all_colleges():
         """Get all colleges in the system"""
-        # For now returns single college, will be multiple in database
-        college = DataHelper.get_college()
-        return [college] if college else []
+        colleges = College.query.order_by(College.college_name.asc()).all()
+        return [DataHelper._college_dict(college) for college in colleges]
 
     @staticmethod
     def get_total_students_count():
         """Get total count of all students"""
-        students = MockDataService.get_students()
-        return len(students)
+        return Student.query.count()
 
     @staticmethod
     def get_total_faculty_count():
         """Get total count of all faculty members"""
-        faculty = MockDataService.get_faculty_members()
-        return len(faculty)
+        return Faculty.query.count()
 
     @staticmethod
     def get_total_departments_count():
         """Get total count of all departments"""
-        departments = MockDataService.get_departments()
-        return len(departments)
+        return Department.query.count()
 
     @staticmethod
     def get_recent_users(limit=5):
         """Get recently registered users"""
-        users_dict = MockDataService.get_users()
-        users_list = list(users_dict.values())
-        # Sort by created_at if available
-        sorted_users = sorted(users_list, key=lambda x: x.get('created_at', datetime.min), reverse=True)
-        return sorted_users[:limit]
+        users = User.query.order_by(User.created_at.desc()).limit(limit).all()
+        return [DataHelper._user_dict(user) for user in users]
 
     @staticmethod
     def get_college_statistics(college_id):
         """Get statistics for a specific college"""
-        students = MockDataService.get_students()
-        faculty = MockDataService.get_faculty_members()
-        departments = MockDataService.get_departments()
-        divisions = MockDataService.get_divisions()
-        
-        # Filter by college_id (all mock data is college_id=1)
-        college_students = [s for s in students if s.get('college_id', 1) == college_id]
-        college_faculty = [f for f in faculty if f.get('college_id', 1) == college_id]
-        college_depts = [d for d in departments if d.get('college_id', 1) == college_id]
-        college_divisions = [div for div in divisions if div.get('college_id', 1) == college_id]
-        
-        # Calculate average attendance
-        attendance_records = DataHelper.get_attendance_records()
+        total_students = Student.query.join(Department).filter(Department.college_id == college_id).count()
+        total_faculty = Faculty.query.join(Department).filter(Department.college_id == college_id).count()
+        total_departments = Department.query.filter_by(college_id=college_id).count()
+        total_divisions = Division.query.join(Department).filter(Department.college_id == college_id).count()
+
+        attendance_records = [
+            record for record in DataHelper.get_attendance_records()
+            if record.get('dept_id') in {
+                dept.dept_id for dept in Department.query.filter_by(college_id=college_id).all()
+            }
+        ]
         if attendance_records:
             avg_attendance = sum(r['attendance_percentage'] for r in attendance_records) / len(attendance_records)
         else:
             avg_attendance = 0
-        
+
         return {
-            'total_students': len(college_students),
-            'total_faculty': len(college_faculty),
-            'total_departments': len(college_depts),
-            'total_divisions': len(college_divisions),
+            'total_students': total_students,
+            'total_faculty': total_faculty,
+            'total_departments': total_departments,
+            'total_divisions': total_divisions,
             'average_attendance': round(avg_attendance, 2)
         }
 
     @staticmethod
     def get_all_users_list():
         """Get all users as a list"""
-        users_dict = MockDataService.get_users()
-        return list(users_dict.values())
+        users = User.query.order_by(User.user_id.asc()).all()
+        return [DataHelper._user_dict(user) for user in users]
 
     @staticmethod
     def get_system_attendance_overview():

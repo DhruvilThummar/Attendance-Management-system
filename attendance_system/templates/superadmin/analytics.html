@@ -1,0 +1,174 @@
+{% extends "superadmin/subase.html" %}
+
+{% block title %}System Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-light rounded px-3 py-2">
+            <li class="breadcrumb-item"><a href="/superadmin/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active">Analytics</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 text-primary fw-bold">
+                <i class="bi bi-graph-up"></i> System Analytics
+            </h1>
+            <p class="text-muted">Comprehensive system-wide attendance and performance analytics</p>
+        </div>
+    </div>
+
+    <!-- Attendance Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-percent display-4 text-primary"></i>
+                    <h6 class="text-muted mt-2">Average Attendance</h6>
+                    <h3 class="fw-bold text-primary">{{ attendance_overview.average_attendance }}%</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-check display-4 text-info"></i>
+                    <h6 class="text-muted mt-2">Total Lectures</h6>
+                    <h3 class="fw-bold text-info">{{ attendance_overview.total_lectures }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-check-circle-fill display-4 text-success"></i>
+                    <h6 class="text-muted mt-2">Good Attendance</h6>
+                    <h3 class="fw-bold text-success">{{ attendance_overview.good_attendance_count }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-exclamation-circle-fill display-4 text-danger"></i>
+                    <h6 class="text-muted mt-2">Poor Attendance</h6>
+                    <h3 class="fw-bold text-danger">{{ attendance_overview.poor_attendance_count }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Performance -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-bar-chart-fill"></i> Department Performance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Department</th>
+                                    <th>Code</th>
+                                    <th>Students</th>
+                                    <th>Faculty</th>
+                                    <th>Avg. Attendance</th>
+                                    <th>Performance</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if dept_performance %}
+                                {% for dept in dept_performance %}
+                                <tr>
+                                    <td class="fw-bold">{{ dept.dept_name }}</td>
+                                    <td>{{ dept.dept_code }}</td>
+                                    <td>{{ dept.student_count }}</td>
+                                    <td>{{ dept.faculty_count }}</td>
+                                    <td>
+                                        <span
+                                            class="badge {% if dept.average_attendance >= 85 %}bg-success{% elif dept.average_attendance >= 75 %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ dept.average_attendance }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar {% if dept.average_attendance >= 85 %}bg-success{% elif dept.average_attendance >= 75 %}bg-warning{% else %}bg-danger{% endif %}"
+                                                style="width: {{ dept.average_attendance }}%;">
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if dept.average_attendance >= 85 %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> Excellent
+                                        </span>
+                                        {% elif dept.average_attendance >= 75 %}
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-exclamation-circle"></i> Good
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle"></i> Needs Attention
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">No department data available
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Charts Placeholder -->
+    <div class="row mt-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">Attendance Trend</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-graph-up display-1"></i>
+                        <p class="mt-3">Chart visualization coming soon</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">Department Comparison</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-bar-chart display-1"></i>
+                        <p class="mt-3">Chart visualization coming soon</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

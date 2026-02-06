@@ -17,6 +17,7 @@ The application is organized into modular route blueprints:
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from dotenv import load_dotenv
 from datetime import datetime
 import os
@@ -32,13 +33,14 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
     'DATABASE_URL',
-    'mysql+pymysql://root:password@localhost/attendance_db'
+    'mysql://root:password@localhost/attendance_db'
 )
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize SQLAlchemy
 
 db.init_app(app)
+migrate = Migrate(app, db)
 
 # ==================== MOCK DATA (FOR DEVELOPMENT) ====================
 # These mock data structures match the database models

@@ -10,15 +10,15 @@ class AcademicCalendar(db.Model):
     
     __tablename__ = 'academic_calendar'
     
-    event_id = db.Column(db.Integer, primary_key=True)
-    college_id = db.Column(db.Integer, db.ForeignKey('college.college_id', ondelete='CASCADE'), nullable=False)
-    event_date = db.Column(db.Date, nullable=False)
+    college_id = db.Column(db.Integer, db.ForeignKey('college.college_id', ondelete='CASCADE'), primary_key=True)
+    event_date = db.Column(db.Date, primary_key=True, nullable=False)
     event_type = db.Column(
         db.Enum('REGULAR', 'EXAM', 'HOLIDAY'),
+        primary_key=True,
         nullable=False
     )
     description = db.Column(db.String(255))
-    dept_id = db.Column(db.Integer, db.ForeignKey('department.dept_id'), nullable=False)
+    dept_id = db.Column(db.Integer, db.ForeignKey('department.dept_id'), primary_key=True, nullable=False)
     
     # Relationships
     college = db.relationship('College')
