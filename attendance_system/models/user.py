@@ -5,6 +5,8 @@ User and Role models
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
+from utils.simple_hash import simple_hash, verify_simple_hash
+
 
 db = SQLAlchemy()
 
@@ -48,6 +50,14 @@ class User(db.Model):
     
     def __repr__(self):
         return f'<User {self.email} - {self.name}>'
+    
+    def set_password(self, password):
+        """Hash and set password using simple custom hashing"""
+        self.password_hash = simple_hash(password)
+    
+    def check_password(self, password):
+        """Check if provided password matches the hash using simple verification"""
+        return verify_simple_hash(password, self.password_hash)
     
     def get_role_name(self):
         """Get the role name for this user"""

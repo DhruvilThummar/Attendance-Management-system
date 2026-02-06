@@ -3,6 +3,19 @@
 {% block title %}Login - Attendify{% endblock %}
 
 {% block content %}
+<!-- Flash messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert"
+    style="margin: 20px;">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
 <!-- Login container -->
 <div class="auth-container">
     <div class="auth-card">
@@ -13,18 +26,7 @@
         </div>
 
         <!-- Login form -->
-        <form action="/login" method="post" novalidate>
-            <div class="form-group position-relative">
-                <label for="college" class="form-label">
-                    <i class="bi bi-building"></i> College Name
-                </label>
-                <input type="text" class="form-control" id="college" name="college"
-                    placeholder="Search and select your college..." autocomplete="off" required />
-                <input type="hidden" id="collegeId" name="collegeId" />
-                <div id="collegeSuggestions" class="suggestions-dropdown"></div>
-                <small id="collegeError" class="error-text d-none text-danger"></small>
-            </div>
-
+        <form id="loginForm" novalidate>
             <div class="form-group">
                 <label for="email" class="form-label">
                     <i class="bi bi-envelope"></i> Email Address
@@ -64,4 +66,7 @@
     </div>
 </div>
 
+<!-- Include session manager and login JS -->
+<script src="{{ url_for('static', filename='js/session-manager.js') }}"></script>
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
 {% endblock %}

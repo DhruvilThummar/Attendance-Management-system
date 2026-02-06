@@ -1,67 +1,111 @@
-// Colleges list for autocomplete
-const colleges = [
-    "Engineering College Mumbai",
-    "IIT Bombay",
-    "COEP Pune",
-    "NIT Surathkal",
-    "Delhi Institute of Technology",
-    "MIT Manipal",
-    "VIT Vellore",
-    "BITS Pilani"
-];
+/**
+ * Register Page JavaScript
+ * Handles registration form submission and validation
+ */
 
-// Role titles mapping
-const roleTitles = {
-    'student': 'Student',
-    'faculty': 'Faculty',
-    'hod': 'Head of Department (HOD)',
-    'college_admin': 'College Administrator',
-    'parent': 'Parent/Guardian'
-};
+document.addEventListener('DOMContentLoaded', function () {
+    // Get form
+    const registerForm = document.getElementById('registerForm');
 
-// Select role and show form
-function selectRole(role) {
-    const selectedRole = document.getElementById('selectedRole');
-    selectedRole.value = role;
-
-    // Hide role selection, show form
-    document.getElementById('roleSelectionScreen').style.display = 'none';
-    document.getElementById('formScreen').style.display = 'block';
-
-    // Update form title
-    document.getElementById('formTitle').textContent = `Register as ${roleTitles[role]}`;
-
-    // Hide all role-specific fields first
-    document.getElementById('studentFields').style.display = 'none';
-    document.getElementById('facultyFields').style.display = 'none';
-    document.getElementById('hodFields').style.display = 'none';
-    document.getElementById('collegeAdminFields').style.display = 'none';
-    document.getElementById('parentFields').style.display = 'none';
-
-    // Show selected role fields
-    switch (role) {
-        case 'student':
-            document.getElementById('studentFields').style.display = 'block';
-            initCollegeSearch('studentCollege', 'studentCollegeSuggestions');
-            break;
-        case 'faculty':
-            document.getElementById('facultyFields').style.display = 'block';
-            initCollegeSearch('facultyCollege', 'facultyCollegeSuggestions');
-            break;
-        case 'hod':
-            document.getElementById('hodFields').style.display = 'block';
-            initCollegeSearch('hodCollege', 'hodCollegeSuggestions');
-            break;
-        case 'college_admin':
-            document.getElementById('collegeAdminFields').style.display = 'block';
-            break;
-        case 'parent':
-            document.getElementById('parentFields').style.display = 'block';
-            break;
+    if (!registerForm) {
+        return;
     }
 
-    // Scroll to top
-    document.querySelector('.auth-card').scrollTop = 0;
+    // Handle form submission
+    registerForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        // Validation
+        const name = formData.get('name').trim();
+        const email = formData.get('email').trim();
+        const password = formData.get('password');
+        const confirmPassword = formData.get('confirm_password');
+        const collegeId = formData.get('college_id');
+        const roleId = formData.get('role_id');
+        const terms = formData.get('terms');
+
+        // Client-side validation
+        const errors = [];
+        if (!name) errors.push('Name is required');
+        if (!email) errors.push('Email is required');
+        if (!password) errors.push('Password is required');
+        if (password !== confirmPassword) errors.push('Passwords do not match');
+        if (!collegeId) errors.push('College is required');
+        if (!roleId) errors.push('Role is required');
+        if (!terms) errors.push('You must accept the terms & conditions');
+
+        if (password && password.length < 6) {
+            errors.push('Password must be at least 6 characters');
+        }
+
+        if (errors.length > 0) {
+            alert('Registration failed:\n\n' + errors.join('\n'));
+            return;
+        }
+
+        try {
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(formData)
+            });
+
+            const contentType = response.headers.get('content-type');
+
+            if (contentType && contentType.includes('application/json')) {
+                // JSON response from AJAX endpoint
+                const data = await response.json();
+                if (data.success) {
+                    alert('✓ Registration successful!\nYour account is pending admin approval.\nPlease login after approval.');
+                    window.location.href = '/login';
+                } else {
+                    alert('❌ Registration failed:\n' + data.message);
+                }
+            } else {
+                // HTML response (fallback)
+                const text = await response.text();
+                document.body.innerHTML = text;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    });
+
+    // Redirect to dashboard if already logged in
+    if (SessionManager.isLoggedIn()) {
+        const roleRedirects = {
+            'ADMIN': '/college/dashboard',
+            'HOD': '/hod/dashboard',
+            'FACULTY': '/faculty/dashboard',
+            'STUDENT': '/student/dashboard',
+            'PARENT': '/parent/dashboard'
+        };
+
+        const role = SessionManager.getUserRole();
+        const redirectUrl = roleRedirects[role] || '/';
+        window.location.href = redirectUrl;
+    }
+});
+
+        case 'hod':
+document.getElementById('hodFields').style.display = 'block';
+initCollegeSearch('hodCollege', 'hodCollegeSuggestions');
+break;
+        case 'college_admin':
+document.getElementById('collegeAdminFields').style.display = 'block';
+break;
+        case 'parent':
+document.getElementById('parentFields').style.display = 'block';
+break;
+    }
+
+// Scroll to top
+document.querySelector('.auth-card').scrollTop = 0;
 }
 
 // Go back to role selection
