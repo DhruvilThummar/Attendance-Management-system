@@ -15,11 +15,11 @@ The application is organized into modular route blueprints:
 - routes/parent.py: Parent routes
 """
 
-from flask import Flask
+from flask import Flask, g, session
 from dotenv import load_dotenv
 import os
 
-from models.user import db
+from models.user import db, User
 
 
 # Load environment variables
@@ -38,6 +38,18 @@ app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes
 
 # Initialize SQLAlchemy
 db.init_app(app)
+
+@app.before_request
+def load_logged_in_user():
+    user_id = session.get('user_id')
+    if user_id is None:
+        g.user = None
+    else:
+        g.user = User.query.get(user_id)
+
+@app.context_processor
+def inject_user():
+    return dict(user=g.user)
 
 # Create all database tables if they don't exist
 with app.app_context():

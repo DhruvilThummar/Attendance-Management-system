@@ -65,24 +65,31 @@ def college_dashboard():
 def college_profile():
     """College Profile"""
     college = DataHelper.get_college()
+    college_id = college.get('college_id') if college else None
+    college_stats = DataHelper.get_college_statistics(college_id) if college_id else {
+        'total_departments': 0,
+        'total_faculty': 0,
+        'total_students': 0,
+        'total_divisions': 0,
+        'avg_attendance': 0,
+        'total_users': 0
+    }
+    
     return render_template("college/profile.html",
                          title="College Profile",
-                         college=college)
+                         college=college,
+                         college_stats=college_stats)
 
 
 @college_bp.route("/departments")
 def college_departments():
     """College Departments List"""
     departments = DataHelper.get_departments()
+    faculty = DataHelper.get_faculty()
     return render_template("college/departments.html",
-        {'faculty_id': 5, 'name': 'Prof. Vijay Singh'},
-                            title="Departments",
-                            departments=departments)                
-
-    return render_template("college/departments.html",  
                          title="Departments",
                          departments=departments,
-                         all_faculty=faculty)
+                         faculty=faculty)
 
 
 @college_bp.route("/divisions")
@@ -143,6 +150,27 @@ def college_faculty():
                          faculty=faculty)
 
 
+@college_bp.route("/faculty/hod-list")
+def college_faculty_hod_list():
+    """College HOD List"""
+    departments = DataHelper.get_departments()
+    hod_list = []
+    
+    for dept in departments if departments else []:
+        if dept.get('hod_faculty_id'):
+            hod_faculty = DataHelper.get_faculty_member(dept['hod_faculty_id'])
+            if hod_faculty:
+                hod_list.append({
+                    'department': dept,
+                    'hod': hod_faculty
+                })
+    
+    return render_template("college/hod_list.html",
+                         title="HOD Management",
+                         departments=departments,
+                         hod_list=hod_list)
+
+
 @college_bp.route("/students")
 def college_students():
     """College Students List"""
@@ -155,6 +183,25 @@ def college_students():
                          departments=departments,
                          divisions=divisions,
                          students=students)
+
+
+@college_bp.route("/students/by-division")
+def college_students_by_division():
+    """College Students Filtered by Division"""
+    division_id = request.args.get('div_id')
+    departments = DataHelper.get_departments()
+    divisions = DataHelper.get_divisions()
+    
+    students = DataHelper.get_students()
+    if division_id:
+        students = [s for s in students if s.get('div_id') == division_id]
+    
+    return render_template("college/students.html",
+                         title="Student Management",
+                         departments=departments,
+                         divisions=divisions,
+                         students=students,
+                         selected_division=division_id)
 
 
 @college_bp.route("/attendance-analytics")

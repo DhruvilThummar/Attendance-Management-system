@@ -39,13 +39,29 @@ def sdashboard():
     context = _get_student_context()
     time_period = request.args.get('period', 'overall')
     
+    # Default attendance data structure
+    default_attendance_data = {
+        'overall_pct': 0,
+        'total_lectures': 0,
+        'attended_lectures': 0,
+        'weekly': [],
+        'monthly': [],
+        'subject_wise': [],
+        'records': []
+    }
+    
     if not context['student']:
+        charts = {
+            'weekly_attendance': generate_attendance_weekly_chart({'Mon': 0, 'Tue': 0, 'Wed': 0, 'Thu': 0, 'Fri': 0}),
+            'monthly_trend': generate_attendance_monthly_chart({'Week 1': 0, 'Week 2': 0, 'Week 3': 0, 'Week 4': 0})
+        }
         return render_template("student/dashboard.html",
                              context=context,
-                             attendance_data={},
+                             attendance_data=default_attendance_data,
                              time_period=time_period,
                              alerts=[],
-                             subjects=[])
+                             subjects=[],
+                             charts=charts)
     
     student_id = context['student']['student_id']
     

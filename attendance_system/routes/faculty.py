@@ -18,7 +18,21 @@ def fdashboard():
     """Faculty dashboard showing assigned subjects and classes"""
     faculty = DataHelper.get_faculty()
     subjects = DataHelper.get_subjects()
-    return render_template("faculty/dashboard.html", faculty=faculty, subjects=subjects)
+    lectures = DataHelper.get_lectures()
+    
+    # Compute stats for dashboard
+    stats = {
+        'total_lectures': len(lectures) if lectures else 0,
+        'remaining': max(0, (len(lectures) - 1) if lectures else 0),
+        'subjects': len(subjects) if subjects else 0,
+        'avg_attendance': 87.5  # Sample data
+    }
+    
+    return render_template("faculty/dashboard.html", 
+                          faculty=faculty, 
+                          subjects=subjects, 
+                          lectures=lectures,
+                          stats=stats)
 
 
 @faculty_bp.route("/attendance")
@@ -125,7 +139,25 @@ def ftimetable():
 def fprofile():
     """View and edit faculty profile"""
     faculty = DataHelper.get_faculty()
-    return render_template("faculty/profile.html", faculty=faculty)
+    college = DataHelper.get_college()
+    dept_id = faculty.get('dept_id') if faculty else None
+    department = DataHelper.get_department(dept_id) if dept_id else None
+    
+    # Compute teaching statistics
+    subjects = DataHelper.get_subjects()
+    lectures = DataHelper.get_lectures()
+    teaching_stats = {
+        'total_subjects': len(subjects) if subjects else 0,
+        'lectures_conducted': len(lectures) if lectures else 0,
+        'proxy_taken': 0,
+        'mentoring_count': 0
+    }
+    
+    return render_template("faculty/profile.html", 
+                          faculty=faculty,
+                          college=college,
+                          department=department,
+                          teaching_stats=teaching_stats)
 
 
 @faculty_bp.route("/download-report", methods=['GET', 'POST'])

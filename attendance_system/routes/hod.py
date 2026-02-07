@@ -35,8 +35,26 @@ def _get_hod_context():
 def hdashboard():
     """Render HOD dashboard with department insights"""
     context = _get_hod_context()
+    
+    # Fallback to sample data if department not configured
     if not context['dept_id']:
-        abort(404, description="HOD department not configured")
+        default_charts = {
+            'monthly_attendance': generate_attendance_monthly_chart({'Week 1': 0, 'Week 2': 0, 'Week 3': 0, 'Week 4': 0}),
+            'subject_attendance': generate_subject_attendance_chart({}),
+            'class_strength': generate_class_strength_chart({})
+        }
+        return render_template(
+            "hod/dashboard.html",
+            context=context,
+            stats={},
+            faculty=[],
+            divisions=[],
+            subjects=[],
+            attendance_summary={},
+            timetable_overview={},
+            timetable_days=[],
+            charts=default_charts
+        )
 
     dept_id = context['dept_id']
     department_stats = DataHelper.get_department_stats(dept_id)
@@ -100,8 +118,15 @@ def hod_redirect():
 def hod_faculty_directory():
     """Show faculty directory for the department"""
     context = _get_hod_context()
+    
+    # Fallback if no department
     if not context['dept_id']:
-        abort(404, description="HOD department not configured")
+        return render_template(
+            "hod/faculty.html",
+            context=context,
+            faculty_cards=[],
+            subject_catalog=[]
+        )
 
     dept_id = context['dept_id']
     faculty_members = DataHelper.get_faculty(dept_id=dept_id)
@@ -141,8 +166,14 @@ def hod_faculty_directory():
 def hod_subjects():
     """List subjects offered in the department"""
     context = _get_hod_context()
+    
+    # Fallback if no department
     if not context['dept_id']:
-        abort(404, description="HOD department not configured")
+        return render_template(
+            "hod/subjects.html",
+            context=context,
+            grouped_subjects={}
+        )
 
     grouped_subjects = DataHelper.get_subjects_grouped_by_semester(context['dept_id'])
 
@@ -157,8 +188,16 @@ def hod_subjects():
 def hod_attendance():
     """Division wise attendance analytics"""
     context = _get_hod_context()
+    
+    # Fallback if no department
     if not context['dept_id']:
-        abort(404, description="HOD department not configured")
+        return render_template(
+            "hod/attendance.html",
+            context=context,
+            attendance_summary={},
+            divisions=[],
+            subjects=[]
+        )
 
     summary = DataHelper.get_division_attendance_summary(context['dept_id'])
 
@@ -175,8 +214,10 @@ def hod_attendance():
 def hod_attendance_data():
     """Provide filtered attendance data as JSON"""
     context = _get_hod_context()
+    
+    # Fallback if no department
     if not context['dept_id']:
-        abort(404, description="HOD department not configured")
+        return jsonify({'records': []})
 
     division_id = request.args.get('division_id', type=int)
     subject_id = request.args.get('subject_id', type=int)
@@ -194,8 +235,18 @@ def hod_attendance_data():
 def hod_timetable():
     """Manage and review department timetable"""
     context = _get_hod_context()
+    
+    # Fallback if no department
     if not context['dept_id']:
-        abort(404, description="HOD department not configured")
+        return render_template(
+            "hod/timetable.html",
+            context=context,
+            divisions=[],
+            subjects=[],
+            faculty_members=[],
+            timetable_overview={},
+            timetable_days=[]
+        )
 
     dept_id = context['dept_id']
     divisions = DataHelper.get_divisions(dept_id=dept_id)
@@ -217,8 +268,10 @@ def hod_timetable():
 def hod_timetable_data():
     """Return timetable entries filtered by division and day"""
     context = _get_hod_context()
+    
+    # Fallback if no department
     if not context['dept_id']:
-        abort(404, description="HOD department not configured")
+        return jsonify({'timetable': []})
 
     division_id = request.args.get('division_id', type=int)
     day = request.args.get('day')
@@ -274,8 +327,18 @@ def hod_delete_timetable_entry(entry_id):
 def hod_profile():
     """HOD Profile"""
     context = _get_hod_context()
+    
+    # Fallback if no department
     if not context['dept_id']:
-        abort(404, description="HOD department not configured")
+        return render_template(
+            "hod/profile.html",
+            title="HOD Profile",
+            user=context['user'],
+            faculty=context['faculty'],
+            department=context['department'],
+            college=DataHelper.get_college(),
+            dept_stats={}
+        )
 
     dept_stats = DataHelper.get_department_stats(context['dept_id'])
 

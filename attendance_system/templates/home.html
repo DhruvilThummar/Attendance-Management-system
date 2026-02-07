@@ -40,13 +40,13 @@
                         <i class="bi bi-speedometer2"></i> Dashboard
                     </a>
                     {% else %}
-                    <a class="btn btn-primary btn-lg" href="/auth/logout"
+                    <a class="btn btn-primary btn-lg" href="{{ url_for('auth.logout') }}"
                         onclick="localStorage.removeItem('attendance_user_session');">
                         <i class="bi bi-box-arrow-right"></i> Logout
                     </a>
                     {% endif %}
 
-                    <a class="btn btn-outline-danger btn-lg" href="/auth/logout"
+                    <a class="btn btn-outline-danger btn-lg" href="{{ url_for('auth.logout') }}"
                         onclick="localStorage.removeItem('attendance_user_session');">
                         <i class="bi bi-box-arrow-right"></i> Logout
                     </a>

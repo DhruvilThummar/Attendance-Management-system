@@ -39,7 +39,7 @@
                     {% endif %}
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/auth/logout"
+                    <a class="nav-link" href="{{ url_for('auth.logout') }}"
                         onclick="localStorage.removeItem('attendance_user_session');">Logout</a>
                 </li>
                 {% else %}
