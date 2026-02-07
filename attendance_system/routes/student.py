@@ -255,7 +255,7 @@ def student_profile():
     from attendance_system.models.college import College
     from attendance_system.models.department import Department
     from attendance_system.models.division import Division
-    from attendance_system.models.semester import Semester
+    from attendance_system.models.subject import Semester
     from attendance_system.models.faculty import Faculty
     from attendance_system.models.user import User
     

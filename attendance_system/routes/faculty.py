@@ -53,8 +53,8 @@ def fdashboard():
     }
     
     # Calculate proxies taken and mentoring count from actual data
-    proxy_lectures = DataHelper.get_proxy_lectures()
-    proxy_taken = len([p for p in (proxy_lectures or []) if p.get('faculty_id') == faculty.get('faculty_id')]) if faculty else 0
+    proxy_requests = DataHelper.get_proxy_requests()
+    proxy_taken = len([p for p in (proxy_requests or []) if p.get('faculty_id') == faculty.get('faculty_id')]) if faculty else 0
     
     # Count students mentored (based on available data)
     students = DataHelper.get_students()
@@ -257,8 +257,8 @@ def fprofile():
     lectures = DataHelper.get_lectures()
     
     # Calculate proxies taken
-    proxy_lectures = DataHelper.get_proxy_lectures()
-    proxy_taken = len([p for p in (proxy_lectures or []) if p.get('faculty_id') == (faculty.get('faculty_id') if faculty else None)]) if faculty else 0
+    proxy_requests = DataHelper.get_proxy_requests()
+    proxy_taken = len([p for p in (proxy_requests or []) if p.get('faculty_id') == (faculty.get('faculty_id') if faculty else None)]) if faculty else 0
     
     # Count students mentored
     students = DataHelper.get_students()

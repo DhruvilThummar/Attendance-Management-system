@@ -109,8 +109,10 @@
                         <div class="card-body">
                             {% set total_subjects = grouped_subjects | map(attribute='subjects') | map('length') | sum
                             %}
-                            {% set total_credits = grouped_subjects | map(attribute='subjects') | map('selectattr',
-                            'credits') | sum %}
+                            {% set total_credits = 0 %}
+                            {% for group in grouped_subjects %}
+                            {% set total_credits = total_credits + (group.subjects | sum(attribute='credits')) %}
+                            {% endfor %}
                             <div class="row text-center">
                                 <div class="col-md-4">
                                     <div class="summary-item">
