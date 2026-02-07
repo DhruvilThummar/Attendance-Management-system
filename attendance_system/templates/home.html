@@ -13,12 +13,52 @@
                 <p class="lead text-muted">Your reliable attendance management system for accurate, secure, and
                     effortless tracking.</p>
                 <div class="d-flex flex-wrap gap-2 mt-3">
+                    {% if session.get('user_id') %}
+                    <!-- Conditional Dashboard Link -->
+                    {% if session.get('role') == 'SUPERADMIN' %}
+                    <a class="btn btn-primary btn-lg" href="/superadmin/dashboard">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    {% elif session.get('role') == 'ADMIN' %}
+                    <a class="btn btn-primary btn-lg" href="/college/dashboard">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    {% elif session.get('role') == 'HOD' %}
+                    <a class="btn btn-primary btn-lg" href="/hod/dashboard">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    {% elif session.get('role') == 'FACULTY' %}
+                    <a class="btn btn-primary btn-lg" href="/faculty/dashboard">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    {% elif session.get('role') == 'STUDENT' %}
+                    <a class="btn btn-primary btn-lg" href="/student/dashboard">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    {% elif session.get('role') == 'PARENT' %}
+                    <a class="btn btn-primary btn-lg" href="/parent/dashboard">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    {% else %}
+                    <a class="btn btn-primary btn-lg" href="/auth/logout"
+                        onclick="localStorage.removeItem('attendance_user_session');">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                    {% endif %}
+
+                    <a class="btn btn-outline-danger btn-lg" href="/auth/logout"
+                        onclick="localStorage.removeItem('attendance_user_session');">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+
+                    {% else %}
                     <a class="btn btn-primary btn-lg" href="/login" role="button">
                         <i class="bi bi-box-arrow-in-right"></i> Login
                     </a>
                     <a class="btn btn-outline-light btn-lg" href="/register" role="button">
                         <i class="bi bi-person-plus"></i> Register
                     </a>
+                    {% endif %}
                 </div>
                 <div class="d-flex gap-3 mt-4 text-muted small">
                     <div><i class="bi bi-shield-check"></i> Secure</div>

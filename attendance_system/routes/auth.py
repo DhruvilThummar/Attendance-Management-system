@@ -97,6 +97,20 @@ def login():
 @auth_bp.route("/register", methods=['GET', 'POST'])
 def register():
     """User registration with proper validation and password hashing"""
+    # Check if user is already logged in (GET request)
+    if request.method == 'GET' and 'user_id' in session and 'role' in session:
+        # Redirect to appropriate dashboard based on role
+        role_redirects = {
+            'SUPERADMIN': '/superadmin/dashboard',
+            'ADMIN': '/college/dashboard',
+            'HOD': '/hod/dashboard',
+            'FACULTY': '/faculty/dashboard',
+            'STUDENT': '/student/dashboard',
+            'PARENT': '/parent/dashboard'
+        }
+        redirect_url = role_redirects.get(session['role'], '/')
+        return redirect(redirect_url)
+
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         email = request.form.get('email', '').strip()
@@ -190,9 +204,13 @@ def logout():
     """User logout"""
     session.clear()
     
-    # Return JSON for AJAX requests
-    return jsonify({
-        'success': True,
-        'message': 'You have been logged out successfully',
-        'redirect': url_for('main.home')
-    })
+    # Handle AJAX requests usually sent by SessionManager.logout()
+    if request.is_json or (request.headers.get('Accept') and 'application/json' in request.headers.get('Accept')):
+        return jsonify({
+            'success': True,
+            'message': 'You have been logged out successfully',
+            'redirect': url_for('main.home')
+        })
+    
+    # Handle standard browser requests (e.g. from Navbar link)
+    return redirect(url_for('main.home'))

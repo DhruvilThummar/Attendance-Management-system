@@ -1,7 +1,9 @@
 """
 College Admin routes - Dashboard, Departments, Divisions, Faculty, Students, Analytics, Settings
 """
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from models.division import Division
+from models.user import db
 from services.data_helper import DataHelper
 from services.chart_helper import (
     generate_department_comparison_chart,
@@ -95,9 +97,33 @@ def college_divisions():
                          divisions=divisions)
 
 
-@college_bp.route("/divisions/create")
+@college_bp.route("/divisions/create", methods=['GET', 'POST'])
 def college_divisions_create():
     """Create New Division"""
+    if request.method == 'POST':
+        dept_id = request.form.get('dept_id')
+        division_name = request.form.get('division_name')
+        division_code = request.form.get('division_code')
+        capacity = request.form.get('capacity')
+        
+        if not dept_id or not division_name:
+            flash('Department and Division Name are required.', 'error')
+        else:
+            try:
+                new_division = Division(
+                    dept_id=dept_id,
+                    division_name=division_name,
+                    # division_code=division_code, # Not in model? Check model again.
+                    capacity=int(capacity) if capacity else 60
+                )
+                db.session.add(new_division)
+                db.session.commit()
+                flash('Division created successfully!', 'success')
+                return redirect(url_for('college.college_divisions'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error creating division: {str(e)}', 'error')
+
     departments = DataHelper.get_departments()
     
     return render_template("college/create_division.html",

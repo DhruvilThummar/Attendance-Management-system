@@ -80,7 +80,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Redirect to dashboard if already logged in
+    // Redirect to dashboard if already logged in - REMOVED to prevent loops
+    // Server-side will handle redirects
+    /*
     if (SessionManager.isLoggedIn()) {
         const roleRedirects = {
             'SUPERADMIN': '/superadmin/dashboard',
@@ -96,4 +98,5 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Already logged in as', role, '- redirecting to', redirectUrl);
         window.location.href = redirectUrl;
     }
+    */
 });

@@ -926,7 +926,8 @@ class DataHelper:
     def get_college_statistics(college_id):
         """Get statistics for a specific college"""
         total_students = Student.query.join(Department).filter(Department.college_id == college_id).count()
-        total_faculty = Faculty.query.join(Department).filter(Department.college_id == college_id).count()
+        # Explicit join needed because Department has foreign key to Faculty (hod_faculty_id) as well
+        total_faculty = Faculty.query.join(Department, Faculty.dept_id == Department.dept_id).filter(Department.college_id == college_id).count()
         total_departments = Department.query.filter_by(college_id=college_id).count()
         total_divisions = Division.query.join(Department).filter(Department.college_id == college_id).count()
 

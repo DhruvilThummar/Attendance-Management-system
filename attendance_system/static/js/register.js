@@ -280,19 +280,4 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('An error occurred. Please try again.');
         }
     });
-
-    // Redirect to dashboard if already logged in
-    if (typeof SessionManager !== 'undefined' && SessionManager.isLoggedIn()) {
-        const roleRedirects = {
-            'ADMIN': '/college/dashboard',
-            'HOD': '/hod/dashboard',
-            'FACULTY': '/faculty/dashboard',
-            'STUDENT': '/student/dashboard',
-            'PARENT': '/parent/dashboard'
-        };
-
-        const role = SessionManager.getUserRole();
-        const redirectUrl = roleRedirects[role] || '/';
-        window.location.href = redirectUrl;
-    }
 });

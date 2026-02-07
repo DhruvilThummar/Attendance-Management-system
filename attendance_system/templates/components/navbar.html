@@ -20,9 +20,38 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/contact">Contact</a>
                 </li>
+                {% if session.get('user_id') %}
+                <li class="nav-item">
+                    {% if session.get('role') == 'SUPERADMIN' %}
+                    <a class="nav-link" href="/superadmin/dashboard">Dashboard</a>
+                    {% elif session.get('role') == 'ADMIN' %}
+                    <a class="nav-link" href="/college/dashboard">Dashboard</a>
+                    {% elif session.get('role') == 'HOD' %}
+                    <a class="nav-link" href="/hod/dashboard">Dashboard</a>
+                    {% elif session.get('role') == 'FACULTY' %}
+                    <a class="nav-link" href="/faculty/dashboard">Dashboard</a>
+                    {% elif session.get('role') == 'STUDENT' %}
+                    <a class="nav-link" href="/student/dashboard">Dashboard</a>
+                    {% elif session.get('role') == 'PARENT' %}
+                    <a class="nav-link" href="/parent/dashboard">Dashboard</a>
+                    {% else %}
+                    <a class="nav-link" href="#">Dashboard</a>
+                    {% endif %}
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/auth/logout"
+                        onclick="localStorage.removeItem('attendance_user_session');">Logout</a>
+                </li>
+                {% else %}
                 <li class="nav-item">
                     <a class="nav-link" href="/login">Login</a>
                 </li>
+                <!--
+                <li class="nav-item">
+                    <a class="nav-link" href="/register">Register</a>
+                </li>
+                -->
+                {% endif %}
             </ul>
         </div>
     </div>
