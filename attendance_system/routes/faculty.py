@@ -3,7 +3,6 @@ from flask import Blueprint, render_template, send_file, request, jsonify
 from models.user import db, User
 from services.data_helper import DataHelper
 from attendance_system.utils.auth_decorators import login_required, faculty_required
-from utils.auth_decorators import login_required, faculty_required
 from services.chart_helper import (
     generate_attendance_weekly_chart,
     generate_attendance_monthly_chart,
@@ -20,16 +19,22 @@ faculty_bp = Blueprint('faculty', __name__, url_prefix='/faculty')
 @faculty_required
 def fdashboard():
     """Faculty dashboard showing assigned subjects and classes"""
-    faculty = DataHelper.get_faculty()
+    faculty_data = DataHelper.get_faculty()
+    
+    # Handle case where get_faculty() returns a list or None
+    if isinstance(faculty_data, list):
+        faculty = faculty_data[0] if faculty_data else None
+    else:
+        faculty = faculty_data
+    
     subjects = DataHelper.get_subjects()
     lectures = DataHelper.get_lectures()
     
     # Get department info for the faculty
     department = None
     if faculty and faculty.get('dept_id'):
-        from attendance_system.models.department import Department
-        dept = Department.query.get(faculty.get('dept_id'))
-        department = {'dept_name': dept.dept_name} if dept else {'dept_name': 'N/A'}
+        dept = DataHelper.get_department(faculty.get('dept_id'))
+        department = {'dept_name': dept.get('dept_name', 'N/A')} if isinstance(dept, dict) else {'dept_name': 'N/A'}
     else:
         department = {'dept_name': 'N/A'}
     
@@ -41,11 +46,20 @@ def fdashboard():
         'avg_attendance': 87.5  # Sample data
     }
     
+    # Teaching stats for template
+    teaching_stats = {
+        'lectures_conducted': len(lectures) if lectures else 0,
+        'total_subjects': len(subjects) if subjects else 0,
+        'proxy_taken': 0,
+        'mentoring_count': 0
+    }
+    
     return render_template("faculty/dashboard.html", 
                           faculty=faculty, 
                           subjects=subjects, 
                           lectures=lectures,
                           stats=stats,
+                          teaching_stats=teaching_stats,
                           department=department,
                           datetime=datetime)
 

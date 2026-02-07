@@ -23,6 +23,9 @@ def college_dashboard():
     departments = DataHelper.get_departments()
     divisions = DataHelper.get_divisions()
     
+    # Calculate total student count
+    total_student_count = sum(dept.get('student_count', 0) for dept in (departments or []))
+    
     # Generate charts
     charts = {}
     
@@ -30,7 +33,7 @@ def college_dashboard():
     dept_data = {}
     for dept in departments if departments else []:
         dept_name = dept.get('dept_name', 'Unknown')
-        student_count = 45  # Sample data
+        student_count = dept.get('student_count', 45)  # Get from data or use default
         dept_data[dept_name] = student_count
     
     if dept_data:
@@ -40,7 +43,7 @@ def college_dashboard():
     class_data = {}
     for div in divisions if divisions else []:
         div_name = div.get('division_name', 'Unknown')
-        student_count = 60
+        student_count = div.get('student_count', 60)  # Get from data or use default
         class_data[div_name] = student_count
     
     if class_data:
@@ -60,6 +63,7 @@ def college_dashboard():
                          college=college,
                          departments=departments,
                          divisions=divisions,
+                         student_count=total_student_count,
                          charts=charts)
 
 
