@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, request, jsonify, flash, redirect,
 from services.data_helper import DataHelper
 from models.user import db
 from models.college import College
+from utils.auth_decorators import login_required, superadmin_required
 from services.chart_helper import (
     generate_role_distribution_chart,
     generate_department_comparison_chart,
@@ -22,6 +23,7 @@ def _get_superadmin_context():
 
 
 @superadmin_bp.route("/dashboard")
+@superadmin_required
 def sudashboard():
     """Super Admin Dashboard - System Overview"""
     context = _get_superadmin_context()
@@ -263,6 +265,7 @@ def analytics():
 
 
 @superadmin_bp.route("/profile")
+@superadmin_required
 def superadmin_profile():
     """Super Admin Profile"""
     context = _get_superadmin_context()

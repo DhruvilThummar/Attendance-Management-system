@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, request, jsonify, abort
 
 from models.user import db, User
 from services.data_helper import DataHelper
+from utils.auth_decorators import login_required, hod_required
 from services.chart_helper import (
     generate_attendance_monthly_chart,
     generate_subject_attendance_chart,
@@ -33,6 +34,7 @@ def _get_hod_context():
 
 
 @hod_bp.route("/dashboard")
+@hod_required
 def hdashboard():
     """Render HOD dashboard with department insights"""
     context = _get_hod_context()
@@ -325,6 +327,7 @@ def hod_delete_timetable_entry(entry_id):
 
 
 @hod_bp.route("/profile")
+@hod_required
 def hod_profile():
     """HOD Profile"""
     context = _get_hod_context()

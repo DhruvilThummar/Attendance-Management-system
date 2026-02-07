@@ -24,6 +24,7 @@ def _get_parent_context():
 
 
 @parent_bp.route("/dashboard")
+@parent_required
 def pdashboard():
     """Parent Dashboard - Child attendance overview"""
     context = _get_parent_context()
@@ -210,6 +211,7 @@ def attendance_data_api(student_id):
 
 
 @parent_bp.route("/profile")
+@parent_required
 def parent_profile():
     """Parent Profile with child information"""
     context = _get_parent_context()

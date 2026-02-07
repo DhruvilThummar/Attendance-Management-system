@@ -34,6 +34,7 @@ def _get_student_context():
 
 
 @student_bp.route("/dashboard")
+@student_required
 def sdashboard():
     """Student Dashboard - Personal attendance overview"""
     context = _get_student_context()
@@ -226,6 +227,7 @@ def attendance_data_api():
 
 
 @student_bp.route("/profile")
+@student_required
 def student_profile():
     """Student Profile with attendance summary"""
     context = _get_student_context()

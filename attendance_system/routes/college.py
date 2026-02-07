@@ -15,6 +15,7 @@ college_bp = Blueprint('college', __name__, url_prefix='/college')
 
 
 @college_bp.route("/dashboard")
+@college_admin_required
 def college_dashboard():
     """College Dashboard with departments and divisions overview"""
     college = DataHelper.get_college()
@@ -62,6 +63,7 @@ def college_dashboard():
 
 
 @college_bp.route("/profile")
+@college_admin_required
 def college_profile():
     """College Profile"""
     from attendance_system.models.user import User
