@@ -5,7 +5,6 @@ Provides route protection for login requirements and role-based access control
 
 from functools import wraps
 from flask import session, redirect, url_for, abort
-from models.user import User, db
 
 
 def login_required(f):
@@ -15,7 +14,8 @@ def login_required(f):
         if 'user_id' not in session or 'role' not in session:
             return redirect(url_for('auth.login'))
         
-        # Verify user still exists in database
+        # Verify user still exists in database (lazy import to avoid circular imports)
+        from models.user import User
         user = User.query.get(session['user_id'])
         if not user or not user.is_approved:
             # Clear invalid session
@@ -41,7 +41,8 @@ def role_required(*allowed_roles):
                 # User is logged in but doesn't have correct role
                 abort(403)  # Forbidden
             
-            # Verify user still exists and is approved
+            # Verify user still exists and is approved (lazy import to avoid circular imports)
+            from models.user import User
             user = User.query.get(session['user_id'])
             if not user or not user.is_approved:
                 session.clear()
