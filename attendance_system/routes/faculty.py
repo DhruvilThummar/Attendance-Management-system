@@ -11,6 +11,7 @@ from services.chart_helper import (
 import csv
 import io
 from datetime import datetime
+import numpy as np
 
 faculty_bp = Blueprint('faculty', __name__, url_prefix='/faculty')
 
@@ -29,6 +30,7 @@ def fdashboard():
     
     subjects = DataHelper.get_subjects()
     lectures = DataHelper.get_lectures()
+    attendance_data = DataHelper.get_attendance_records()
     
     # Get department info for the faculty
     department = None
@@ -38,20 +40,32 @@ def fdashboard():
     else:
         department = {'dept_name': 'N/A'}
     
+    # Calculate average attendance from actual data
+    attendance_percentages = [a.get('attendance_percentage', 0) for a in (attendance_data or [])]
+    avg_attendance = round(float(np.mean(attendance_percentages)), 2) if attendance_percentages else 0.0
+    
     # Compute stats for dashboard
     stats = {
         'total_lectures': len(lectures) if lectures else 0,
         'remaining': max(0, (len(lectures) - 1) if lectures else 0),
         'subjects': len(subjects) if subjects else 0,
-        'avg_attendance': 87.5  # Sample data
+        'avg_attendance': avg_attendance
     }
+    
+    # Calculate proxies taken and mentoring count from actual data
+    proxy_lectures = DataHelper.get_proxy_lectures()
+    proxy_taken = len([p for p in (proxy_lectures or []) if p.get('faculty_id') == faculty.get('faculty_id')]) if faculty else 0
+    
+    # Count students mentored (based on available data)
+    students = DataHelper.get_students()
+    mentoring_count = len([s for s in (students or []) if s.get('mentor_id') == faculty.get('faculty_id')]) if faculty else 0
     
     # Teaching stats for template
     teaching_stats = {
         'lectures_conducted': len(lectures) if lectures else 0,
         'total_subjects': len(subjects) if subjects else 0,
-        'proxy_taken': 0,
-        'mentoring_count': 0
+        'proxy_taken': proxy_taken,
+        'mentoring_count': mentoring_count
     }
     
     return render_template("faculty/dashboard.html", 
@@ -94,31 +108,72 @@ def fanalytics():
     # Generate charts
     charts = {}
     
-    # Weekly attendance chart
-    weekly_data = {
-        'Mon': 42,
-        'Tue': 40,
-        'Wed': 43,
-        'Thu': 41,
-        'Fri': 38
-    }
+    # Weekly attendance chart - calculate from actual data
+    weekly_data = {}
+    if attendance_data:
+        days_map = {0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun'}
+        day_attendance = {}
+        for record in attendance_data:
+            if 'date' in record:
+                try:
+                    date_obj = datetime.fromisoformat(str(record['date'])) if isinstance(record['date'], str) else record['date']
+                    day_name = days_map.get(date_obj.weekday(), 'Unknown')
+                    if day_name not in day_attendance:
+                        day_attendance[day_name] = []
+                    day_attendance[day_name].append(record.get('attendance_percentage', 0))
+                except:
+                    pass
+        # Calculate average for each day
+        for day, percentages in day_attendance.items():
+            weekly_data[day] = round(float(np.mean(percentages)), 1) if percentages else 0.0
+    # Add missing days with zero
+    for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']:
+        if day not in weekly_data:
+            weekly_data[day] = 0.0
     charts['weekly_attendance'] = generate_attendance_weekly_chart(weekly_data)
     
-    # Monthly trend chart
-    monthly_data = {
-        'Week 1': 92.5,
-        'Week 2': 88.3,
-        'Week 3': 90.1,
-        'Week 4': 87.6
-    }
+    # Monthly trend chart - calculate from actual data grouped by week
+    monthly_data = {}
+    if attendance_data:
+        week_attendance = {}
+        for record in attendance_data:
+            if 'date' in record:
+                try:
+                    date_obj = datetime.fromisoformat(str(record['date'])) if isinstance(record['date'], str) else record['date']
+                    week_num = date_obj.isocalendar()[1]
+                    week_key = f'Week {week_num % 4 if week_num % 4 > 0 else 4}'
+                    if week_key not in week_attendance:
+                        week_attendance[week_key] = []
+                    week_attendance[week_key].append(record.get('attendance_percentage', 0))
+                except:
+                    pass
+        # Calculate average for each week
+        for week, percentages in sorted(week_attendance.items()):
+            monthly_data[week] = round(float(np.mean(percentages)), 1) if percentages else 0.0
+    # Add default weeks if needed
+    if not monthly_data:
+        for i in range(1, 5):
+            monthly_data[f'Week {i}'] = 0.0
     charts['monthly_trend'] = generate_attendance_monthly_chart(monthly_data)
     
-    # Subject attendance chart
+    # Subject attendance chart - calculate actual averages per subject
     subject_data = {}
     subjects = DataHelper.get_subjects()
-    for subject in subjects if subjects else []:
-        subject_name = subject.get('subject_name', 'Unknown')
-        subject_data[subject_name] = 87.5
+    if attendance_data and subjects:
+        for subject in subjects:
+            subject_id = subject.get('subject_id')
+            subject_name = subject.get('subject_name', 'Unknown')
+            subject_records = [a for a in attendance_data if a.get('subject_id') == subject_id]
+            if subject_records:
+                percentages = [a.get('attendance_percentage', 0) for a in subject_records]
+                subject_data[subject_name] = round(float(np.mean(percentages)), 1) if percentages else 0.0
+            else:
+                subject_data[subject_name] = 0.0
+    else:
+        # Fallback: ensure all subjects have an entry
+        for subject in (subjects or []):
+            subject_name = subject.get('subject_name', 'Unknown')
+            subject_data[subject_name] = 0.0
     
     if subject_data:
         charts['subject_attendance'] = generate_subject_attendance_chart(subject_data)
@@ -197,14 +252,23 @@ def fprofile():
     if faculty and faculty.get('dept_id'):
         department = Department.query.get(faculty.get('dept_id'))
     
-    # Compute teaching statistics
+    # Compute teaching statistics from actual data
     subjects = DataHelper.get_subjects(dept_id=faculty.get('dept_id') if faculty else None)
     lectures = DataHelper.get_lectures()
+    
+    # Calculate proxies taken
+    proxy_lectures = DataHelper.get_proxy_lectures()
+    proxy_taken = len([p for p in (proxy_lectures or []) if p.get('faculty_id') == (faculty.get('faculty_id') if faculty else None)]) if faculty else 0
+    
+    # Count students mentored
+    students = DataHelper.get_students()
+    mentoring_count = len([s for s in (students or []) if s.get('mentor_id') == (faculty.get('faculty_id') if faculty else None)]) if faculty else 0
+    
     teaching_stats = {
         'total_subjects': len(subjects) if subjects else 0,
         'lectures_conducted': len(lectures) if lectures else 0,
-        'proxy_taken': 0,
-        'mentoring_count': 0
+        'proxy_taken': proxy_taken,
+        'mentoring_count': mentoring_count
     }
     
     return render_template("faculty/profile.html",
