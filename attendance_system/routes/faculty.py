@@ -21,6 +21,15 @@ def fdashboard():
     subjects = DataHelper.get_subjects()
     lectures = DataHelper.get_lectures()
     
+    # Get department info for the faculty
+    department = None
+    if faculty and faculty.get('dept_id'):
+        from attendance_system.models.department import Department
+        dept = Department.query.get(faculty.get('dept_id'))
+        department = {'dept_name': dept.dept_name} if dept else {'dept_name': 'N/A'}
+    else:
+        department = {'dept_name': 'N/A'}
+    
     # Compute stats for dashboard
     stats = {
         'total_lectures': len(lectures) if lectures else 0,
@@ -34,6 +43,7 @@ def fdashboard():
                           subjects=subjects, 
                           lectures=lectures,
                           stats=stats,
+                          department=department,
                           datetime=datetime)
 
 
@@ -44,7 +54,7 @@ def fattendance():
     subjects = DataHelper.get_subjects()
     lectures = DataHelper.get_lectures()
     return render_template("faculty/attendance.html", 
-                          faculty=faculty, subjects=subjects, lectures=lectures)
+                          faculty=faculty, subjects=subjects, lectures=lectures, datetime=datetime)
 
 
 @faculty_bp.route("/analytics")
@@ -121,7 +131,8 @@ def freports():
                           faculty=faculty,
                           subjects=subjects,
                           students=students,
-                          attendance_data=attendance_data)
+                          attendance_data=attendance_data,
+                          datetime=datetime)
 
 
 @faculty_bp.route("/timetable")

@@ -41,7 +41,8 @@ def generate_attendance_weekly_chart(attendance_data):
     ax.set_xlabel('Day of Week', fontweight='bold')
     ax.set_ylabel('Number of Students Present', fontweight='bold')
     ax.set_title('Weekly Attendance Report', fontweight='bold', fontsize=14)
-    ax.set_ylim(0, max(counts) * 1.1 if counts else 10)
+    max_count = max(counts) if counts else 0
+    ax.set_ylim(0, max(max_count * 1.1, 10))  # Ensure minimum range of 10
     ax.grid(axis='y', alpha=0.3)
     
     plt.tight_layout()

@@ -259,11 +259,33 @@ def parent_profile():
     # Calculate average attendance
     avg_attendance = round(total_attendance / len(children_details), 2) if children_details else 0
     
+    # Get first child's detailed info for the profile section
+    first_student = None
+    department = None
+    division = None
+    semester = None
+    
+    if children_details:
+        first_child = children_details[0]
+        first_student = first_child.get('student', {})
+        # Get additional details from DataHelper
+        if first_student:
+            department = {'dept_name': first_student.get('dept_name', 'N/A')}
+            division = {'division_name': first_student.get('division_name', 'N/A')}
+            semester = {
+                'semester_no': first_student.get('semester_no', 'N/A'),
+                'academic_year': first_student.get('academic_year', 'N/A')
+            }
+    
     return render_template("parent/profile.html",
                          title="Parent Profile",
                          context=context,
                          parent=parent_user,
                          children=children_details,
+                         student=first_student,
+                         department=department,
+                         division=division,
+                         semester=semester,
                          avg_attendance=avg_attendance,
                          total_alerts=len(all_alerts),
                          all_alerts=all_alerts)

@@ -88,30 +88,38 @@
                 <h2 class="profile-card-title">
                     <i class="fas fa-user-graduate me-2"></i>Student Information
                 </h2>
+                {% if student %}
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-user"></i>Student Name</span>
-                    <span class="info-value">{{ student.name }}</span>
+                    <span class="info-value">{{ student.name or student.get('name', 'N/A') }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-id-badge"></i>Enrollment No</span>
-                    <span class="info-value">{{ student.enrollment_no }}</span>
+                    <span class="info-value">{{ student.enrollment_no or student.get('enrollment_no', 'N/A') }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-hashtag"></i>Roll Number</span>
-                    <span class="info-value">{{ student.roll_no }}</span>
+                    <span class="info-value">{{ student.roll_no or student.get('roll_no', 'N/A') }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-building"></i>Department</span>
-                    <span class="info-value">{{ department.dept_name }}</span>
+                    <span class="info-value">{{ department.dept_name if department else 'N/A' }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-users"></i>Division</span>
-                    <span class="info-value">{{ division.division_name }}</span>
+                    <span class="info-value">{{ division.division_name if division else 'N/A' }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-book"></i>Semester</span>
-                    <span class="info-value">{{ semester.semester_no }} ({{ semester.academic_year }})</span>
+                    <span class="info-value">{{ semester.semester_no if semester else 'N/A' }} ({{
+                        semester.academic_year if semester else 'N/A' }})</span>
                 </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-info-circle mb-2"></i>
+                    <p>No student information available</p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

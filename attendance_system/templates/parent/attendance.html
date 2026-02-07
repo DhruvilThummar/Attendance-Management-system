@@ -91,16 +91,17 @@
                         <div class="card-body">
                             <div class="text-center py-4">
                                 <div class="display-1 fw-bold text-primary mb-3">
-                                    {{ overall_attendance.percentage }}%
+                                    {{ overall_attendance.get('percentage', 0) }}%
                                 </div>
                                 <div class="progress bg-light mb-3" style="height: 30px;">
                                     <div class="progress-bar bg-success"
-                                        style="width: {{ overall_attendance.percentage }}%;">
+                                        style="width: {{ overall_attendance.get('percentage', 0) }}%;">
                                     </div>
                                 </div>
                                 <small class="text-muted">
-                                    <i class="bi bi-check-circle"></i> {{ overall_attendance.attended_lectures }} of {{
-                                    overall_attendance.total_lectures }} lectures attended
+                                    <i class="bi bi-check-circle"></i> {{ overall_attendance.get('attended_lectures', 0)
+                                    }} of {{
+                                    overall_attendance.get('total_lectures', 0) }} lectures attended
                                 </small>
                             </div>
                         </div>
@@ -114,11 +115,11 @@
                         </div>
                         <div class="card-body">
                             <div class="text-center py-3">
-                                {% if overall_attendance.percentage >= 85 %}
+                                {% if overall_attendance.get('percentage', 0) >= 85 %}
                                 <i class="bi bi-check-circle-fill display-1 text-success"></i>
                                 <p class="mt-3 fw-bold">Excellent Attendance</p>
                                 <small class="text-muted">Keep up the great work!</small>
-                                {% elif overall_attendance.percentage >= 75 %}
+                                {% elif overall_attendance.get('percentage', 0) >= 75 %}
                                 <i class="bi bi-exclamation-circle-fill display-1 text-warning"></i>
                                 <p class="mt-3 fw-bold">Good Attendance</p>
                                 <small class="text-muted">Maintain current pace</small>
