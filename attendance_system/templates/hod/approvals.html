@@ -1,0 +1,126 @@
+{% extends 'hod/hbase.html' %}
+
+{% block title %}Pending Approvals{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-user-check me-2"></i>Pending Approvals</h3>
+                    <p class="text-muted mb-0">Review and approve Faculty, Students, and Parents in your department</p>
+                </div>
+                <div class="card-body">
+                    {% if pending_users %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Mobile</th>
+                                    <th>Registered Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in pending_users %}
+                                <tr id="user-{{ user.user_id }}">
+                                    <td>{{ user.user_id }}</td>
+                                    <td><strong>{{ user.name }}</strong></td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if user.role.role_name == 'FACULTY' %}bg-primary
+                                            {% elif user.role.role_name == 'STUDENT' %}bg-success
+                                            {% else %}bg-warning{% endif %}">
+                                            {{ user.role.role_name }}
+                                        </span>
+                                    </td>
+                                    <td>{{ user.mobile or 'N/A' }}</td>
+                                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success approve-btn" data-id="{{ user.user_id }}"
+                                            data-name="{{ user.name }}" data-role="{{ user.role.role_name }}">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                        <button class="btn btn-sm btn-danger reject-btn" data-id="{{ user.user_id }}"
+                                            data-name="{{ user.name }}" data-role="{{ user.role.role_name }}">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>No pending approvals at this time.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Approve button handlers
+        document.querySelectorAll('.approve-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const userId = this.dataset.id;
+                const userName = this.dataset.name;
+                const userRole = this.dataset.role;
+
+                if (confirm(`Approve ${userRole} "${userName}"?`)) {
+                    fetch(`/hod/approve/user/${userId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                document.getElementById(`user-${userId}`).remove();
+                            } else {
+                                alert('Error: ' + data.message);
+                            }
+                        })
+                        .catch(error => alert('Error: ' + error));
+                }
+            });
+        });
+
+        // Reject button handlers
+        document.querySelectorAll('.reject-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const userId = this.dataset.id;
+                const userName = this.dataset.name;
+                const userRole = this.dataset.role;
+
+                if (confirm(`Reject and remove ${userRole} "${userName}"? This cannot be undone!`)) {
+                    fetch(`/hod/reject/user/${userId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                document.getElementById(`user-${userId}`).remove();
+                            } else {
+                                alert('Error: ' + data.message);
+                            }
+                        })
+                        .catch(error => alert('Error: ' + error));
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

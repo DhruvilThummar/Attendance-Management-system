@@ -1,5 +1,6 @@
 """Faculty routes - Attendance, Analytics, Reports, Timetable, Profile"""
 from flask import Blueprint, render_template, send_file, request, jsonify
+from models.user import db, User
 from services.data_helper import DataHelper
 from services.chart_helper import (
     generate_attendance_weekly_chart,
@@ -195,3 +196,52 @@ def download_report():
         as_attachment=True,
         download_name=f'attendance_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
     )
+
+
+@faculty_bp.route("/approvals")
+def faculty_approvals():
+    """View pending student and parent approvals"""
+    faculty = DataHelper.get_faculty()
+    
+    # Get pending students and parents
+    pending_users = User.query.filter(
+        User.is_approved == False,
+        User.role_id.in_([5, 6])  # STUDENT=5, PARENT=6
+    ).all()
+    
+    return render_template("faculty/approvals.html",
+                          title="Pending Approvals",
+                          faculty=faculty,
+                          pending_users=pending_users)
+
+
+@faculty_bp.route("/approve/user/<int:user_id>", methods=['POST'])
+def faculty_approve_user(user_id):
+    """Approve a student or parent"""
+    try:
+        user = User.query.get(user_id)
+        if user and user.role_id in [5, 6]:  # STUDENT, PARENT
+            user.is_approved = True
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'{user.role.role_name} "{user.name}" approved successfully'})
+        return jsonify({'success': False, 'message': 'User not found or invalid role'}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@faculty_bp.route("/reject/user/<int:user_id>", methods=['POST'])
+def faculty_reject_user(user_id):
+    """Reject/Delete a user"""
+    try:
+        user = User.query.get(user_id)
+        if user:
+            user_name = user.name
+            user_role = user.role.role_name
+            db.session.delete(user)
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'{user_role} "{user_name}" rejected and removed'})
+        return jsonify({'success': False, 'message': 'User not found'}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500

@@ -1,8 +1,10 @@
 """
 Super Admin routes - System-wide Dashboard and Administration
 """
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from services.data_helper import DataHelper
+from models.user import db
+from models.college import College
 from services.chart_helper import (
     generate_role_distribution_chart,
     generate_department_comparison_chart,
@@ -29,6 +31,9 @@ def sudashboard():
     total_students = DataHelper.get_total_students_count()
     total_faculty = DataHelper.get_total_faculty_count()
     total_departments = DataHelper.get_total_departments_count()
+    
+    # Get pending approvals count
+    pending_colleges_count = College.query.filter_by(is_approved=False).count()
     
     # Get recent activities
     recent_registrations = DataHelper.get_recent_users(limit=5)
@@ -95,6 +100,7 @@ def sudashboard():
                           total_students=total_students,
                           total_faculty=total_faculty,
                           total_departments=total_departments,
+                          pending_colleges_count=pending_colleges_count,
                           recent_registrations=recent_registrations,
                           charts=charts)
 
@@ -261,6 +267,60 @@ def superadmin_profile():
     """Super Admin Profile"""
     context = _get_superadmin_context()
     
+    # Get system statistics
+    system_stats = {
+        'total_colleges': DataHelper.get_total_colleges_count(),
+        'total_users': DataHelper.get_total_users_count(),
+        'active_admins': DataHelper.get_active_admins_count(),
+        'last_login': None  # Placeholder
+    }
+    
     return render_template("superadmin/profile.html",
                           title="Super Admin Profile",
-                          context=context)
+                          context=context,
+                          system_stats=system_stats)
+
+
+@superadmin_bp.route("/approvals")
+def approvals():
+    """View pending college approvals"""
+    context = _get_superadmin_context()
+    
+    # Get pending colleges
+    pending_colleges = College.query.filter_by(is_approved=False).all()
+    
+    return render_template("superadmin/approvals.html",
+                          title="Pending Approvals",
+                          context=context,
+                          pending_colleges=pending_colleges)
+
+
+@superadmin_bp.route("/approve/college/<int:college_id>", methods=['POST'])
+def approve_college(college_id):
+    """Approve a college"""
+    try:
+        college = College.query.get(college_id)
+        if college:
+            college.is_approved = True
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'College "{college.college_name}" approved successfully'})
+        return jsonify({'success': False, 'message': 'College not found'}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@superadmin_bp.route("/reject/college/<int:college_id>", methods=['POST'])
+def reject_college(college_id):
+    """Reject/Delete a college"""
+    try:
+        college = College.query.get(college_id)
+        if college:
+            college_name = college.college_name
+            db.session.delete(college)
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'College "{college_name}" rejected and removed'})
+        return jsonify({'success': False, 'message': 'College not found'}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500

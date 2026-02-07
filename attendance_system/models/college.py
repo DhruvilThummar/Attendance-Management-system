@@ -18,6 +18,7 @@ class College(db.Model):
     email = db.Column(db.String(120))
     phone = db.Column(db.String(20))
     website = db.Column(db.String(255))
+    is_approved = db.Column(db.Boolean, default=False)
     
     # Relationships
     users = db.relationship('User', back_populates='college', cascade='all, delete-orphan')

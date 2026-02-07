@@ -1,0 +1,117 @@
+{% extends 'superadmin/subase.html' %}
+
+{% block title %}Pending Approvals{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-check-circle me-2"></i>Pending College Approvals</h3>
+                    <p class="text-muted mb-0">Review and approve new college registrations</p>
+                </div>
+                <div class="card-body">
+                    {% if pending_colleges %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>College ID</th>
+                                    <th>College Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Address</th>
+                                    <th>Registered Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for college in pending_colleges %}
+                                <tr id="college-{{ college.college_id }}">
+                                    <td>{{ college.college_id }}</td>
+                                    <td><strong>{{ college.college_name }}</strong></td>
+                                    <td>{{ college.email or 'N/A' }}</td>
+                                    <td>{{ college.phone or 'N/A' }}</td>
+                                    <td>{{ college.address or 'N/A' }}</td>
+                                    <td>{{ college.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success approve-btn"
+                                            data-id="{{ college.college_id }}" data-name="{{ college.college_name }}">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                        <button class="btn btn-sm btn-danger reject-btn"
+                                            data-id="{{ college.college_id }}" data-name="{{ college.college_name }}">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>No pending college approvals at this time.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Approve button handlers
+        document.querySelectorAll('.approve-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const collegeId = this.dataset.id;
+                const collegeName = this.dataset.name;
+
+                if (confirm(`Approve college "${collegeName}"?`)) {
+                    fetch(`/superadmin/approve/college/${collegeId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                document.getElementById(`college-${collegeId}`).remove();
+                            } else {
+                                alert('Error: ' + data.message);
+                            }
+                        })
+                        .catch(error => alert('Error: ' + error));
+                }
+            });
+        });
+
+        // Reject button handlers
+        document.querySelectorAll('.reject-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const collegeId = this.dataset.id;
+                const collegeName = this.dataset.name;
+
+                if (confirm(`Reject and delete college "${collegeName}"? This cannot be undone!`)) {
+                    fetch(`/superadmin/reject/college/${collegeId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                document.getElementById(`college-${collegeId}`).remove();
+                            } else {
+                                alert('Error: ' + data.message);
+                            }
+                        })
+                        .catch(error => alert('Error: ' + error));
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

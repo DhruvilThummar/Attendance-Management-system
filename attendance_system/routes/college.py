@@ -1,9 +1,9 @@
 """
 College Admin routes - Dashboard, Departments, Divisions, Faculty, Students, Analytics, Settings
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from models.division import Division
-from models.user import db
+from models.user import db, User
 from services.data_helper import DataHelper
 from services.chart_helper import (
     generate_department_comparison_chart,
@@ -230,3 +230,52 @@ def college_settings():
     return render_template("college/settings.html",
                          title="College Settings",
                          college=college)
+
+
+@college_bp.route("/approvals")
+def college_approvals():
+    """View pending faculty and HOD approvals"""
+    college = DataHelper.get_college()
+    
+    # Get pending faculty and HOD users
+    pending_users = User.query.filter(
+        User.college_id == college['college_id'],
+        User.is_approved == False,
+        User.role_id.in_([3, 4])  # HOD=3, FACULTY=4
+    ).all()
+    
+    return render_template("college/approvals.html",
+                          title="Pending Approvals",
+                          college=college,
+                          pending_users=pending_users)
+
+
+@college_bp.route("/approve/user/<int:user_id>", methods=['POST'])
+def approve_user(user_id):
+    """Approve a faculty or HOD user"""
+    try:
+        user = User.query.get(user_id)
+        if user and user.role_id in [3, 4]:  # HOD or FACULTY
+            user.is_approved = True
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'User "{user.name}" approved successfully'})
+        return jsonify({'success': False, 'message': 'User not found or invalid role'}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@college_bp.route("/reject/user/<int:user_id>", methods=['POST'])
+def reject_user(user_id):
+    """Reject/Delete a user"""
+    try:
+        user = User.query.get(user_id)
+        if user:
+            user_name = user.name
+            db.session.delete(user)
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'User "{user_name}" rejected and removed'})
+        return jsonify({'success': False, 'message': 'User not found'}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500

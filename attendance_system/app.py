@@ -49,7 +49,19 @@ def load_logged_in_user():
 
 @app.context_processor
 def inject_user():
-    return dict(user=g.user)
+    user = g.user
+    # Provide safe fallback if user is None
+    if user is None:
+        user = type('User', (), {
+            'user_id': None,
+            'name': 'Guest',
+            'email': 'guest@example.com',
+            'mobile': None,
+            'avatar': None,
+            'is_approved': False,
+            'created_at': None
+        })()
+    return dict(user=user)
 
 # Create all database tables if they don't exist
 with app.app_context():

@@ -13,12 +13,12 @@
         <div class="row align-items-center">
             <div class="col-md-3 text-center">
                 <div class="avatar-upload">
-                    {% if user.avatar %}
+                    {% if user and user.avatar %}
                     <img src="{{ url_for('static', filename='uploads/' + user.avatar) }}" alt="Profile"
                         class="profile-avatar" id="avatarPreview">
                     {% else %}
                     <div class="profile-avatar-placeholder">
-                        {{ user.name[0].upper() }}
+                        {{ (user.name[0].upper() if user.name else 'S') if user else 'S' }}
                     </div>
                     {% endif %}
                     <label for="avatarInput" class="avatar-edit-btn">
@@ -28,7 +28,7 @@
                 </div>
             </div>
             <div class="col-md-9">
-                <h1 class="profile-name">{{ user.name }}</h1>
+                <h1 class="profile-name">{{ user.name if user else 'Student' }}</h1>
                 <p class="profile-role">
                     <i class="fas fa-user-graduate me-2"></i>Student
                     {% if user.is_approved %}
@@ -243,7 +243,8 @@
                 <form id="editProfileForm">
                     <div class="mb-3">
                         <label for="name" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="name" name="name" value="{{ user.name }}" required>
+                        <input type="text" class="form-control" id="name" name="name"
+                            value="{{ user.name if user else '' }}" required>
                     </div>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
