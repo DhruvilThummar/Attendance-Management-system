@@ -2,13 +2,20 @@
 Database Query Helper
 
 This module provides helper functions for routes to query data.
-Currently uses mock data, can be easily switched to real database queries.
 """
 
+import base64
+import io
 from collections import defaultdict
 from datetime import datetime
+from functools import lru_cache
 
+import matplotlib
+import numpy as np
 from sqlalchemy import case, func
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 from models import (
     AcademicCalendar,
@@ -32,7 +39,7 @@ from models.user import db
 
 
 class DataHelper:
-    """Helper class to get data - works with both mock and real database"""
+    """Helper class to get data from the database"""
 
     DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     DAY_MAP = {
@@ -52,6 +59,81 @@ class DataHelper:
         'student': 'STUDENT',
         'parent': 'PARENT'
     }
+
+    @staticmethod
+    def _np_mean(values):
+        if not values:
+            return 0.0
+        return float(np.mean(np.array(values, dtype=float)))
+
+    @staticmethod
+    def _plot_to_base64(fig):
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png', dpi=140)
+        plt.close(fig)
+        buffer.seek(0)
+        return base64.b64encode(buffer.read()).decode('ascii')
+
+    @staticmethod
+    @lru_cache(maxsize=64)
+    def _render_bar_chart_cached(labels, values, title, y_label, color):
+        fig, ax = plt.subplots(figsize=(6.4, 4.0))
+        x = np.arange(len(labels))
+        ax.bar(x, values, color=color)
+        ax.set_title(title)
+        ax.set_ylabel(y_label)
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels, rotation=25, ha='right')
+        ax.set_ylim(0, 100)
+        fig.tight_layout()
+        return DataHelper._plot_to_base64(fig)
+
+    @staticmethod
+    @lru_cache(maxsize=64)
+    def _render_line_chart_cached(labels, values, title, y_label, color):
+        fig, ax = plt.subplots(figsize=(6.4, 4.0))
+        x = np.arange(len(labels))
+        ax.plot(x, values, color=color, marker='o')
+        ax.set_title(title)
+        ax.set_ylabel(y_label)
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels, rotation=25, ha='right')
+        ax.set_ylim(0, 100)
+        fig.tight_layout()
+        return DataHelper._plot_to_base64(fig)
+
+    @staticmethod
+    @lru_cache(maxsize=64)
+    def _render_donut_chart_cached(labels, values, title, colors):
+        fig, ax = plt.subplots(figsize=(5.5, 4.0))
+        safe_values = np.array(values, dtype=float)
+        if np.sum(safe_values) <= 0:
+            safe_values = np.array([1.0])
+            labels = ("No data",)
+            colors = ("#cbd5f5",)
+        wedges, _ = ax.pie(
+            safe_values,
+            labels=labels,
+            colors=colors,
+            startangle=90,
+            wedgeprops={'width': 0.45, 'edgecolor': 'white'}
+        )
+        ax.set_title(title)
+        ax.axis('equal')
+        fig.tight_layout()
+        return DataHelper._plot_to_base64(fig)
+
+    @staticmethod
+    def _render_bar_chart(labels, values, title, y_label, color):
+        return DataHelper._render_bar_chart_cached(tuple(labels), tuple(values), title, y_label, color)
+
+    @staticmethod
+    def _render_line_chart(labels, values, title, y_label, color):
+        return DataHelper._render_line_chart_cached(tuple(labels), tuple(values), title, y_label, color)
+
+    @staticmethod
+    def _render_donut_chart(labels, values, title, colors):
+        return DataHelper._render_donut_chart_cached(tuple(labels), tuple(values), title, tuple(colors))
 
     @staticmethod
     def _safe_attr(obj, attr_name, default=''):
@@ -519,9 +601,9 @@ class DataHelper:
         attendance_records = DataHelper.get_attendance_records(dept_id=dept_id)
 
         avg_attendance = round(
-            sum(record['attendance_percentage'] for record in attendance_records) / len(attendance_records),
+            DataHelper._np_mean([record['attendance_percentage'] for record in attendance_records]),
             2
-        ) if attendance_records else 0.0
+        )
 
         return {
             'total_faculty': len(faculty),
@@ -719,7 +801,7 @@ class DataHelper:
                 week_filtered = [r for r in records if r.get('last_updated', today) >= week_start]
                 
                 if week_filtered:
-                    avg_pct = sum(r['attendance_percentage'] for r in week_filtered) / len(week_filtered)
+                    avg_pct = DataHelper._np_mean([r['attendance_percentage'] for r in week_filtered])
                     weekly_data.append({
                         'week': f'Week {4 - week_num}',
                         'start_date': week_start.strftime('%Y-%m-%d'),
@@ -742,7 +824,7 @@ class DataHelper:
                 month_filtered = [r for r in records if r.get('last_updated', today) >= month_start]
                 
                 if month_filtered:
-                    avg_pct = sum(r['attendance_percentage'] for r in month_filtered) / len(month_filtered)
+                    avg_pct = DataHelper._np_mean([r['attendance_percentage'] for r in month_filtered])
                     monthly_data.append({
                         'month': month_start.strftime('%B %Y'),
                         'average_percentage': round(avg_pct, 2),
@@ -855,7 +937,7 @@ class DataHelper:
             }
         ]
         if attendance_records:
-            avg_attendance = sum(r['attendance_percentage'] for r in attendance_records) / len(attendance_records)
+            avg_attendance = DataHelper._np_mean([r['attendance_percentage'] for r in attendance_records])
         else:
             avg_attendance = 0
 
@@ -886,7 +968,7 @@ class DataHelper:
                 'poor_attendance_count': 0
             }
         
-        avg_attendance = sum(r['attendance_percentage'] for r in records) / len(records)
+        avg_attendance = DataHelper._np_mean([r['attendance_percentage'] for r in records])
         total_lectures = sum(r.get('total_lectures', 0) for r in records)
         good_count = sum(1 for r in records if r['attendance_percentage'] >= 85)
         poor_count = sum(1 for r in records if r['attendance_percentage'] < 75)
@@ -910,7 +992,7 @@ class DataHelper:
             dept_records = [r for r in attendance_records if r['dept_id'] == dept['dept_id']]
             
             if dept_records:
-                avg_attendance = sum(r['attendance_percentage'] for r in dept_records) / len(dept_records)
+                avg_attendance = DataHelper._np_mean([r['attendance_percentage'] for r in dept_records])
             else:
                 avg_attendance = 0
             
@@ -928,31 +1010,242 @@ class DataHelper:
         
         return sorted(dept_performance, key=lambda x: x['average_attendance'], reverse=True)
 
+    @staticmethod
+    def get_day_wise_attendance():
+        """Aggregate attendance percentages by day of week"""
+        lecture_stats = db.session.query(
+            Lecture.lecture_date.label('lecture_date'),
+            func.count(Attendance.attendance_id).label('total'),
+            func.sum(case((Attendance.status_id == 1, 1), else_=0)).label('present')
+        ).join(Attendance, Attendance.lecture_id == Lecture.lecture_id) \
+            .group_by(Lecture.lecture_date).all()
 
-# Transition helper comments for database migration
-MIGRATION_NOTES = """
-To migrate from mock data to real database:
+        day_map = defaultdict(list)
+        for row in lecture_stats:
+            total = row.total or 0
+            present = row.present or 0
+            percentage = (present / total) * 100 if total else 0.0
+            day_name = row.lecture_date.strftime('%A')
+            day_map[day_name].append(percentage)
 
-1. In routes, replace:
-   from services.mock_data import MockDataService
-   mock_data = MockDataService.get_data()
-   
-   With:
-   from models import User, Student, Faculty, etc.
-   user = User.query.get(user_id)
+        day_stats = []
+        for day_name in DataHelper.DAY_ORDER:
+            day_values = day_map.get(day_name, [])
+            day_stats.append({
+                'day': day_name,
+                'percentage': round(DataHelper._np_mean(day_values), 2)
+            })
 
-2. Replace DataHelper calls:
-   department = DataHelper.get_department(1)
-   
-   With:
-   from models import Department
-   department = Department.query.get(1)
+        return day_stats
 
-3. Update any mock data filtering to use SQLAlchemy queries:
-   students = DataHelper.get_students(div_id=1)
-   
-   With:
-   students = Student.query.filter_by(division_id=1).all()
+    @staticmethod
+    def get_class_wise_attendance():
+        """Aggregate attendance by division"""
+        records = DataHelper.get_attendance_records()
+        divisions = defaultdict(list)
+        for record in records:
+            divisions[record['division_name']].append(record['attendance_percentage'])
 
-4. Test each route after migration to ensure data is correctly retrieved.
-"""
+        class_stats = []
+        for division_name, values in divisions.items():
+            class_stats.append({
+                'division': division_name,
+                'percentage': round(DataHelper._np_mean(values), 2)
+            })
+
+        return sorted(class_stats, key=lambda item: item['division'])
+
+    @staticmethod
+    def get_faculty_analytics_payload():
+        """Return analytics data and charts for faculty analytics view"""
+        class_stats = DataHelper.get_class_wise_attendance()
+        day_stats = DataHelper.get_day_wise_attendance()
+
+        class_labels = [item['division'] for item in class_stats]
+        class_values = [item['percentage'] for item in class_stats]
+        day_labels = [item['day'] for item in day_stats]
+        day_values = [item['percentage'] for item in day_stats]
+
+        charts = {
+            'class_chart': DataHelper._render_bar_chart(
+                class_labels,
+                class_values,
+                'Class-wise Attendance Overview',
+                'Attendance %',
+                '#667eea'
+            ),
+            'day_chart': DataHelper._render_line_chart(
+                day_labels,
+                day_values,
+                'Day-wise Attendance (Weekly Trend)',
+                'Attendance %',
+                '#ed8936'
+            )
+        }
+
+        return {
+            'class_stats': class_stats,
+            'day_stats': day_stats,
+            'charts': charts
+        }
+
+    @staticmethod
+    def get_attendance_trend():
+        """Attendance trend over time based on lecture dates"""
+        lecture_stats = db.session.query(
+            Lecture.lecture_date.label('lecture_date'),
+            func.count(Attendance.attendance_id).label('total'),
+            func.sum(case((Attendance.status_id == 1, 1), else_=0)).label('present')
+        ).join(Attendance, Attendance.lecture_id == Lecture.lecture_id) \
+            .group_by(Lecture.lecture_date) \
+            .order_by(Lecture.lecture_date.asc())
+
+        dates = []
+        values = []
+        for row in lecture_stats:
+            total = row.total or 0
+            present = row.present or 0
+            percentage = (present / total) * 100 if total else 0.0
+            dates.append(row.lecture_date.strftime('%Y-%m-%d'))
+            values.append(round(percentage, 2))
+
+        return dates, values
+
+    @staticmethod
+    def get_college_attendance_records():
+        """Detailed attendance records for college analytics"""
+        rows = db.session.query(
+            Lecture.lecture_date.label('lecture_date'),
+            Department.dept_id.label('dept_id'),
+            Department.dept_name.label('dept_name'),
+            Division.division_id.label('div_id'),
+            Division.division_name.label('div_name'),
+            func.count(Attendance.attendance_id).label('total'),
+            func.sum(case((Attendance.status_id == 1, 1), else_=0)).label('present'),
+            func.sum(case((Attendance.status_id == 2, 1), else_=0)).label('absent')
+        ).join(Attendance, Attendance.lecture_id == Lecture.lecture_id) \
+            .join(Student, Attendance.student_id == Student.student_id) \
+            .join(Division, Student.division_id == Division.division_id) \
+            .join(Department, Student.dept_id == Department.dept_id) \
+            .group_by(
+                Lecture.lecture_date,
+                Department.dept_id,
+                Department.dept_name,
+                Division.division_id,
+                Division.division_name
+            ).order_by(Lecture.lecture_date.desc()).all()
+
+        records = []
+        for row in rows:
+            total = row.total or 0
+            present = row.present or 0
+            absent = row.absent or 0
+            present_percentage = (present / total) * 100 if total else 0.0
+            records.append({
+                'date': row.lecture_date.strftime('%Y-%m-%d'),
+                'dept_id': row.dept_id,
+                'dept_name': row.dept_name,
+                'div_id': row.div_id,
+                'div_name': row.div_name,
+                'present': present,
+                'absent': absent,
+                'late': 0,
+                'total': total,
+                'present_percentage': round(present_percentage, 2)
+            })
+
+        return records
+
+    @staticmethod
+    def get_college_attendance_stats():
+        """Summary stats for college analytics"""
+        total_present = Attendance.query.filter(Attendance.status_id == 1).count()
+        total_absent = Attendance.query.filter(Attendance.status_id == 2).count()
+        total = total_present + total_absent
+        total_days = db.session.query(func.count(func.distinct(Lecture.lecture_date))).scalar() or 0
+
+        present_pct = (total_present / total) * 100 if total else 0.0
+        absent_pct = (total_absent / total) * 100 if total else 0.0
+
+        return {
+            'present_count': total_present,
+            'absent_count': total_absent,
+            'late_count': 0,
+            'total_days': total_days,
+            'present_percentage': round(present_pct, 2),
+            'absent_percentage': round(absent_pct, 2),
+            'late_percentage': 0.0
+        }
+
+    @staticmethod
+    def get_college_attendance_analytics():
+        """Analytics payload for college attendance page"""
+        stats = DataHelper.get_college_attendance_stats()
+        attendance_records = DataHelper.get_college_attendance_records()
+        dept_stats = DataHelper.get_department_performance()
+
+        div_groups = defaultdict(list)
+        for record in DataHelper.get_attendance_records():
+            div_groups[record['division_name']].append(record['attendance_percentage'])
+        div_labels = list(div_groups.keys())
+        div_values = [round(DataHelper._np_mean(values), 2) for values in div_groups.values()]
+
+        trend_dates, trend_values = DataHelper.get_attendance_trend()
+
+        charts = {
+            'attendance_distribution': DataHelper._render_donut_chart(
+                ['Present', 'Absent', 'Late'],
+                [stats['present_count'], stats['absent_count'], stats['late_count']],
+                'Attendance Distribution',
+                ['#51cf66', '#ff6b6b', '#ffd93d']
+            ),
+            'dept_attendance': DataHelper._render_bar_chart(
+                [d['dept_name'] for d in dept_stats],
+                [d['average_attendance'] for d in dept_stats],
+                'Department-wise Attendance',
+                'Attendance %',
+                '#51cf66'
+            ),
+            'div_attendance': DataHelper._render_bar_chart(
+                div_labels,
+                div_values,
+                'Division-wise Attendance',
+                'Attendance %',
+                '#4dabf7'
+            ),
+            'trend': DataHelper._render_line_chart(
+                trend_dates,
+                trend_values,
+                'Daily Attendance Trend',
+                'Attendance %',
+                '#667eea'
+            )
+        }
+
+        return {
+            'stats': stats,
+            'attendance_records': attendance_records,
+            'charts': charts
+        }
+
+    @staticmethod
+    def get_superadmin_charts(dept_performance):
+        """Charts for superadmin analytics"""
+        trend_dates, trend_values = DataHelper.get_attendance_trend()
+
+        return {
+            'attendance_trend': DataHelper._render_line_chart(
+                trend_dates,
+                trend_values,
+                'Attendance Trend',
+                'Attendance %',
+                '#2563eb'
+            ),
+            'department_comparison': DataHelper._render_bar_chart(
+                [d['dept_name'] for d in dept_performance],
+                [d['average_attendance'] for d in dept_performance],
+                'Department Comparison',
+                'Attendance %',
+                '#38bdf8'
+            )
+        }

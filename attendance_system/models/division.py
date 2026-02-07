@@ -13,6 +13,9 @@ class Division(db.Model):
     division_id = db.Column(db.Integer, primary_key=True)
     dept_id = db.Column(db.Integer, db.ForeignKey('department.dept_id', ondelete='CASCADE'), nullable=False)
     division_name = db.Column(db.String(50), nullable=False)
+    semester_id = db.Column(db.Integer, db.ForeignKey('semester.semester_id', ondelete='SET NULL'))
+    capacity = db.Column(db.Integer)
+    class_teacher = db.Column(db.String(100))
     
     # Relationships
     department = db.relationship('Department', back_populates='divisions')

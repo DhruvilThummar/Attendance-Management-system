@@ -158,6 +158,59 @@
         </div>
     </div>
 
+    <!-- Charts Section -->
+    <div class="row mb-4">
+        {% if charts.weekly_attendance %}
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">Weekly Attendance Report</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="chart-container">
+                        <img src="{{ charts.weekly_attendance }}" alt="Weekly Attendance" class="img-fluid"
+                            style="max-width: 100%; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if charts.monthly_trend %}
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">Monthly Attendance Trend</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="chart-container">
+                        <img src="{{ charts.monthly_trend }}" alt="Monthly Trend" class="img-fluid"
+                            style="max-width: 100%; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if charts.subject_attendance %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="card-title mb-0">Subject-wise Attendance Overview</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="chart-container">
+                        <img src="{{ charts.subject_attendance }}" alt="Subject Attendance" class="img-fluid"
+                            style="max-width: 100%; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Subject-wise Attendance -->
     <div class="row">
         <div class="col-12">

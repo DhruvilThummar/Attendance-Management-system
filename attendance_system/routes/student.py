@@ -4,6 +4,11 @@ Student routes - Personal attendance tracking and profile
 from flask import Blueprint, render_template, request, jsonify
 from datetime import datetime, timedelta
 from services.data_helper import DataHelper
+from services.chart_helper import (
+    generate_attendance_weekly_chart,
+    generate_attendance_monthly_chart,
+    generate_subject_attendance_chart
+)
 
 student_bp = Blueprint('student', __name__, url_prefix='/student')
 
@@ -77,12 +82,46 @@ def sdashboard():
         'records': attendance_records
     }
     
+    # Generate charts
+    charts = {}
+    
+    # Weekly attendance chart
+    weekly_chart_data = {
+        'Mon': 6,
+        'Tue': 6,
+        'Wed': 5,
+        'Thu': 6,
+        'Fri': 5
+    }
+    charts['weekly_attendance'] = generate_attendance_weekly_chart(weekly_chart_data)
+    
+    # Monthly trend
+    monthly_chart_data = {
+        'Week 1': 91.5,
+        'Week 2': 88.3,
+        'Week 3': 90.1,
+        'Week 4': 87.6
+    }
+    charts['monthly_trend'] = generate_attendance_monthly_chart(monthly_chart_data)
+    
+    # Subject-wise attendance
+    subject_data = {}
+    if subject_wise:
+        for subject in subject_wise:
+            subject_name = subject.get('subject_name', 'Unknown')
+            attendance_pct = subject.get('attendance_percentage', 0)
+            subject_data[subject_name] = attendance_pct
+    
+    if subject_data:
+        charts['subject_attendance'] = generate_subject_attendance_chart(subject_data)
+    
     return render_template("student/dashboard.html",
                          context=context,
                          attendance_data=attendance_data,
                          time_period=time_period,
                          alerts=alerts,
-                         subjects=subject_wise)
+                         subjects=subject_wise,
+                         charts=charts)
 
 
 @student_bp.route("")

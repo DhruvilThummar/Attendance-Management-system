@@ -14,6 +14,10 @@ class College(db.Model):
     college_id = db.Column(db.Integer, primary_key=True)
     college_name = db.Column(db.String(150), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    address = db.Column(db.String(255))
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(20))
+    website = db.Column(db.String(255))
     
     # Relationships
     users = db.relationship('User', back_populates='college', cascade='all, delete-orphan')

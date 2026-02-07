@@ -28,7 +28,7 @@
                         </div>
                         <div class="stat-content">
                             <h5>Avg. Attendance</h5>
-                            <h3>82%</h3>
+                            <h3>{{ avg_attendance }}%</h3>
                         </div>
                     </div>
                 </div>
@@ -39,7 +39,13 @@
                         </div>
                         <div class="stat-content">
                             <h5>Best Class</h5>
-                            <h3>ECE-A (92%)</h3>
+                            <h3>
+                                {% if best_class %}
+                                {{ best_class.division }} ({{ best_class.percentage }}%)
+                                {% else %}
+                                --
+                                {% endif %}
+                            </h3>
                         </div>
                     </div>
                 </div>
@@ -50,7 +56,13 @@
                         </div>
                         <div class="stat-content">
                             <h5>Lowest Day</h5>
-                            <h3>Saturday (75%)</h3>
+                            <h3>
+                                {% if lowest_day %}
+                                {{ lowest_day.day }} ({{ lowest_day.percentage }}%)
+                                {% else %}
+                                --
+                                {% endif %}
+                            </h3>
                         </div>
                     </div>
                 </div>
@@ -58,30 +70,56 @@
 
             <!-- Charts Row (Side by Side) -->
             <div class="row mb-4">
-                <!-- Class-wise Analytics -->
+                <!-- Weekly Attendance Chart -->
                 <div class="col-lg-6 mb-4">
-                    <div class="card border-0 shadow-sm mb-4">
+                    {% if charts.weekly_attendance %}
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold">Weekly Attendance Report</h5>
+                        </div>
                         <div class="card-body p-4">
-                            <h5 class="card-title fw-bold mb-4">Class-wise Attendance Overview</h5>
                             <div class="chart-container">
-                                <canvas id="classChart"></canvas>
+                                <img class="img-fluid" src="{{ charts.weekly_attendance }}"
+                                    alt="Weekly attendance chart" />
                             </div>
                         </div>
                     </div>
+                    {% endif %}
                 </div>
 
-                <!-- Day-wise Analytics -->
+                <!-- Monthly Trend Chart -->
                 <div class="col-lg-6 mb-4">
-                    <div class="card border-0 shadow-sm h-100">
+                    {% if charts.monthly_trend %}
+                    <div class="card border-0 shadow-sm">
                         <div class="card-header bg-white py-3">
-                            <h5 class="mb-0 fw-bold">Day-wise Attendance (Weekly Trend)</h5>
+                            <h5 class="mb-0 fw-bold">Monthly Attendance Trend</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body p-4">
                             <div class="chart-container">
-                                <canvas id="dayChart"></canvas>
+                                <img class="img-fluid" src="{{ charts.monthly_trend }}" alt="Monthly trend chart" />
                             </div>
                         </div>
                     </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Subject Attendance Chart -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    {% if charts.subject_attendance %}
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold">Subject-wise Attendance Overview</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="chart-container">
+                                <img class="img-fluid" src="{{ charts.subject_attendance }}"
+                                    alt="Subject attendance chart" />
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -147,65 +185,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // Prepare data from Jinja2
-    const classLabels = JSON.parse('{{ class_stats|map(attribute="division")|list|tojson|safe }}');
-    const classData = JSON.parse('{{ class_stats|map(attribute="percentage")|list|tojson|safe }}');
-    const dayLabels = JSON.parse('{{ day_stats|map(attribute="day")|list|tojson|safe }}');
-    const dayData = JSON.parse('{{ day_stats|map(attribute="percentage")|list|tojson|safe }}');
-
-    // Class-wise Chart
-    const classCtx = document.getElementById('classChart').getContext('2d');
-    new Chart(classCtx, {
-        type: 'bar',
-        data: {
-            labels: classLabels,
-            datasets: [{
-                label: 'Attendance Percentage',
-                data: classData,
-                backgroundColor: 'rgba(102, 126, 234, 0.6)',
-                borderColor: 'rgba(102, 126, 234, 1)',
-                borderWidth: 1,
-                borderRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true, max: 100 }
-            }
-        }
-    });
-
-    // Day-wise Chart
-    const dayCtx = document.getElementById('dayChart').getContext('2d');
-    new Chart(dayCtx, {
-        type: 'line',
-        data: {
-            labels: dayLabels,
-            datasets: [{
-                label: 'Attendance Trend',
-                data: dayData,
-                fill: true,
-                backgroundColor: 'rgba(237, 137, 54, 0.1)',
-                borderColor: 'rgba(237, 137, 54, 1)',
-                tension: 0.4,
-                pointRadius: 4,
-                pointBackgroundColor: 'rgba(237, 137, 54, 1)'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true, max: 100 }
-            }
-        }
-    });
-</script>
 {% endblock %}

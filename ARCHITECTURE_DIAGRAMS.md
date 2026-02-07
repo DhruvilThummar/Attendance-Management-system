@@ -7,10 +7,17 @@
 │                      FLASK APPLICATION                          │
 │                        (app.py)                                 │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │                   MOCK DATA                              │  │
-│  │  • Users (6 types)                                       │  │
-│  │  • Departments, Divisions, Students, Faculty            │  │
-│  │  • Statistics & Analytics                               │  │
+│  │                 SQLALCHEMY MODELS                        │  │
+│  │  • user, college, department, division                   │  │
+│  │  • faculty, student, parent, subject                     │  │
+│  │  • timetable, lecture, attendance                        │  │
+│  │  • academic_calendar, proxy_lecture                      │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │                    DATA HELPERS                          │  │
+│  │  • services/data_helper.py                               │  │
+│  │  • DB queries + aggregation                              │  │
+│  │  • Matplotlib charts (server-side PNG)                   │  │
 │  └──────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
                                │
@@ -72,8 +79,8 @@ Client Request
     │
     ├─→ http://localhost:5000/faculty/download-report?type=monthly&dept=1&month=2024-01
     │   └─→ faculty_bp.route("/download-report") → download_report()
-    │       ├─→ generate_sample_attendance_data()
-    │       ├─→ create_attendance_csv()
+    │       ├─→ DataHelper.get_attendance_records()
+    │       ├─→ build CSV in-memory
     │       └─→ send_file(CSV)
     │
     └─→ 404 (Route not found)
@@ -104,74 +111,50 @@ Client Request
     ┌──────────────────────────────────────┐
     │ download_report() in faculty.py      │
     │ 1. Parse parameters                  │
-    │ 2. Validate input                    │
-    │ 3. Call generate_sample_attendance_  │
-    │    data(dept_id, year, month, type)  │
+    │ 2. Fetch attendance records (DB)     │
+    │ 3. Build CSV in-memory               │
     └──────────────────────────────────────┘
              │
              ↓
     ┌──────────────────────────────────────┐
-    │ Generate Attendance Data             │
-    │ • Get students for dept 1            │
-    │ • Create calendar for Jan 2024       │
-    │ • Generate attendance records        │
-    │ • Calculate statistics               │
+    │ DataHelper.get_attendance_records()  │
+    │ • Join student, lecture, subject     │
+    │ • Aggregate totals + present counts  │
+    │ • Calculate attendance percentage    │
     └──────────────────────────────────────┘
              │
              ↓
     ┌──────────────────────────────────────┐
     │ Create CSV                           │
     │ • Write headers                      │
-    │ • Write summary table                │
-    │ • Write detailed records             │
-    │ • Calculate percentages              │
-    │ • Determine eligibility status       │
+    │ • Write summary + detail rows        │
     └──────────────────────────────────────┘
              │
              ↓
-    ┌──────────────────────────────────────┐
-    │ Send File to Client                  │
-    │ Filename: Attendance_CSE_Monthly_    │
-    │           January_2024.csv           │
-    │                                      │
-    │ Content:                             │
-    │ - ATTENDANCE REPORT                  │
-    │ - Monthly Report - January 2024      │
-    │ - Department: CSE                    │
-    │ - Generated: 2024-01-15 10:30:45    │
-    │ (Empty row)                          │
-    │ - STUDENT ATTENDANCE SUMMARY         │
-    │ - Roll No, Name, Total, Present...   │
-    │ - 101, Raj Kumar, 20, 17, 3, 85%... │
-    │ (Empty row)                          │
-    │ - DETAILED DAILY ATTENDANCE          │
-    │ - Date, Roll No, Name, Status        │
-    │ - 2024-01-01, 101, Raj Kumar, PRES. │
-    │ ...                                  │
-    └──────────────────────────────────────┘
-             │
-             ↓
-    Download to Client's Computer
+    Send file to client
 ```
 
 ## Module Dependencies
 
 ```
 app.py
-  ├── Import: Flask, render_template, dotenv
-  ├── Define: Mock data (users, departments, etc.)
-  └── Import: routes/__init__.py
-      └── Import: All 8 blueprint modules
-          ├── routes/main.py
-          ├── routes/auth.py
-          ├── routes/superadmin.py
-          ├── routes/college.py
-          ├── routes/hod.py
-          ├── routes/faculty.py
-          │   └── Import: datetime, csv, io, random
-          ├── routes/student.py
-          └── routes/parent.py
-              └── Each imports: Flask, render_template
+    ├── Import: Flask, dotenv, SQLAlchemy
+    ├── Init: db + blueprints
+    └── Import: routes/__init__.py
+            └── Import: All 8 blueprint modules
+                    ├── routes/main.py
+                    ├── routes/auth.py
+                    ├── routes/superadmin.py
+                    ├── routes/college.py
+                    ├── routes/hod.py
+                    ├── routes/faculty.py
+                    │   └── Import: datetime, csv, io
+                    ├── routes/student.py
+                    └── routes/parent.py
+services/data_helper.py
+    ├── SQLAlchemy queries + aggregations
+    ├── NumPy for stats and data collation
+    └── Matplotlib for all charts (PNG)
 ```
 
 ## Access Control (Future Enhancement)
@@ -209,37 +192,20 @@ Super Admin (Logged In)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   USERS TABLE                           │
+│                   CORE TABLES                           │
 ├─────────────────────────────────────────────────────────┤
-│ id | name | email | password | role | created_at       │
-│ 1  | Raj  | raj@c | hash...  | STU  | 2023-08-15       │
+│ user, role, college, department, division               │
+│ faculty, student, parent, subject                       │
+│ timetable, lecture, attendance                          │
+│ academic_calendar, proxy_lecture                         │
 └─────────────────────────────────────────────────────────┘
               │
-              ├──→ ┌────────────────────────────┐
-              │    │   COLLEGES TABLE           │
-              │    │ id | name | address | ...  │
-              │    └────────────────────────────┘
-              │              │
-              │              └──→ ┌──────────────────┐
-              │                   │ DEPARTMENTS      │
-              │                   │ id|dept_name|... │
-              │                   └──────────────────┘
-              │                           │
-              │                           └──→ ┌──────────────┐
-              │                               │ DIVISIONS    │
-              │                               │ id|div_name..│
-              │                               └──────────────┘
-              │                                      │
-              └──────────────→ ┌────────────────────────────┐
-                               │   STUDENTS TABLE           │
-                               │ id|user_id|roll_no|div_id  │
-                               └────────────────────────────┘
-                                      │
-                                      └──→ ┌─────────────────────┐
-                                          │ ATTENDANCE TABLE    │
-                                          │ id|student_id|date  │
-                                          │ status|created_at   │
-                                          └─────────────────────┘
+              ├──→ department.college_id → college.college_id
+              ├──→ division.dept_id → department.dept_id
+              ├──→ student.user_id → user.user_id
+              ├──→ faculty.user_id → user.user_id
+              ├──→ attendance.student_id → student.student_id
+              └──→ lecture.timetable_id → timetable.timetable_id
 ```
 
 ## Performance Optimization Tips

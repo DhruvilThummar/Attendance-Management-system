@@ -36,6 +36,7 @@ class Subject(db.Model):
     subject_name = db.Column(db.String(120), nullable=False)
     subject_code = db.Column(db.String(20), unique=True)
     semester_id = db.Column(db.Integer, db.ForeignKey('semester.semester_id', ondelete='CASCADE'), nullable=False)
+    credits = db.Column(db.Integer)
     
     # Relationships
     department = db.relationship('Department', back_populates='subjects')

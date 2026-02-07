@@ -4,7 +4,6 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -99,7 +98,9 @@
                             </div>
                             <div class="card-body">
                                 <div class="chart-container-modern">
-                                    <canvas id="attendanceChart"></canvas>
+                                    <img class="img-fluid"
+                                        src="data:image/png;base64,{{ charts.attendance_distribution }}"
+                                        alt="Attendance distribution chart" />
                                 </div>
                             </div>
                         </div>
@@ -111,7 +112,8 @@
                             </div>
                             <div class="card-body">
                                 <div class="chart-container-modern">
-                                    <canvas id="deptAttendanceChart"></canvas>
+                                    <img class="img-fluid" src="data:image/png;base64,{{ charts.dept_attendance }}"
+                                        alt="Department attendance chart" />
                                 </div>
                             </div>
                         </div>
@@ -127,7 +129,8 @@
                             </div>
                             <div class="card-body">
                                 <div class="chart-container-modern">
-                                    <canvas id="divAttendanceChart"></canvas>
+                                    <img class="img-fluid" src="data:image/png;base64,{{ charts.div_attendance }}"
+                                        alt="Division attendance chart" />
                                 </div>
                             </div>
                         </div>
@@ -139,7 +142,8 @@
                             </div>
                             <div class="card-body">
                                 <div class="chart-container-modern">
-                                    <canvas id="trendChart"></canvas>
+                                    <img class="img-fluid" src="data:image/png;base64,{{ charts.trend }}"
+                                        alt="Attendance trend chart" />
                                 </div>
                             </div>
                         </div>
@@ -208,129 +212,6 @@
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/college-dashboard.js') }}"></script>
 <script>
-    let charts = {};
-
-    function initializeCharts() {
-        // Attendance Distribution Chart
-        const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
-        charts.attendance = new Chart(attendanceCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Present', 'Absent', 'Late'],
-                datasets: [{
-                    data: [
-                        Number('{{ stats.present_count }}'),
-                        Number('{{ stats.absent_count }}'),
-                        Number('{{ stats.late_count }}')
-                    ],
-                    backgroundColor: ['#51cf66', '#ff6b6b', '#ffd93d'],
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
-
-        // Department-wise Attendance
-        const deptCtx = document.getElementById('deptAttendanceChart').getContext('2d');
-        charts.dept = new Chart(deptCtx, {
-            type: 'bar',
-            data: {
-                labels: JSON.parse('{{ dept_labels | tojson | safe }}'),
-                datasets: [{
-                    label: 'Present %',
-                    data: JSON.parse('{{ dept_present | tojson | safe }}'),
-                    backgroundColor: '#51cf66'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true
-                    }
-                }
-            }
-        });
-
-        // Division-wise Attendance
-        const divCtx = document.getElementById('divAttendanceChart').getContext('2d');
-        charts.div = new Chart(divCtx, {
-            type: 'bar',
-            data: {
-                labels: JSON.parse('{{ div_labels | tojson | safe }}'),
-                datasets: [{
-                    label: 'Present %',
-                    data: JSON.parse('{{ div_present | tojson | safe }}'),
-                    backgroundColor: '#4dabf7'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true
-                    }
-                }
-            }
-        });
-
-        // Trend Chart
-        const trendCtx = document.getElementById('trendChart').getContext('2d');
-        charts.trend = new Chart(trendCtx, {
-            type: 'line',
-            data: {
-                labels: JSON.parse('{{ trend_dates | tojson | safe }}'),
-                datasets: [{
-                    label: 'Attendance %',
-                    data: JSON.parse('{{ trend_values | tojson | safe }}'),
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true
-                    }
-                }
-            }
-        });
-    }
-
     function updateAnalytics() {
         const selectedDept = localStorage.getItem('selectedDept');
         const selectedDiv = localStorage.getItem('selectedDiv');
@@ -362,7 +243,6 @@
 
     // Initialize charts on page load
     document.addEventListener('DOMContentLoaded', () => {
-        initializeCharts();
         updateAnalytics();
     });
 

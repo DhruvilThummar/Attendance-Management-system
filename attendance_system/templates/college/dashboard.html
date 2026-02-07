@@ -95,6 +95,57 @@
                     </div>
                 </div>
 
+                <!-- Charts Section -->
+                <div class="row mb-4">
+                    {% if charts.department_comparison %}
+                    <div class="col-12 mb-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white py-3">
+                                <h5 class="mb-0 fw-bold">Department-wise Student Distribution</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="chart-container">
+                                    <img src="{{ charts.department_comparison }}" alt="Department Comparison"
+                                        class="img-fluid" style="max-width: 100%; border-radius: 8px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if charts.class_strength %}
+                    <div class="col-12 mb-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white py-3">
+                                <h5 class="mb-0 fw-bold">Division-wise Class Strength</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="chart-container">
+                                    <img src="{{ charts.class_strength }}" alt="Class Strength" class="img-fluid"
+                                        style="max-width: 100%; border-radius: 8px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if charts.monthly_attendance %}
+                    <div class="col-12 mb-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white py-3">
+                                <h5 class="mb-0 fw-bold">Monthly Attendance Trend</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="chart-container">
+                                    <img src="{{ charts.monthly_attendance }}" alt="Monthly Attendance"
+                                        class="img-fluid" style="max-width: 100%; border-radius: 8px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
                 <!-- Students Summary Tables (Side by Side) -->
                 <div class="row mb-4">
                     <!-- Students by Department -->

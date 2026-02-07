@@ -61,6 +61,53 @@
         </div>
     </div>
 
+    <!-- Charts and Visualizations -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            {% if charts.role_distribution %}
+            {% include 'components/chart.html' with context %}
+            <script>
+                document.querySelector('.chart-container').innerHTML = '<h5 class="chart-title mb-3">User Role Distribution</h5><div class="chart-wrapper"><img src="{{ charts.role_distribution }}" alt="Role Distribution" class="img-fluid" style="max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>';
+            </script>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            {% if charts.monthly_attendance %}
+            <div class="chart-container mb-4">
+                <h5 class="chart-title mb-3">Monthly Attendance Trend</h5>
+                <div class="chart-wrapper">
+                    <img src="{{ charts.monthly_attendance }}" alt="Monthly Attendance" class="img-fluid" style="max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        {% if charts.department_comparison %}
+        <div class="col-12 mb-4">
+            <div class="chart-container">
+                <h5 class="chart-title mb-3">Department-wise Comparison</h5>
+                <div class="chart-wrapper">
+                    <img src="{{ charts.department_comparison }}" alt="Department Comparison" class="img-fluid" style="max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if charts.class_strength %}
+        <div class="col-12 mb-4">
+            <div class="chart-container">
+                <h5 class="chart-title mb-3">Class Strength Distribution</h5>
+                <div class="chart-wrapper">
+                    <img src="{{ charts.class_strength }}" alt="Class Strength" class="img-fluid" style="max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
     <!-- College Statistics -->
     <div class="row mb-4">
         <div class="col-12">

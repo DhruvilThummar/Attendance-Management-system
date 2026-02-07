@@ -60,16 +60,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Show success message
                     console.log('✓ Login successful');
 
-                    // Redirect based on role
-                    const roleRedirects = {
-                        'ADMIN': '/college/dashboard',
-                        'HOD': '/hod/dashboard',
-                        'FACULTY': '/faculty/dashboard',
-                        'STUDENT': '/student/dashboard',
-                        'PARENT': '/parent/dashboard'
-                    };
-
-                    const redirectUrl = roleRedirects[data.user.role] || '/';
+                    // Use redirect URL from server response
+                    const redirectUrl = data.redirect || '/';
                     setTimeout(() => {
                         window.location.href = redirectUrl;
                     }, 500);
@@ -91,6 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Redirect to dashboard if already logged in
     if (SessionManager.isLoggedIn()) {
         const roleRedirects = {
+            'SUPERADMIN': '/superadmin/dashboard',
             'ADMIN': '/college/dashboard',
             'HOD': '/hod/dashboard',
             'FACULTY': '/faculty/dashboard',
@@ -100,6 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const role = SessionManager.getUserRole();
         const redirectUrl = roleRedirects[role] || '/';
+        console.log('Already logged in as', role, '- redirecting to', redirectUrl);
         window.location.href = redirectUrl;
     }
 });

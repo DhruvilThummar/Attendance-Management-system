@@ -3,6 +3,12 @@ Super Admin routes - System-wide Dashboard and Administration
 """
 from flask import Blueprint, render_template, request, jsonify
 from services.data_helper import DataHelper
+from services.chart_helper import (
+    generate_role_distribution_chart,
+    generate_department_comparison_chart,
+    generate_class_strength_chart,
+    generate_attendance_monthly_chart
+)
 
 superadmin_bp = Blueprint('superadmin', __name__, url_prefix='/superadmin')
 
@@ -36,6 +42,52 @@ def sudashboard():
             'stats': stats
         })
     
+    # Generate charts
+    charts = {}
+    
+    # Role distribution chart
+    role_data = {
+        'SUPERADMIN': 1,
+        'ADMIN': 1,
+        'HOD': total_departments,
+        'FACULTY': total_faculty,
+        'STUDENT': total_students,
+        'PARENT': int(total_students * 0.8)  # Estimate
+    }
+    charts['role_distribution'] = generate_role_distribution_chart(role_data)
+    
+    # Department comparison chart
+    dept_data = {}
+    for college in colleges:
+        depts = DataHelper.get_departments()
+        for dept in depts if depts else []:
+            dept_name = dept.get('dept_name', 'Unknown')
+            student_count = len(DataHelper.get_students()) if DataHelper.get_students() else 0
+            dept_data[dept_name] = student_count
+    
+    if dept_data:
+        charts['department_comparison'] = generate_department_comparison_chart(dept_data)
+    
+    # Class strength chart (divisions)
+    divisions_data = {}
+    divisions = DataHelper.get_divisions()
+    for div in divisions if divisions else []:
+        div_name = div.get('division_name', 'Unknown')
+        student_count = len(DataHelper.get_students()) if DataHelper.get_students() else 0
+        divisions_data[div_name] = student_count
+    
+    if divisions_data:
+        charts['class_strength'] = generate_class_strength_chart(divisions_data)
+    
+    # Monthly attendance trend (sample data)
+    monthly_data = {
+        'Week 1': 92.5,
+        'Week 2': 88.3,
+        'Week 3': 90.1,
+        'Week 4': 87.6
+    }
+    charts['monthly_attendance'] = generate_attendance_monthly_chart(monthly_data)
+    
     return render_template("superadmin/dashboard.html",
                           context=context,
                           colleges=colleges,
@@ -43,7 +95,8 @@ def sudashboard():
                           total_students=total_students,
                           total_faculty=total_faculty,
                           total_departments=total_departments,
-                          recent_registrations=recent_registrations)
+                          recent_registrations=recent_registrations,
+                          charts=charts)
 
 
 @superadmin_bp.route("")
@@ -193,11 +246,14 @@ def analytics():
     
     # Department-wise performance
     dept_performance = DataHelper.get_department_performance()
+
+    charts = DataHelper.get_superadmin_charts(dept_performance)
     
     return render_template("superadmin/analytics.html",
                           context=context,
                           attendance_overview=attendance_overview,
-                          dept_performance=dept_performance)
+                          dept_performance=dept_performance,
+                          charts=charts)
 
 
 @superadmin_bp.route("/profile")

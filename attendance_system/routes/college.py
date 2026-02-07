@@ -3,6 +3,11 @@ College Admin routes - Dashboard, Departments, Divisions, Faculty, Students, Ana
 """
 from flask import Blueprint, render_template
 from services.data_helper import DataHelper
+from services.chart_helper import (
+    generate_department_comparison_chart,
+    generate_class_strength_chart,
+    generate_attendance_monthly_chart
+)
 
 college_bp = Blueprint('college', __name__, url_prefix='/college')
 
@@ -14,11 +19,44 @@ def college_dashboard():
     departments = DataHelper.get_departments()
     divisions = DataHelper.get_divisions()
     
+    # Generate charts
+    charts = {}
+    
+    # Department comparison chart
+    dept_data = {}
+    for dept in departments if departments else []:
+        dept_name = dept.get('dept_name', 'Unknown')
+        student_count = 45  # Sample data
+        dept_data[dept_name] = student_count
+    
+    if dept_data:
+        charts['department_comparison'] = generate_department_comparison_chart(dept_data)
+    
+    # Class strength chart
+    class_data = {}
+    for div in divisions if divisions else []:
+        div_name = div.get('division_name', 'Unknown')
+        student_count = 60
+        class_data[div_name] = student_count
+    
+    if class_data:
+        charts['class_strength'] = generate_class_strength_chart(class_data)
+    
+    # Monthly attendance chart
+    monthly_data = {
+        'Week 1': 91.5,
+        'Week 2': 89.3,
+        'Week 3': 92.1,
+        'Week 4': 88.6
+    }
+    charts['monthly_attendance'] = generate_attendance_monthly_chart(monthly_data)
+    
     return render_template("college/dashboard.html",
                          title="College Dashboard",
                          college=college,
                          departments=departments,
-                         divisions=divisions)
+                         divisions=divisions,
+                         charts=charts)
 
 
 @college_bp.route("/profile")
@@ -98,11 +136,17 @@ def college_attendance_analytics():
     """College Attendance Analytics"""
     departments = DataHelper.get_departments()
     divisions = DataHelper.get_divisions()
-    
-    return render_template("college/attendance-analytics.html",
-                         title="Attendance Analytics",
-                         departments=departments,
-                         divisions=divisions)
+    analytics_payload = DataHelper.get_college_attendance_analytics()
+
+    return render_template(
+        "college/attendance-analytics.html",
+        title="Attendance Analytics",
+        departments=departments,
+        divisions=divisions,
+        stats=analytics_payload['stats'],
+        attendance_records=analytics_payload['attendance_records'],
+        charts=analytics_payload['charts']
+    )
 
 
 @college_bp.route("/settings")

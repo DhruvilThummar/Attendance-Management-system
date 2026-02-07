@@ -14,6 +14,7 @@ class Faculty(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), unique=True, nullable=False)
     dept_id = db.Column(db.Integer, db.ForeignKey('department.dept_id', ondelete='CASCADE'), nullable=False)
     short_name = db.Column(db.String(50))
+    designation = db.Column(db.String(100))
     
     # Relationships
     user = db.relationship('User', back_populates='faculty')

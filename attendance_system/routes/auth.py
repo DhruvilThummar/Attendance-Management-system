@@ -11,6 +11,20 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route("/login", methods=['GET', 'POST'])
 def login():
     """User login with email and password validation"""
+    # Check if user is already logged in (GET request)
+    if request.method == 'GET' and 'user_id' in session and 'role' in session:
+        # Redirect to appropriate dashboard based on role
+        role_redirects = {
+            'SUPERADMIN': '/superadmin/dashboard',
+            'ADMIN': '/college/dashboard',
+            'HOD': '/hod/dashboard',
+            'FACULTY': '/faculty/dashboard',
+            'STUDENT': '/student/dashboard',
+            'PARENT': '/parent/dashboard'
+        }
+        redirect_url = role_redirects.get(session['role'], '/')
+        return redirect(redirect_url)
+    
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
@@ -53,10 +67,22 @@ def login():
         session['role'] = user.get_role_name()
         session.permanent = remember
         
+        # Determine redirect URL based on role
+        role_redirects = {
+            'SUPERADMIN': '/superadmin/dashboard',
+            'ADMIN': '/college/dashboard',
+            'HOD': '/hod/dashboard',
+            'FACULTY': '/faculty/dashboard',
+            'STUDENT': '/student/dashboard',
+            'PARENT': '/parent/dashboard'
+        }
+        redirect_url = role_redirects.get(user.get_role_name(), '/')
+        
         # Return JSON response for AJAX requests
         return jsonify({
             'success': True,
             'message': f'Welcome back, {user.name}!',
+            'redirect': redirect_url,
             'user': {
                 'user_id': user.user_id,
                 'email': user.email,

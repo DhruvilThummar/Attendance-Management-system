@@ -21,8 +21,8 @@ class AcademicCalendar(db.Model):
     dept_id = db.Column(db.Integer, db.ForeignKey('department.dept_id'), primary_key=True, nullable=False)
     
     # Relationships
-    college = db.relationship('College')
-    department = db.relationship('Department')
+    college = db.relationship('College', overlaps='academic_calendars')
+    department = db.relationship('Department', overlaps='academic_calendars')
     
     def __repr__(self):
         return f'<AcademicCalendar {self.event_type} on {self.event_date}>'

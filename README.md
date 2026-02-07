@@ -93,15 +93,140 @@ The system comes pre-seeded with the following accounts for testing.
 
 ## 📂 Project Structure
 
-*   `attendance_system/`
-    *   `blueprints/`: Route controllers for each role.
-    *   `models/`: Data classes and persistence logic.
-    *   `services/`: PDF parsing, Calendar logic, Search service (BST).
-    *   `templates/`: Jinja2 HTML templates.
-    *   `static/`: CSS, JS, and Images.
-    *   `db_manager.py`: Database connection and execution utilities.
-*   `seed_db.py`: Database migration and seeding script.
-*   `diagnose_login.py`: Utility to test DB connectivity.
+```
+attendance_system
+├──models
+│   ├──__init__.py
+│   ├──academic_calendar.py
+│   ├──attendance.py
+│   ├──college.py
+│   ├──department.py
+│   ├──division.py
+│   ├──faculty.py
+│   ├──lecture.py
+│   ├──parent.py
+│   ├──proxy_lecture.py
+│   ├──student.py
+│   ├──subject.py
+│   ├──timetable.py
+│   └──user.py
+├──routes
+│   ├──__init__.py
+│   ├──auth.py
+│   ├──college.py
+│   ├──faculty.py
+│   ├──hod.py
+│   ├──main.py
+│   ├──parent.py
+│   ├──student.py
+│   └──superadmin.py
+├──services
+│   ├──chart_helper.py
+│   └──data_helper.py
+├──static
+│   ├──css
+│   │   ├──auth.css
+│   │   ├──college-dashboard.css
+│   │   ├──faculty.css
+│   │   ├──profile.css
+│   │   ├──register-form.css
+│   │   └──style.css
+│   ├──img
+│   │   ├──logos
+│   │   │   └──attendify.svg
+│   │   └──Gemini_Generated_Image_u1vmhru1vmhru1vm.png
+│   └──js
+│   │   ├──auth.js
+│   │   ├──college-dashboard.js
+│   │   ├──login.js
+│   │   ├──profile.js
+│   │   ├──register.js
+│   │   ├──scripts.js
+│   │   └──session-manager.js
+├──templates
+│   ├──college
+│   │   ├──components
+│   │   │   ├──footer.html
+│   │   │   └──nav.html
+│   │   ├──attendance-analytics.html
+│   │   ├──cbase.html
+│   │   ├──dashboard.html
+│   │   ├──departments.html
+│   │   ├──divisions.html
+│   │   ├──faculty.html
+│   │   ├──profile.html
+│   │   ├──settings.html
+│   │   └──students.html
+│   ├──components
+│   │   ├──chart.html
+│   │   ├──footer.html
+│   │   └──navbar.html
+│   ├──faculty
+│   │   ├──components
+│   │   │   ├──footer.html
+│   │   │   ├──nav.html
+│   │   │   └──profile_card.html
+│   │   ├──analytics.html
+│   │   ├──attendance.html
+│   │   ├──dashboard.html
+│   │   ├──fbase.html
+│   │   ├──profile.html
+│   │   ├──reports.html
+│   │   └──timetable.html
+│   ├──hod
+│   │   ├──components
+│   │   │   ├──footer.html
+│   │   │   └──nav.html
+│   │   ├──attendance.html
+│   │   ├──dashboard.html
+│   │   ├──faculty.html
+│   │   ├──hbase.html
+│   │   ├──profile.html
+│   │   ├──subjects.html
+│   │   └──timetable.html
+│   ├──parent
+│   │   ├──components
+│   │   │   ├──footer.html
+│   │   │   └──nav.html
+│   │   ├──attendance.html
+│   │   ├──dashboard.html
+│   │   ├──pbase.html
+│   │   └──profile.html
+│   ├──student
+│   │   ├──components
+│   │   │   ├──footer.html
+│   │   │   └──nav.html
+│   │   ├──attendance.html
+│   │   ├──dashboard.html
+│   │   ├──profile.html
+│   │   └──sbase.html
+│   ├──superadmin
+│   │   ├──components
+│   │   │   ├──footer.html
+│   │   │   └──nav.html
+│   │   ├──analytics.html
+│   │   ├──college_details.html
+│   │   ├──colleges.html
+│   │   ├──dashboard.html
+│   │   ├──departments.html
+│   │   ├──faculty.html
+│   │   ├──profile.html
+│   │   ├──students.html
+│   │   ├──subase.html
+│   │   └──users.html
+│   ├──about.html
+│   ├──base.html
+│   ├──contact.html
+│   ├──home.html
+│   ├──login.html
+│   └──register.html
+├──utils
+│   ├──__init__.py
+│   └──simple_hash.py
+├──__init__.py
+├──app.py
+└──schema.sql
+```
 
 ## 🤝 Contribution
-Authored by **Dhruvil Thummar**.
+Authored by **Dhruvil Thummar**

@@ -100,7 +100,15 @@ CREATE TABLE `college`
   `college_name` varchar
 (150) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp
-()
+(),
+  `address` varchar
+(255) DEFAULT NULL,
+  `email` varchar
+(120) DEFAULT NULL,
+  `phone` varchar
+(20) DEFAULT NULL,
+  `website` varchar
+(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -134,7 +142,13 @@ CREATE TABLE `division`
   `dept_id` int
 (11) NOT NULL,
   `division_name` varchar
-(50) NOT NULL
+(50) NOT NULL,
+  `semester_id` int
+(11) DEFAULT NULL,
+  `capacity` int
+(11) DEFAULT NULL,
+  `class_teacher` varchar
+(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -152,7 +166,9 @@ CREATE TABLE `faculty`
   `dept_id` int
 (11) NOT NULL,
   `short_name` varchar
-(50) DEFAULT NULL
+(50) DEFAULT NULL,
+  `designation` varchar
+(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -303,7 +319,9 @@ CREATE TABLE `subject`
   `subject_code` varchar
 (20) DEFAULT NULL,
   `semester_id` int
-(11) NOT NULL
+(11) NOT NULL,
+  `credits` int
+(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -424,7 +442,9 @@ ALTER TABLE `division`
 ADD PRIMARY KEY
 (`division_id`),
 ADD KEY `dept_id`
-(`dept_id`);
+(`dept_id`),
+ADD KEY `fk_division_semester`
+(`semester_id`);
 
 --
 -- Indexes for table `faculty`
@@ -701,7 +721,12 @@ ALTER TABLE `division`
 ADD CONSTRAINT `division_ibfk_1` FOREIGN KEY
 (`dept_id`) REFERENCES `department`
 (`dept_id`) ON
-DELETE CASCADE;
+DELETE CASCADE,
+ADD CONSTRAINT `fk_division_semester` FOREIGN KEY
+(`semester_id`) REFERENCES `semester`
+(`semester_id`) ON
+DELETE
+SET NULL;
 
 --
 -- Constraints for table `faculty`

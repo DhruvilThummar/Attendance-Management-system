@@ -58,20 +58,32 @@ function addRoleSpecificFields(roleName) {
             fieldsHTML = `
                 <div class="form-group mb-3">
                     <label class="form-label">
-                        <i class="bi bi-123"></i> Roll Number
+                        <i class="bi bi-123"></i> Enrollment Number *
                     </label>
-                    <input type="text" class="form-control" name="roll_number" placeholder="Enter your roll number">
+                    <input type="text" class="form-control" name="enrollment_number" placeholder="Enter your enrollment number" required>
                 </div>
                 <div class="form-group mb-3">
                     <label class="form-label">
-                        <i class="bi bi-calendar"></i> Academic Year
+                        <i class="bi bi-diagram-3"></i> Department *
                     </label>
-                    <select class="form-control" name="academic_year">
-                        <option value="">Select Year</option>
-                        <option value="1">First Year</option>
-                        <option value="2">Second Year</option>
-                        <option value="3">Third Year</option>
-                        <option value="4">Fourth Year</option>
+                    <select class="form-control" name="department" required>
+                        <option value="">-- Select Department --</option>
+                        <option value="CSE">Computer Science & Engineering</option>
+                        <option value="ECE">Electronics & Communication</option>
+                        <option value="ME">Mechanical Engineering</option>
+                        <option value="CE">Civil Engineering</option>
+                        <option value="EE">Electrical Engineering</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-layers"></i> Division *
+                    </label>
+                    <select class="form-control" name="division" required>
+                        <option value="">-- Select Division --</option>
+                        <option value="A">Division A</option>
+                        <option value="B">Division B</option>
+                        <option value="C">Division C</option>
                     </select>
                 </div>
             `;
@@ -115,15 +127,39 @@ function addRoleSpecificFields(roleName) {
             fieldsHTML = `
                 <div class="form-group mb-3">
                     <label class="form-label">
-                        <i class="bi bi-person"></i> Student Name
+                        <i class="bi bi-person"></i> Student Name *
                     </label>
-                    <input type="text" class="form-control" name="student_name" placeholder="Your child's name">
+                    <input type="text" class="form-control" name="student_name" placeholder="Your child's name" required>
                 </div>
                 <div class="form-group mb-3">
                     <label class="form-label">
-                        <i class="bi bi-123"></i> Student Roll Number
+                        <i class="bi bi-123"></i> Student Enrollment Number *
                     </label>
-                    <input type="text" class="form-control" name="student_roll" placeholder="Student's roll number">
+                    <input type="text" class="form-control" name="student_enrollment_number" placeholder="Student's enrollment number" required>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-diagram-3"></i> Department *
+                    </label>
+                    <select class="form-control" name="student_department" required>
+                        <option value="">-- Select Department --</option>
+                        <option value="CSE">Computer Science & Engineering</option>
+                        <option value="ECE">Electronics & Communication</option>
+                        <option value="ME">Mechanical Engineering</option>
+                        <option value="CE">Civil Engineering</option>
+                        <option value="EE">Electrical Engineering</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-layers"></i> Division *
+                    </label>
+                    <select class="form-control" name="student_division" required>
+                        <option value="">-- Select Division --</option>
+                        <option value="A">Division A</option>
+                        <option value="B">Division B</option>
+                        <option value="C">Division C</option>
+                    </select>
                 </div>
             `;
             break;
@@ -181,6 +217,29 @@ document.addEventListener('DOMContentLoaded', function () {
             errors.push('Password must be at least 6 characters');
         }
 
+        // Role-specific validation
+        if (roleId === '4') { // STUDENT
+            const enrollmentNumber = formData.get('enrollment_number')?.trim();
+            const department = formData.get('department')?.trim();
+            const division = formData.get('division')?.trim();
+
+            if (!enrollmentNumber) errors.push('Enrollment Number is required for students');
+            if (!department) errors.push('Department is required for students');
+            if (!division) errors.push('Division is required for students');
+        }
+
+        if (roleId === '5') { // PARENT
+            const studentName = formData.get('student_name')?.trim();
+            const enrollmentNumber = formData.get('student_enrollment_number')?.trim();
+            const department = formData.get('student_department')?.trim();
+            const division = formData.get('student_division')?.trim();
+
+            if (!studentName) errors.push('Student name is required');
+            if (!enrollmentNumber) errors.push('Student enrollment number is required');
+            if (!department) errors.push('Student department is required');
+            if (!division) errors.push('Student division is required');
+        }
+
         if (errors.length > 0) {
             alert('Registration failed:\n\n' + errors.join('\n'));
             return;
@@ -236,287 +295,4 @@ document.addEventListener('DOMContentLoaded', function () {
         const redirectUrl = roleRedirects[role] || '/';
         window.location.href = redirectUrl;
     }
-});
-
-break;
-        case 'parent':
-document.getElementById('parentFields').style.display = 'block';
-break;
-    }
-
-// Scroll to top
-document.querySelector('.auth-card').scrollTop = 0;
-}
-
-// Go back to role selection
-function goBackToRoleSelection(e) {
-    e.preventDefault();
-    document.getElementById('roleSelectionScreen').style.display = 'block';
-    document.getElementById('formScreen').style.display = 'none';
-    resetForm();
-}
-
-// Reset form
-function resetForm() {
-    document.getElementById('registrationForm').reset();
-    document.getElementById('selectedRole').value = '';
-
-    // Clear all error messages
-    document.querySelectorAll('.error-text').forEach(el => {
-        el.classList.add('d-none');
-    });
-
-    // Clear all invalid classes
-    document.querySelectorAll('.form-control').forEach(el => {
-        el.classList.remove('is-invalid');
-    });
-}
-
-// Initialize college autocomplete
-function initCollegeSearch(inputId, suggestionsId) {
-    const input = document.getElementById(inputId);
-    const suggestionsBox = document.getElementById(suggestionsId);
-
-    input.addEventListener('input', function () {
-        const value = this.value.toLowerCase();
-
-        if (value.length > 0) {
-            const filtered = colleges.filter(college =>
-                college.toLowerCase().includes(value)
-            );
-
-            if (filtered.length > 0) {
-                suggestionsBox.innerHTML = filtered.map(college =>
-                    `<div class="suggestion-item" onclick="selectCollege('${college}', '${inputId}')">${college}</div>`
-                ).join('');
-                suggestionsBox.classList.add('show');
-            } else {
-                suggestionsBox.classList.remove('show');
-            }
-        } else {
-            suggestionsBox.classList.remove('show');
-        }
-    });
-
-    // Close suggestions on focus out
-    input.addEventListener('blur', function () {
-        setTimeout(() => {
-            suggestionsBox.classList.remove('show');
-        }, 200);
-    });
-}
-
-// Select college from dropdown
-function selectCollege(college, inputId) {
-    document.getElementById(inputId).value = college;
-    const suggestionsId = inputId + 'Suggestions';
-    document.getElementById(suggestionsId).classList.remove('show');
-}
-
-// Validate Email
-function validateEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-// Validate Password
-function validatePassword(password) {
-    const hasMinLength = password.length >= 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecialChar = /[!@#$%^&*()_\-+=\[\]{};:'",.<>?/\\|`~]/.test(password);
-
-    return hasMinLength && hasUpperCase && hasNumber && hasSpecialChar;
-}
-
-// Show error
-function showError(inputId, errorId, message) {
-    const input = document.getElementById(inputId);
-    const error = document.getElementById(errorId);
-
-    input.classList.add('is-invalid');
-    if (error) {
-        error.innerHTML = `<i class="bi bi-exclamation-circle"></i> ${message}`;
-        error.classList.remove('d-none');
-    }
-}
-
-// Clear error
-function clearError(inputId, errorId) {
-    const input = document.getElementById(inputId);
-    const error = document.getElementById(errorId);
-
-    input.classList.remove('is-invalid');
-    if (error) {
-        error.classList.add('d-none');
-        error.innerHTML = '';
-    }
-}
-
-// Form submission
-function submitRegistration(e) {
-    e.preventDefault();
-
-    const role = document.getElementById('selectedRole').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    const terms = document.getElementById('terms').checked;
-
-    let isValid = true;
-
-    // Validate email
-    if (!email || !validateEmail(email)) {
-        showError('email', 'emailError', email ? 'Invalid email format' : 'Email is required');
-        isValid = false;
-    } else {
-        clearError('email', 'emailError');
-    }
-
-    // Validate password
-    if (!password) {
-        showError('password', 'passwordError', 'Password is required');
-        isValid = false;
-    } else if (!validatePassword(password)) {
-        showError('password', 'passwordError',
-            'Password must have: 8+ chars, 1 uppercase, 1 number, 1 special char');
-        isValid = false;
-    } else {
-        clearError('password', 'passwordError');
-    }
-
-    // Validate confirm password
-    if (!confirmPassword) {
-        showError('confirmPassword', 'confirmPasswordError', 'Please confirm your password');
-        isValid = false;
-    } else if (password !== confirmPassword) {
-        showError('confirmPassword', 'confirmPasswordError', 'Passwords do not match');
-        isValid = false;
-    } else {
-        clearError('confirmPassword', 'confirmPasswordError');
-    }
-
-    // Validate terms
-    if (!terms) {
-        alert('Please agree to the Terms & Conditions');
-        isValid = false;
-    }
-
-    // Role-specific validation
-    if (role === 'student') {
-        const name = document.getElementById('studentName').value;
-        const enrollment = document.getElementById('enrollment').value;
-        const college = document.getElementById('studentCollege').value;
-
-        if (!name) {
-            showError('studentName', null, 'Name is required');
-            isValid = false;
-        }
-        if (!enrollment) {
-            showError('enrollment', null, 'Enrollment number is required');
-            isValid = false;
-        }
-        if (!college) {
-            showError('studentCollege', null, 'Please select a college');
-            isValid = false;
-        }
-    } else if (role === 'faculty') {
-        const name = document.getElementById('facultyName').value;
-        const college = document.getElementById('facultyCollege').value;
-        const department = document.getElementById('department').value;
-
-        if (!name) isValid = false;
-        if (!college) isValid = false;
-        if (!department) isValid = false;
-    } else if (role === 'hod') {
-        const name = document.getElementById('hodName').value;
-        const college = document.getElementById('hodCollege').value;
-        const department = document.getElementById('hodDepartment').value;
-
-        if (!name) isValid = false;
-        if (!college) isValid = false;
-        if (!department) isValid = false;
-    } else if (role === 'college_admin') {
-        const name = document.getElementById('adminName').value;
-        const college = document.getElementById('adminCollege').value;
-        const phone = document.getElementById('adminPhone').value;
-
-        if (!name) isValid = false;
-        if (!college) isValid = false;
-        if (!phone) isValid = false;
-    } else if (role === 'parent') {
-        const name = document.getElementById('parentName').value;
-        const enrollment = document.getElementById('studentEnrollmentParent').value;
-        const phone = document.getElementById('parentPhone').value;
-
-        if (!name) isValid = false;
-        if (!enrollment) isValid = false;
-        if (!phone) isValid = false;
-    }
-
-    if (isValid) {
-        // Prepare form data
-        const formData = new FormData(document.getElementById('registrationForm'));
-
-        // Additional data based on role
-        if (role === 'student') {
-            formData.set('name', document.getElementById('studentName').value);
-            formData.set('college', document.getElementById('studentCollege').value);
-            formData.set('enrollment', document.getElementById('enrollment').value);
-        } else if (role === 'faculty') {
-            formData.set('name', document.getElementById('facultyName').value);
-            formData.set('college', document.getElementById('facultyCollege').value);
-            formData.set('department', document.getElementById('department').value);
-        } else if (role === 'hod') {
-            formData.set('name', document.getElementById('hodName').value);
-            formData.set('college', document.getElementById('hodCollege').value);
-            formData.set('department', document.getElementById('hodDepartment').value);
-        } else if (role === 'college_admin') {
-            formData.set('name', document.getElementById('adminName').value);
-            formData.set('college', document.getElementById('adminCollege').value);
-            formData.set('phone', document.getElementById('adminPhone').value);
-        } else if (role === 'parent') {
-            formData.set('name', document.getElementById('parentName').value);
-            formData.set('childEnrollment', document.getElementById('studentEnrollmentParent').value);
-            formData.set('phone', document.getElementById('parentPhone').value);
-        }
-
-        console.log('Form Data:', {
-            role: formData.get('role'),
-            email: formData.get('email'),
-            password: '***',
-            name: formData.get('name'),
-            college: formData.get('college')
-        });
-
-        // TODO: Send to backend
-        alert(`Registration form submitted for ${roleTitles[role]}!\n\nEmail: ${formData.get('email')}\nRole: ${roleTitles[role]}`);
-
-        // Uncomment below to send to server
-        // fetch('/register', {
-        //     method: 'POST',
-        //     body: formData
-        // })
-        // .then(response => response.json())
-        // .then(data => {
-        //     if (data.success) {
-        //         alert('Registration successful!');
-        //         window.location.href = '/login';
-        //     } else {
-        //         alert('Error: ' + data.message);
-        //     }
-        // })
-        // .catch(error => console.error('Error:', error));
-    }
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function () {
-    // Highlight role selection
-    document.querySelectorAll('.role-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
 });
