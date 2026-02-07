@@ -277,6 +277,7 @@ def superadmin_profile():
     
     return render_template("superadmin/profile.html",
                           title="Super Admin Profile",
+                          user=context.get('user'),
                           context=context,
                           system_stats=system_stats)
 

@@ -151,13 +151,35 @@ def ftimetable():
 @faculty_bp.route("/profile")
 def fprofile():
     """View and edit faculty profile"""
-    faculty = DataHelper.get_faculty()
-    college = DataHelper.get_college()
-    dept_id = faculty.get('dept_id') if faculty else None
-    department = DataHelper.get_department(dept_id) if dept_id else None
+    from attendance_system.models.user import User
+    from attendance_system.models.college import College
+    from attendance_system.models.department import Department
+    from attendance_system.models.faculty import Faculty
+    
+    # Get current user
+    user_data = DataHelper.get_user('faculty')
+    if not user_data:
+        return render_template("faculty/profile.html",
+                             user=None,
+                             faculty=None,
+                             college=None,
+                             department=None,
+                             teaching_stats={})
+    
+    # Get faculty record
+    faculty_record = Faculty.query.filter_by(user_id=user_data['user_id']).first()
+    faculty = DataHelper._faculty_dict(faculty_record) if faculty_record else None
+    
+    # Get college
+    college = College.query.get(user_data['college_id']) if user_data.get('college_id') else None
+    
+    # Get department
+    department = None
+    if faculty and faculty.get('dept_id'):
+        department = Department.query.get(faculty.get('dept_id'))
     
     # Compute teaching statistics
-    subjects = DataHelper.get_subjects()
+    subjects = DataHelper.get_subjects(dept_id=faculty.get('dept_id') if faculty else None)
     lectures = DataHelper.get_lectures()
     teaching_stats = {
         'total_subjects': len(subjects) if subjects else 0,
@@ -166,7 +188,8 @@ def fprofile():
         'mentoring_count': 0
     }
     
-    return render_template("faculty/profile.html", 
+    return render_template("faculty/profile.html",
+                          user=user_data,
                           faculty=faculty,
                           college=college,
                           department=department,

@@ -183,17 +183,6 @@
                                     </div>
                                     <div class="card-body p-2">
                                         <div class="small">
-                                            {% set entries_by_day = {} %}
-                                            {% for entry in overview.entries %}
-                                            {% if entry.day not in entries_by_day %}
-                                            {% set entries_by_day = entries_by_day | urlencode %}
-                                            {% set temp = entries_by_day.update({entry.day: []}) %}
-                                            {% set entries_by_day = entries_by_day | urlencode %}
-                                            {% endif %}
-                                            {% if entry.day in entries_by_day %}
-                                            {% set temp = entries_by_day[entry.day].append(entry) %}
-                                            {% endif %}
-                                            {% endfor %}
                                             {% for entry in overview.entries | sort(attribute='day') %}
                                             <div class="mb-2 pb-2 border-bottom">
                                                 <div class="text-muted small">{{ entry.day }}</div>

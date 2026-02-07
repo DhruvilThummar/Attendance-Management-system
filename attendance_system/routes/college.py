@@ -64,8 +64,18 @@ def college_dashboard():
 @college_bp.route("/profile")
 def college_profile():
     """College Profile"""
-    college = DataHelper.get_college()
-    college_id = college.get('college_id') if college else None
+    from attendance_system.models.user import User
+    from attendance_system.models.college import College
+    
+    # Get current user
+    user_data = DataHelper.get_user('college')
+    
+    # Get college
+    college = None
+    if user_data and user_data.get('college_id'):
+        college = College.query.get(user_data['college_id'])
+    
+    college_id = college.college_id if college else None
     college_stats = DataHelper.get_college_statistics(college_id) if college_id else {
         'total_departments': 0,
         'total_faculty': 0,
@@ -77,6 +87,7 @@ def college_profile():
     
     return render_template("college/profile.html",
                          title="College Profile",
+                         user=user_data,
                          college=college,
                          college_stats=college_stats)
 

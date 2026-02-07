@@ -234,12 +234,39 @@ def student_profile():
         return render_template("student/profile.html",
                              title="Student Profile",
                              context=context,
+                             user=context.get('user'),
                              student=None,
+                             college=None,
+                             department=None,
+                             division=None,
+                             semester=None,
+                             mentor=None,
                              attendance_summary={},
                              subject_wise=[],
                              alerts=[])
     
     student_id = context['student']['student_id']
+    student_data = context['student']
+    
+    # Get related entities from database
+    from attendance_system.models.college import College
+    from attendance_system.models.department import Department
+    from attendance_system.models.division import Division
+    from attendance_system.models.semester import Semester
+    from attendance_system.models.faculty import Faculty
+    from attendance_system.models.user import User
+    
+    college = College.query.get(context['user']['college_id']) if context['user'] else None
+    department = Department.query.get(student_data.get('dept_id')) if student_data.get('dept_id') else None
+    division = Division.query.get(student_data.get('division_id')) if student_data.get('division_id') else None
+    semester = Semester.query.get(student_data.get('semester_id')) if student_data.get('semester_id') else None
+    
+    # Get mentor if exists
+    mentor = None
+    if student_data.get('mentor_id'):
+        mentor_faculty = Faculty.query.get(student_data.get('mentor_id'))
+        if mentor_faculty and mentor_faculty.user:
+            mentor = {'name': mentor_faculty.user.name}
     
     # Get attendance summary
     attendance_records = DataHelper.get_child_attendance(student_id)
@@ -269,7 +296,13 @@ def student_profile():
     return render_template("student/profile.html",
                          title="Student Profile",
                          context=context,
-                         student=context['student'],
+                         user=context['user'],
+                         student=student_data,
+                         college=college,
+                         department=department,
+                         division=division,
+                         semester=semester,
+                         mentor=mentor,
                          attendance_summary=attendance_summary,
                          subject_wise=subject_wise,
                          alerts=alerts)
