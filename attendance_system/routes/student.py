@@ -268,6 +268,7 @@ def student_profile():
     return render_template("student/profile.html",
                          title="Student Profile",
                          context=context,
+                         student=context['student'],
                          attendance_summary=attendance_summary,
                          subject_wise=subject_wise,
                          alerts=alerts)

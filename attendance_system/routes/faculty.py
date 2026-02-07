@@ -33,7 +33,8 @@ def fdashboard():
                           faculty=faculty, 
                           subjects=subjects, 
                           lectures=lectures,
-                          stats=stats)
+                          stats=stats,
+                          datetime=datetime)
 
 
 @faculty_bp.route("/attendance")

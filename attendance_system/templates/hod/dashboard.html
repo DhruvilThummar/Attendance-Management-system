@@ -194,7 +194,7 @@
                                             {% set temp = entries_by_day[entry.day].append(entry) %}
                                             {% endif %}
                                             {% endfor %}
-                                            {% for entry in overview.entries | sorted(attribute='day') %}
+                                            {% for entry in overview.entries | sort(attribute='day') %}
                                             <div class="mb-2 pb-2 border-bottom">
                                                 <div class="text-muted small">{{ entry.day }}</div>
                                                 <div class="fw-bold">{{ entry.subject_code }}</div>
