@@ -148,12 +148,15 @@ attendance_system
 │   │   ├──components
 │   │   │   ├──footer.html
 │   │   │   └──nav.html
+│   │   ├──approvals.html
 │   │   ├──attendance-analytics.html
 │   │   ├──cbase.html
+│   │   ├──create_division.html
 │   │   ├──dashboard.html
 │   │   ├──departments.html
 │   │   ├──divisions.html
 │   │   ├──faculty.html
+│   │   ├──hod_list.html
 │   │   ├──profile.html
 │   │   ├──settings.html
 │   │   └──students.html
@@ -167,6 +170,7 @@ attendance_system
 │   │   │   ├──nav.html
 │   │   │   └──profile_card.html
 │   │   ├──analytics.html
+│   │   ├──approvals.html
 │   │   ├──attendance.html
 │   │   ├──dashboard.html
 │   │   ├──fbase.html
@@ -177,6 +181,7 @@ attendance_system
 │   │   ├──components
 │   │   │   ├──footer.html
 │   │   │   └──nav.html
+│   │   ├──approvals.html
 │   │   ├──attendance.html
 │   │   ├──dashboard.html
 │   │   ├──faculty.html
@@ -205,6 +210,7 @@ attendance_system
 │   │   │   ├──footer.html
 │   │   │   └──nav.html
 │   │   ├──analytics.html
+│   │   ├──approvals.html
 │   │   ├──college_details.html
 │   │   ├──colleges.html
 │   │   ├──dashboard.html

@@ -68,24 +68,27 @@
                 </h2>
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-id-card"></i>Faculty ID</span>
-                    <span class="info-value">{{ faculty.faculty_id }}</span>
+                    <span class="info-value">{{ faculty.faculty_id if faculty else 'N/A' }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-signature"></i>Short Name</span>
-                    <span class="info-value">{{ faculty.short_name or 'Not set' }}</span>
+                    <span class="info-value">{{ faculty.short_name if faculty and faculty.short_name else 'Not set'
+                        }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-envelope"></i>Email</span>
-                    <span class="info-value">{{ user.email }}</span>
+                    <span class="info-value">{{ user.email if user else 'N/A' }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-phone"></i>Mobile</span>
-                    <span class="info-value">{{ user.mobile or 'Not provided' }}</span>
+                    <span class="info-value">{{ user.mobile if user and user.mobile else 'Not provided' }}</span>
                 </div>
+                {% if user and user.created_at %}
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-calendar"></i>Joined</span>
                     <span class="info-value">{{ user.created_at.strftime('%B %d, %Y') }}</span>
                 </div>
+                {% endif %}
             </div>
         </div>
 
@@ -97,11 +100,11 @@
                 </h2>
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-university"></i>College</span>
-                    <span class="info-value">{{ college.college_name }}</span>
+                    <span class="info-value">{{ college.college_name if college else 'N/A' }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-building"></i>Department</span>
-                    <span class="info-value">{{ department.dept_name }}</span>
+                    <span class="info-value">{{ department.dept_name if department else 'N/A' }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label"><i class="fas fa-users"></i>Total Students</span>
