@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, request, jsonify, flash, redirect,
 from services.data_helper import DataHelper
 from models.user import db
 from models.college import College
-from utils.auth_decorators import login_required, superadmin_required
+from attendance_system.utils.auth_decorators import login_required, superadmin_required
 from services.chart_helper import (
     generate_role_distribution_chart,
     generate_department_comparison_chart,

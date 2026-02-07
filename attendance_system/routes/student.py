@@ -4,6 +4,7 @@ Student routes - Personal attendance tracking and profile
 from flask import Blueprint, render_template, request, jsonify
 from datetime import datetime, timedelta
 from services.data_helper import DataHelper
+from attendance_system.utils.auth_decorators import login_required, student_required
 from services.chart_helper import (
     generate_attendance_weekly_chart,
     generate_attendance_monthly_chart,

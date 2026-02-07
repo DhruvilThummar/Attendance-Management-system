@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from models.division import Division
 from models.user import db, User
 from services.data_helper import DataHelper
+from attendance_system.utils.auth_decorators import login_required, college_admin_required
 from services.chart_helper import (
     generate_department_comparison_chart,
     generate_class_strength_chart,

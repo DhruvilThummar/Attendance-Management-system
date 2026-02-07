@@ -2,6 +2,7 @@
 from flask import Blueprint, render_template, send_file, request, jsonify
 from models.user import db, User
 from services.data_helper import DataHelper
+from attendance_system.utils.auth_decorators import login_required, faculty_required
 from utils.auth_decorators import login_required, faculty_required
 from services.chart_helper import (
     generate_attendance_weekly_chart,
@@ -49,7 +50,9 @@ def fdashboard():
                           datetime=datetime)
 
 
-@faculty_bp.route("/attendance")@faculty_requireddef fattendance():
+@faculty_bp.route("/attendance")
+@faculty_required
+def fattendance():
     """Record attendance for lectures"""
     faculty = DataHelper.get_faculty()
     subjects = DataHelper.get_subjects()

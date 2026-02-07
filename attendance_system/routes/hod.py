@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, request, jsonify, abort
 
 from models.user import db, User
 from services.data_helper import DataHelper
-from utils.auth_decorators import login_required, hod_required
+from attendance_system.utils.auth_decorators import login_required, hod_required
 from services.chart_helper import (
     generate_attendance_monthly_chart,
     generate_subject_attendance_chart,
