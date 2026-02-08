@@ -237,8 +237,13 @@
         const selectedDiv = localStorage.getItem('selectedDiv');
         const month = document.getElementById('analyticsMonth').value;
 
-        console.log('Generate report:', { selectedDept, selectedDiv, month });
-        // Generate and download CSV/PDF report
+        const params = new URLSearchParams({
+            ...(selectedDept && { dept_id: selectedDept }),
+            ...(selectedDiv && { div_id: selectedDiv }),
+            ...(month && { month: month })
+        });
+
+        window.location.href = `/college/attendance-analytics/report?${params.toString()}`;
     }
 
     // Initialize charts on page load

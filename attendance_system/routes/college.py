@@ -1,7 +1,10 @@
 """
 College Admin routes - Dashboard, Departments, Divisions, Faculty, Students, Analytics, Settings
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+import csv
+import io
+
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response
 from models.division import Division
 from models.user import db, User
 from services.data_helper import DataHelper
@@ -324,6 +327,53 @@ def college_attendance_analytics():
         attendance_records=analytics_payload['attendance_records'],
         charts=analytics_payload['charts']
     )
+
+
+@college_bp.route("/attendance-analytics/report")
+def college_attendance_analytics_report():
+    """Download college attendance analytics as CSV"""
+    records = DataHelper.get_college_attendance_records()
+
+    dept_id = request.args.get('dept_id', type=int)
+    div_id = request.args.get('div_id', type=int)
+    month = request.args.get('month')
+
+    if dept_id:
+        records = [r for r in records if r.get('dept_id') == dept_id]
+    if div_id:
+        records = [r for r in records if r.get('div_id') == div_id]
+    if month:
+        records = [r for r in records if (r.get('date') or '').startswith(month)]
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        'Date',
+        'Department',
+        'Division',
+        'Present',
+        'Absent',
+        'Late',
+        'Total Students',
+        'Present %'
+    ])
+
+    for record in records:
+        writer.writerow([
+            record.get('date', ''),
+            record.get('dept_name', ''),
+            record.get('div_name', ''),
+            record.get('present', 0),
+            record.get('absent', 0),
+            record.get('late', 0),
+            record.get('total', 0),
+            record.get('present_percentage', 0)
+        ])
+
+    response = make_response(output.getvalue())
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = 'attachment; filename=college_attendance_report.csv'
+    return response
 
 
 @college_bp.route("/settings")

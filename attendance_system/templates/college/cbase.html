@@ -31,8 +31,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 
     <script>
-        window.collegeDepartments = {{ departments | tojson if departments is not none else '[]' }};
-        window.collegeDivisions = {{ divisions | tojson if divisions is not none else '[]' }};
+        window.collegeDepartments = {{ (departments | default ([], true)) | tojson }};
+        window.collegeDivisions = {{ (divisions | default ([], true)) | tojson }};
     </script>
 
     <!-- Extra CSS Block -->
