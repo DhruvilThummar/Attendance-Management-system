@@ -88,6 +88,7 @@ The system comes pre-seeded with the following accounts for testing.
 | HOD           | `hod@college.edu`     | `hod@123`     |
 | Faculty       | `faculty@college.edu` | `faculty@123` |
 | Student       | `student@college.edu` | `student@123!` |
+| Parent        | `parent@college.edu`  | `parent@123`  |
 
 > **Note**: For new users, use the **Sign Up** page. Registration requires selecting a college (created by Super Admin). New accounts are "Pending" until approved by their respective superior (HOD approves Faculty, Faculty approves Students).
 
