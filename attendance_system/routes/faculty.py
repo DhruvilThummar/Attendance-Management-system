@@ -215,7 +215,7 @@ def freports():
             # Get mentor name if assigned
             if student.get('mentor_id'):
                 mentor = DataHelper.get_faculty_member(faculty_id=student.get('mentor_id'))
-                mentor_name = mentor.get('full_name') if mentor else 'N/A'
+                mentor_name = mentor.get('short_name') if mentor else 'N/A'
             
             student_reports[student_id] = {
                 'student_id': student_id,
