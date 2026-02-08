@@ -224,6 +224,14 @@ def parent_profile():
     all_alerts = []
     total_attendance = 0
     
+    # Initialize attendance stats
+    attendance_stats = {
+        'total_lectures': 0,
+        'present': 0,
+        'absent': 0,
+        'percentage': 0
+    }
+    
     for child in children:
         student_id = child.get('student_id', child.get('id'))
         student = DataHelper.get_student(student_id)
@@ -233,6 +241,12 @@ def parent_profile():
         
         if attendance_records:
             overall_pct = sum(r.get('attendance_percentage', 0) for r in attendance_records) / len(attendance_records)
+            
+            # Calculate attendance stats from records
+            for record in attendance_records:
+                attendance_stats['total_lectures'] += record.get('total_lectures', 0)
+                attendance_stats['present'] += record.get('present_count', 0)
+                attendance_stats['absent'] += record.get('absent_count', 0)
         else:
             overall_pct = 0
         
@@ -258,6 +272,12 @@ def parent_profile():
             'subject_wise': subject_wise,
             'alerts': child_alerts
         })
+    
+    # Calculate attendance percentage
+    if attendance_stats['total_lectures'] > 0:
+        attendance_stats['percentage'] = round(
+            (attendance_stats['present'] / attendance_stats['total_lectures']) * 100, 2
+        )
     
     # Calculate average attendance
     avg_attendance = round(total_attendance / len(children_details), 2) if children_details else 0
@@ -290,5 +310,6 @@ def parent_profile():
                          division=division,
                          semester=semester,
                          avg_attendance=avg_attendance,
+                         attendance_stats=attendance_stats,
                          total_alerts=len(all_alerts),
                          all_alerts=all_alerts)
