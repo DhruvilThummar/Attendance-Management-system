@@ -80,13 +80,18 @@ def pdashboard():
         })
     
     # Get unique subjects for filter
-    all_subjects = set()
+    all_subjects = {}  # Use dict to avoid duplicates, key by subject_id
     for child_data in children_attendance:
         for subject in child_data.get('subject_wise', []):
-            all_subjects.add({
-                'subject_id': subject['subject_id'],
-                'subject_name': subject['subject_name']
-            })
+            subject_id = subject.get('subject_id')
+            if subject_id and subject_id not in all_subjects:
+                all_subjects[subject_id] = {
+                    'subject_id': subject_id,
+                    'subject_name': subject.get('subject_name', 'Unknown')
+                }
+    
+    # Convert to list
+    all_subjects_list = list(all_subjects.values())
     
     # Generate charts for first child (or primary child)
     charts = {}
@@ -114,7 +119,7 @@ def pdashboard():
         
         # Subject-wise attendance
         subject_data = {}
-        for subject in all_subjects:
+        for subject in all_subjects_list:
             subject_name = subject.get('subject_name', 'Unknown')
             subject_data[subject_name] = 87.5
         
@@ -126,7 +131,7 @@ def pdashboard():
                          children_attendance=children_attendance,
                          time_period=time_period,
                          alerts=all_alerts,
-                         subjects=list(all_subjects),
+                         subjects=all_subjects_list,
                          charts=charts)
 
 
