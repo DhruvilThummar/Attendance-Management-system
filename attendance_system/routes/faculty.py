@@ -1,5 +1,5 @@
 """Faculty routes - Attendance, Analytics, Reports, Timetable, Profile"""
-from flask import Blueprint, render_template, send_file, request, jsonify
+from flask import Blueprint, render_template, send_file, request, jsonify, session
 from models.user import db, User
 from services.data_helper import DataHelper
 from attendance_system.utils.auth_decorators import login_required, faculty_required
@@ -82,12 +82,230 @@ def fdashboard():
 @faculty_required
 def fattendance():
     """Record attendance for lectures"""
-    faculty = DataHelper.get_faculty()
-    subjects = DataHelper.get_subjects()
-    lectures = DataHelper.get_lectures()
+    # Get faculty from session
+    faculty_user_id = session.get('user_id')
+    from models.faculty import Faculty
+    from models.timetable import Timetable
+    from models.subject import Subject
+    
+    faculty = Faculty.query.filter_by(user_id=faculty_user_id).first()
+    
+    # Get divisions where this faculty teaches
     divisions = DataHelper.get_divisions()
+    
+    # For each division, add subjects that this faculty teaches
+    for division in divisions:
+        # Initialize subjects array
+        division['subjects'] = []
+        
+        if faculty:
+            # Get subjects the faculty teaches for this division
+            timetable_entries = Timetable.query.filter_by(
+                faculty_id=faculty.faculty_id,
+                division_id=division['div_id']
+            ).all()
+            
+            # Get unique subjects
+            subject_ids = list(set([t.subject_id for t in timetable_entries]))
+            subjects_for_div = Subject.query.filter(Subject.subject_id.in_(subject_ids)).all() if subject_ids else []
+            
+            # Add subjects array to division
+            division['subjects'] = [
+                {
+                    'id': s.subject_id,
+                    'name': s.subject_name,
+                    'code': s.subject_code
+                }
+                for s in subjects_for_div
+            ]
+    
+    # Filter out divisions where faculty teaches no subjects
+    divisions = [d for d in divisions if d.get('subjects')]
+    
     return render_template("faculty/attendance.html", 
-                          faculty=faculty, subjects=subjects, lectures=lectures, divisions=divisions, datetime=datetime)
+                          divisions=divisions, 
+                          datetime=datetime)
+
+
+@faculty_bp.route("/attendance/students/<int:division_id>")
+@faculty_required
+def get_students_by_division(division_id):
+    """Get all students in a division for attendance marking"""
+    try:
+        students = DataHelper.get_students(division_id=division_id)
+        return jsonify({'students': students})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@faculty_bp.route("/attendance/mark", methods=['POST'])
+@faculty_required
+def mark_attendance():
+    """Mark attendance for a lecture"""
+    try:
+        data = request.get_json()
+        division_id = data.get('division_id')
+        subject_id = data.get('subject_id')
+        lecture_date = data.get('lecture_date')
+        attendance_data = data.get('attendance')  # List of {student_id, status}
+        
+        if not all([division_id, subject_id, lecture_date, attendance_data]):
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        from models.timetable import Timetable
+        from models.lecture import Lecture
+        from models.attendance import Attendance, AttendanceStatus
+        from datetime import datetime as dt
+        
+        # Get faculty from session
+        faculty_user_id = session.get('user_id')
+        from models.faculty import Faculty
+        faculty = Faculty.query.filter_by(user_id=faculty_user_id).first()
+        if not faculty:
+            return jsonify({'error': 'Faculty not found'}), 404
+        
+        # Find or create timetable entry
+        timetable = Timetable.query.filter_by(
+            subject_id=subject_id,
+            faculty_id=faculty.faculty_id,
+            division_id=division_id
+        ).first()
+        
+        if not timetable:
+            # Create a timetable entry if it doesn't exist
+            lecture_date_obj = dt.strptime(lecture_date, '%Y-%m-%d').date()
+            day_of_week = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'][lecture_date_obj.weekday()]
+            
+            timetable = Timetable(
+                subject_id=subject_id,
+                faculty_id=faculty.faculty_id,
+                division_id=division_id,
+                day_of_week=day_of_week,
+                lecture_no=1,
+                start_time=dt.strptime('09:00', '%H:%M').time(),
+                end_time=dt.strptime('10:00', '%H:%M').time()
+            )
+            db.session.add(timetable)
+            db.session.flush()
+        
+        # Find or create lecture
+        lecture_date_obj = dt.strptime(lecture_date, '%Y-%m-%d').date()
+        lecture = Lecture.query.filter_by(
+            timetable_id=timetable.timetable_id,
+            lecture_date=lecture_date_obj
+        ).first()
+        
+        if not lecture:
+            lecture = Lecture(
+                timetable_id=timetable.timetable_id,
+                lecture_date=lecture_date_obj
+            )
+            db.session.add(lecture)
+            db.session.flush()
+        
+        # Get status IDs
+        present_status = AttendanceStatus.query.filter_by(status_name='PRESENT').first()
+        absent_status = AttendanceStatus.query.filter_by(status_name='ABSENT').first()
+        
+        if not present_status or not absent_status:
+            return jsonify({'error': 'Attendance status not configured'}), 500
+        
+        # Mark attendance for each student
+        for record in attendance_data:
+            student_id = record.get('student_id')
+            status = record.get('status', 'PRESENT')
+            
+            # Check if attendance already exists
+            existing = Attendance.query.filter_by(
+                student_id=student_id,
+                lecture_id=lecture.lecture_id
+            ).first()
+            
+            status_id = present_status.status_id if status == 'PRESENT' else absent_status.status_id
+            
+            if existing:
+                # Update existing attendance
+                existing.status_id = status_id
+                existing.marked_at = dt.utcnow()
+            else:
+                # Create new attendance record
+                new_attendance = Attendance(
+                    student_id=student_id,
+                    lecture_id=lecture.lecture_id,
+                    status_id=status_id
+                )
+                db.session.add(new_attendance)
+        
+        db.session.commit()
+        return jsonify({'message': 'Attendance marked successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@faculty_bp.route("/attendance/get", methods=['GET'])
+@faculty_required
+def get_attendance():
+    """Get existing attendance for a lecture to enable editing"""
+    try:
+        division_id = request.args.get('division_id', type=int)
+        subject_id = request.args.get('subject_id', type=int)
+        lecture_date = request.args.get('lecture_date')
+        
+        if not all([division_id, subject_id, lecture_date]):
+            return jsonify({'error': 'Missing required parameters'}), 400
+        
+        from models.timetable import Timetable
+        from models.lecture import Lecture
+        from models.attendance import Attendance, AttendanceStatus
+        from datetime import datetime as dt
+        
+        # Get faculty from session
+        faculty_user_id = session.get('user_id')
+        from models.faculty import Faculty
+        faculty = Faculty.query.filter_by(user_id=faculty_user_id).first()
+        if not faculty:
+            return jsonify({'error': 'Faculty not found'}), 404
+        
+        # Find timetable entry
+        timetable = Timetable.query.filter_by(
+            subject_id=subject_id,
+            faculty_id=faculty.faculty_id,
+            division_id=division_id
+        ).first()
+        
+        if not timetable:
+            return jsonify({'exists': False, 'attendance': []})
+        
+        # Find lecture
+        lecture_date_obj = dt.strptime(lecture_date, '%Y-%m-%d').date()
+        lecture = Lecture.query.filter_by(
+            timetable_id=timetable.timetable_id,
+            lecture_date=lecture_date_obj
+        ).first()
+        
+        if not lecture:
+            return jsonify({'exists': False, 'attendance': []})
+        
+        # Get attendance records
+        attendance_records = Attendance.query.filter_by(lecture_id=lecture.lecture_id).all()
+        
+        attendance_data = [
+            {
+                'student_id': record.student_id,
+                'status': record.status.status_name
+            }
+            for record in attendance_records
+        ]
+        
+        return jsonify({
+            'exists': True,
+            'attendance': attendance_data
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @faculty_bp.route("/analytics")

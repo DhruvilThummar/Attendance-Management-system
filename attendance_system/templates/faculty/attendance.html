@@ -131,18 +131,13 @@
 
 {% block extra_js %}
 <script>
-    const mockStudents = [
-        { id: 1, roll: '101', name: 'Raj Kumar', status: 'PRESENT' },
-        { id: 2, roll: '102', name: 'Priya Singh', status: 'PRESENT' },
-        { id: 3, roll: '103', name: 'Amit Verma', status: 'PRESENT' },
-        { id: 4, roll: '104', name: 'Neha Sharma', status: 'PRESENT' },
-        { id: 5, roll: '105', name: 'Vikram Singh', status: 'PRESENT' },
-    ];
-
     // Read division data from script tag to avoid linter errors
-    const divisionData = JSON.parse('{{ divisions|tojson|safe }}');
+    const divisionData = {{ divisions|default ([], true) | tojson | safe }};
 
     let currentMode = 'entry';
+    let currentStudents = []; // Store fetched students
+    let selectedDivisionId = null;
+    let selectedSubjectId = null;
 
     document.getElementById('modeEntry').addEventListener('click', function () {
         setMode('entry');
@@ -163,6 +158,7 @@
 
     document.getElementById('divisionSelect').addEventListener('change', function () {
         const divId = this.value;
+        selectedDivisionId = divId;
         const subjectSelect = document.getElementById('subjectSelect');
         subjectSelect.innerHTML = '<option value="">-- Select Subject --</option>';
 
@@ -180,7 +176,10 @@
         checkSelection();
     });
 
-    document.getElementById('subjectSelect').addEventListener('change', checkSelection);
+    document.getElementById('subjectSelect').addEventListener('change', function () {
+        selectedSubjectId = this.value;
+        checkSelection();
+    });
 
     function checkSelection() {
         const divId = document.getElementById('divisionSelect').value;
@@ -194,13 +193,66 @@
         }
     }
 
-    function openAttendanceModal() {
-        loadStudents();
-        const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
-        modal.show();
+    async function openAttendanceModal() {
+        if (!selectedDivisionId) {
+            alert('Please select a division');
+            return;
+        }
+
+        // Fetch students from API
+        try {
+            const response = await fetch(`/faculty/attendance/students/${selectedDivisionId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch students');
+            }
+            const data = await response.json();
+            currentStudents = data.students || [];
+
+            if (currentStudents.length === 0) {
+                alert('No students found in this division');
+                return;
+            }
+
+            // If in edit mode, fetch existing attendance
+            let existingAttendance = {};
+            if (currentMode === 'edit') {
+                const lectureDate = document.getElementById('attendanceDate').value;
+                if (!lectureDate || !selectedSubjectId) {
+                    alert('Please select date and subject');
+                    return;
+                }
+
+                try {
+                    const attendanceResponse = await fetch(
+                        `/faculty/attendance/get?division_id=${selectedDivisionId}&subject_id=${selectedSubjectId}&lecture_date=${lectureDate}`
+                    );
+                    if (attendanceResponse.ok) {
+                        const attendanceData = await attendanceResponse.json();
+                        if (attendanceData.exists && attendanceData.attendance) {
+                            // Create a map of student_id to status
+                            attendanceData.attendance.forEach(record => {
+                                existingAttendance[record.student_id] = record.status;
+                            });
+                        } else if (attendanceData.exists === false) {
+                            alert('No attendance record found for this date. Please use "New Entry" mode.');
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error fetching existing attendance:', err);
+                }
+            }
+
+            loadStudents(existingAttendance);
+            const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+            modal.show();
+        } catch (error) {
+            console.error('Error fetching students:', error);
+            alert('Failed to load students. Please try again.');
+        }
     }
 
-    function loadStudents() {
+    function loadStudents(existingAttendance = {}) {
         const listBody = document.getElementById('studentListBody');
         listBody.innerHTML = '';
 
@@ -212,19 +264,30 @@
         document.getElementById('selectedDivisionText').innerText = devData ? devData.division_name : '';
         document.getElementById('selectedSubjectText').innerText = subSelect.options[subSelect.selectedIndex].text;
 
-        mockStudents.forEach(student => {
+        // Sort students by roll number
+        const sortedStudents = [...currentStudents].sort((a, b) => {
+            const rollA = parseInt(a.roll_no) || 0;
+            const rollB = parseInt(b.roll_no) || 0;
+            return rollA - rollB;
+        });
+
+        sortedStudents.forEach(student => {
+            // Use existing attendance if available, otherwise default to PRESENT
+            const status = existingAttendance[student.student_id] || 'PRESENT';
+            const isPresent = status === 'PRESENT';
+
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td class="ps-4 fw-medium text-muted">${student.roll}</td>
+                <td class="ps-4 fw-medium text-muted">${student.roll_no || 'N/A'}</td>
                 <td class="fw-bold">${student.name}</td>
                 <td class="text-center">
-                    <span id="badge-${student.id}" class="badge rounded-pill bg-success-soft text-success px-3 py-2">
-                        PRESENT
+                    <span id="badge-${student.student_id}" class="badge rounded-pill ${isPresent ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'} px-3 py-2">
+                        ${status}
                     </span>
                 </td>
                 <td class="pe-4 text-end">
-                    <button id="btn-${student.id}" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="toggleStudent(${student.id})">
-                        Mark Absent
+                    <button id="btn-${student.student_id}" class="btn btn-sm ${isPresent ? 'btn-outline-danger' : 'btn-outline-success'} rounded-pill px-3" onclick="toggleStudent(${student.student_id})">
+                        ${isPresent ? 'Mark Absent' : 'Mark Present'}
                     </button>
                 </td>
             `;
@@ -254,26 +317,75 @@
     }
 
     function markAllAbsent() {
-        mockStudents.forEach(student => {
-            const badge = document.getElementById(`badge-${student.id}`);
-            if (badge.innerText === 'PRESENT') {
-                toggleStudent(student.id);
+        currentStudents.forEach(student => {
+            const badge = document.getElementById(`badge-${student.student_id}`);
+            if (badge && badge.innerText === 'PRESENT') {
+                toggleStudent(student.student_id);
             }
         });
     }
 
     function markAllPresent() {
-        mockStudents.forEach(student => {
-            const badge = document.getElementById(`badge-${student.id}`);
-            if (badge.innerText === 'ABSENT') {
-                toggleStudent(student.id);
+        currentStudents.forEach(student => {
+            const badge = document.getElementById(`badge-${student.student_id}`);
+            if (badge && badge.innerText === 'ABSENT') {
+                toggleStudent(student.student_id);
             }
         });
     }
 
-    function saveAttendance() {
-        const action = currentMode === 'entry' ? 'Saved' : 'Updated';
-        alert(`Attendance ${action} Successfully!`);
+    async function saveAttendance() {
+        if (!selectedDivisionId || !selectedSubjectId) {
+            alert('Please select division and subject');
+            return;
+        }
+
+        const lectureDate = document.getElementById('attendanceDate').value;
+        if (!lectureDate) {
+            alert('Please select lecture date');
+            return;
+        }
+
+        // Collect attendance data
+        const attendanceData = currentStudents.map(student => {
+            const badge = document.getElementById(`badge-${student.student_id}`);
+            return {
+                student_id: student.student_id,
+                status: badge ? badge.innerText : 'PRESENT'
+            };
+        });
+
+        // Send to API
+        try {
+            const response = await fetch('/faculty/attendance/mark', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    division_id: parseInt(selectedDivisionId),
+                    subject_id: parseInt(selectedSubjectId),
+                    lecture_date: lectureDate,
+                    attendance: attendanceData
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert(result.message || 'Attendance saved successfully!');
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('attendanceModal'));
+                modal.hide();
+                // Reset form
+                currentStudents = [];
+            } else {
+                alert('Error: ' + (result.error || 'Failed to save attendance'));
+            }
+        } catch (error) {
+            console.error('Error saving attendance:', error);
+            alert('Failed to save attendance. Please try again.');
+        }
     }
 </script>
 {% endblock %}
