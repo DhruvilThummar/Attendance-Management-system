@@ -191,27 +191,44 @@ class DataHelper:
             return None
         hod_name = dept.hod_faculty.short_name if dept.hod_faculty and dept.hod_faculty.short_name else (
             dept.hod_faculty.user.name if dept.hod_faculty and dept.hod_faculty.user else 'Not Assigned')
+        
+        from models.student import Student
+        student_count = Student.query.filter_by(dept_id=dept.dept_id).count()
+        
         return {
             'dept_id': dept.dept_id,
             'college_id': dept.college_id,
             'dept_name': dept.dept_name,
             'dept_code': DataHelper._dept_code(dept.dept_name),
             'hod_faculty_id': dept.hod_faculty_id,
-            'hod_name': hod_name
+            'hod_name': hod_name,
+            'student_count': student_count
         }
 
     @staticmethod
     def _division_dict(division):
         if not division:
             return None
+        class_teacher_name = None
+        if division.class_teacher:
+            class_teacher_name = division.class_teacher.short_name or (
+                division.class_teacher.user.name if division.class_teacher.user else None)
+        
+        from models.student import Student
+        student_count = Student.query.filter_by(division_id=division.division_id).count()
+        
         return {
             'division_id': division.division_id,
+            'div_id': division.division_id,  # Alias for template compatibility
             'dept_id': division.dept_id,
             'division_name': division.division_name,
+            'division_code': division.division_name,  # Use division name as code if no separate field
             'semester_id': DataHelper._safe_attr(division, 'semester_id', None),
-            'capacity': DataHelper._safe_attr(division, 'capacity', None),
+            'capacity': DataHelper._safe_attr(division, 'capacity', 60),
+            'student_count': student_count,
             'class_teacher_id': DataHelper._safe_attr(division, 'class_teacher_id', None),
-            'class_teacher_name': division.class_teacher.user.name if division.class_teacher and division.class_teacher.user else None
+            'class_teacher_name': class_teacher_name,
+            'class_teacher': class_teacher_name  # Alias for template compatibility
         }
 
     @staticmethod
