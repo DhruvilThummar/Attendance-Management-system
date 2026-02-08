@@ -115,6 +115,7 @@ def college_divisions():
     """College Divisions List"""
     departments = DataHelper.get_departments()
     all_divisions = DataHelper.get_divisions()
+    faculty = DataHelper.get_faculty()
     
     # Group divisions by department
     for dept in departments:
@@ -123,7 +124,8 @@ def college_divisions():
     return render_template("college/divisions.html",
                          title="Divisions",
                          departments=departments,
-                         divisions=all_divisions)
+                         divisions=all_divisions,
+                         faculty=faculty)
 
 
 @college_bp.route("/divisions/create", methods=['GET', 'POST'])

@@ -196,8 +196,8 @@
                         <label class="form-label">Class Teacher</label>
                         <select class="form-select" id="classTeacher" title="Select Class Teacher">
                             <option value="">Select Teacher</option>
-                            {% for faculty in all_faculty %}
-                            <option value="{{ faculty.faculty_id }}">{{ faculty.name }}</option>
+                            {% for fac in faculty %}
+                            <option value="{{ fac.faculty_id }}">{{ fac.short_name or fac.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
