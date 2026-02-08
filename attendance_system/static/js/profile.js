@@ -5,6 +5,21 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function initializeProfile() {
+    const endpoints = getProfileEndpoints();
+
+    // Edit Profile Modal
+    const editProfileBtn = document.getElementById('editProfileBtn');
+    if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', openEditProfileModal);
+    }
+
+    const editProfileForm = document.getElementById('editProfileForm');
+    if (editProfileForm) {
+        editProfileForm.addEventListener('submit', function (event) {
+            handleProfileUpdate(event, endpoints.profile);
+        });
+    }
+
     // Change Password Modal
     const changePasswordBtn = document.getElementById('changePasswordBtn');
     if (changePasswordBtn) {
@@ -14,14 +29,32 @@ function initializeProfile() {
     // Avatar Upload (view only, no actual upload for superadmin)
     const avatarInput = document.getElementById('avatarInput');
     if (avatarInput) {
-        avatarInput.addEventListener('change', handleAvatarUpload);
+        avatarInput.addEventListener('change', function (event) {
+            handleAvatarUpload(event, endpoints.avatar);
+        });
     }
 
     // Form Submissions
     const changePasswordForm = document.getElementById('changePasswordForm');
     if (changePasswordForm) {
-        changePasswordForm.addEventListener('submit', handlePasswordChange);
+        changePasswordForm.addEventListener('submit', function (event) {
+            handlePasswordChange(event, endpoints.password);
+        });
     }
+}
+
+function getProfileEndpoints() {
+    const container = document.querySelector('.profile-container');
+    return {
+        profile: container?.dataset?.profileEndpoint || '',
+        password: container?.dataset?.passwordEndpoint || '',
+        avatar: container?.dataset?.avatarEndpoint || ''
+    };
+}
+
+function openEditProfileModal() {
+    const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+    modal.show();
 }
 
 function openPasswordModal() {
@@ -29,7 +62,7 @@ function openPasswordModal() {
     modal.show();
 }
 
-function handleAvatarUpload(event) {
+function handleAvatarUpload(event, avatarEndpoint) {
     const file = event.target.files[0];
     if (file) {
         // Validate file type
@@ -58,18 +91,23 @@ function handleAvatarUpload(event) {
         };
         reader.readAsDataURL(file);
 
+        if (!avatarEndpoint) {
+            showAlert('Avatar upload is not available', 'warning');
+            return;
+        }
+
         // Auto-upload avatar
-        uploadAvatar(file);
+        uploadAvatar(file, avatarEndpoint);
     }
 }
 
-function uploadAvatar(file) {
+function uploadAvatar(file, endpoint) {
     const formData = new FormData();
     formData.append('avatar', file);
 
     showLoading(true);
 
-    fetch('/profile/upload-avatar', {
+    fetch(endpoint, {
         method: 'POST',
         body: formData
     })
@@ -89,8 +127,13 @@ function uploadAvatar(file) {
         });
 }
 
-function handlePasswordChange(event) {
+function handlePasswordChange(event, endpoint) {
     event.preventDefault();
+
+    if (!endpoint) {
+        showAlert('Password change is not available for this profile', 'warning');
+        return;
+    }
 
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData.entries());
@@ -108,7 +151,7 @@ function handlePasswordChange(event) {
 
     showLoading(true);
 
-    fetch('/profile/change-password', {
+    fetch(endpoint, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -136,6 +179,57 @@ function handlePasswordChange(event) {
             showLoading(false);
             console.error('Error:', error);
             showAlert('An error occurred while changing password', 'danger');
+        });
+}
+
+function handleProfileUpdate(event, endpoint) {
+    event.preventDefault();
+
+    if (!endpoint) {
+        showAlert('Profile update is not available for this profile', 'warning');
+        return;
+    }
+
+    const formData = new FormData(event.target);
+    const data = Object.fromEntries(formData.entries());
+
+    if (!validateProfileData(data)) {
+        return;
+    }
+
+    showLoading(true);
+
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            name: data.name,
+            email: data.email,
+            mobile: data.mobile
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            showLoading(false);
+            if (data.success) {
+                showAlert('Profile updated successfully!', 'success');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                setTimeout(() => {
+                    location.reload();
+                }, 1200);
+            } else {
+                showAlert(data.message || 'Failed to update profile', 'danger');
+            }
+        })
+        .catch(error => {
+            showLoading(false);
+            console.error('Error:', error);
+            showAlert('An error occurred while updating profile', 'danger');
         });
 }
 

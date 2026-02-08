@@ -22,9 +22,15 @@ def college_dashboard():
     college = DataHelper.get_college()
     departments = DataHelper.get_departments()
     divisions = DataHelper.get_divisions()
+    faculty_members = DataHelper.get_faculty()
     
     # Calculate total student count
     total_student_count = sum(dept.get('student_count', 0) for dept in (departments or []))
+    faculty_count = len(faculty_members) if faculty_members else 0
+
+    # Attach divisions to departments for dashboard tables/cards
+    for dept in departments if departments else []:
+        dept['divisions'] = [div for div in (divisions or []) if div.get('dept_id') == dept.get('dept_id')]
     
     # Generate charts
     charts = {}
@@ -64,6 +70,7 @@ def college_dashboard():
                          departments=departments,
                          divisions=divisions,
                          student_count=total_student_count,
+                         faculty_count=faculty_count,
                          charts=charts)
 
 
@@ -75,7 +82,7 @@ def college_profile():
     from models.college import College
     
     # Get current user
-    user_data = DataHelper.get_user('college')
+    user_data = DataHelper.get_user('college_admin')
     
     # Get college
     college = None
@@ -91,12 +98,66 @@ def college_profile():
         'avg_attendance': 0,
         'total_users': 0
     }
+
+    if college_stats and 'avg_attendance' not in college_stats:
+        college_stats['avg_attendance'] = college_stats.get('average_attendance', 0)
     
     return render_template("college/profile.html",
                          title="College Profile",
                          user=user_data,
                          college=college,
                          college_stats=college_stats)
+
+
+@college_bp.route("/profile/update", methods=['POST'])
+@college_admin_required
+def college_update_profile():
+    """Update college admin profile information"""
+    try:
+        data = request.get_json() or {}
+        user_data = DataHelper.get_user('college_admin')
+        if not user_data:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        user = User.query.get(user_data['user_id'])
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        user.name = data.get('name', user.name)
+        user.email = data.get('email', user.email)
+        user.mobile = data.get('mobile', user.mobile)
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Profile updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error updating profile: {str(e)}'}), 500
+
+
+@college_bp.route("/profile/change-password", methods=['POST'])
+@college_admin_required
+def college_change_password():
+    """Change college admin password"""
+    try:
+        data = request.get_json() or {}
+        user_data = DataHelper.get_user('college_admin')
+        if not user_data:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        user = User.query.get(user_data['user_id'])
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        if not user.check_password(data.get('current_password')):
+            return jsonify({'success': False, 'message': 'Current password is incorrect'}), 400
+
+        user.set_password(data.get('new_password'))
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Password changed successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error changing password: {str(e)}'}), 500
 
 
 @college_bp.route("/departments")

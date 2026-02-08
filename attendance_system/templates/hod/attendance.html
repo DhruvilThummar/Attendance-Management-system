@@ -72,6 +72,12 @@
                             <i class="fas fa-filter me-2"></i>Apply Filters
                         </button>
                     </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">&nbsp;</label>
+                        <button class="btn btn-outline-primary w-100" id="downloadReportBtn">
+                            <i class="fas fa-download me-2"></i>Download Report
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -205,6 +211,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const filterBtn = document.getElementById('applyFiltersBtn');
+        const downloadBtn = document.getElementById('downloadReportBtn');
         const viewBtns = document.querySelectorAll('button[data-division-id]');
 
         filterBtn.addEventListener('click', function () {
@@ -234,6 +241,18 @@
                 modal.show();
             });
         });
+
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function () {
+                const divisionId = document.getElementById('filterDivision').value;
+                const subjectId = document.getElementById('filterSubject').value;
+                const params = new URLSearchParams({
+                    ...(divisionId && { division_id: divisionId }),
+                    ...(subjectId && { subject_id: subjectId })
+                });
+                window.location.href = `/hod/attendance/report?${params.toString()}`;
+            });
+        }
     });
 </script>
 {% endblock %}

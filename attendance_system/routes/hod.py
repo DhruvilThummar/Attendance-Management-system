@@ -1,7 +1,10 @@
 """
 HOD (Head of Department) routes - dashboard, management pages, and APIs
 """
-from flask import Blueprint, render_template, request, jsonify, abort
+import csv
+import io
+
+from flask import Blueprint, render_template, request, jsonify, abort, make_response
 
 from models.user import db, User
 from services.data_helper import DataHelper
@@ -299,6 +302,60 @@ def hod_attendance_data():
     )
 
     return jsonify({'records': records})
+
+
+@hod_bp.route("/attendance/report")
+def hod_attendance_report():
+    """Download attendance report as CSV"""
+    context = _get_hod_context()
+
+    if not context['dept_id']:
+        return jsonify({'success': False, 'message': 'Department not configured'}), 400
+
+    division_id = request.args.get('division_id', type=int)
+    subject_id = request.args.get('subject_id', type=int)
+
+    records = DataHelper.get_attendance_records(
+        dept_id=context['dept_id'],
+        division_id=division_id,
+        subject_id=subject_id
+    )
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        'Student ID',
+        'Student Name',
+        'Department',
+        'Division',
+        'Subject',
+        'Subject Code',
+        'Total Lectures',
+        'Attended Lectures',
+        'Attendance %',
+        'Status',
+        'Last Updated'
+    ])
+
+    for record in records:
+        writer.writerow([
+            record.get('student_id', ''),
+            record.get('student_name', ''),
+            record.get('dept_name', ''),
+            record.get('division_name', ''),
+            record.get('subject_name', ''),
+            record.get('subject_code', ''),
+            record.get('total_lectures', 0),
+            record.get('attended_lectures', 0),
+            record.get('attendance_percentage', 0),
+            record.get('status', ''),
+            record.get('last_updated', '')
+        ])
+
+    response = make_response(output.getvalue())
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = 'attachment; filename=hod_attendance_report.csv'
+    return response
 
 
 @hod_bp.route("/timetable")
