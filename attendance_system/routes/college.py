@@ -239,6 +239,128 @@ def college_faculty():
                          faculty=faculty_list)
 
 
+@college_bp.route("/faculty/<int:faculty_id>")
+def get_faculty_details(faculty_id):
+    """Get details of a specific faculty member"""
+    faculty = DataHelper.get_faculty_member(faculty_id=faculty_id)
+    if not faculty:
+        return jsonify({'error': 'Faculty not found'}), 404
+    return jsonify(faculty)
+
+
+@college_bp.route("/faculty/add", methods=['POST'])
+def add_faculty():
+    """Add a new faculty member"""
+    try:
+        data = request.get_json()
+        
+        # Create user first
+        from models.user import User
+        from models.faculty import Faculty
+        from models.department import Department
+        
+        # Check if email already exists
+        existing_user = User.query.filter_by(email=data.get('email')).first()
+        if existing_user:
+            return jsonify({'error': 'Email already exists'}), 400
+        
+        # Create new user
+        new_user = User(
+            name=data.get('name'),
+            email=data.get('email'),
+            mobile=data.get('phone'),
+            role='faculty',
+            password='default123'  # Default password, should be changed
+        )
+        db.session.add(new_user)
+        db.session.flush()  # Get user_id
+        
+        # Create faculty record
+        new_faculty = Faculty(
+            user_id=new_user.user_id,
+            dept_id=data.get('dept_id'),
+            short_name=data.get('short_name'),
+            designation=data.get('specialization')
+        )
+        db.session.add(new_faculty)
+        db.session.flush()  # Get faculty_id
+        
+        # If is_hod is True, update department
+        if data.get('is_hod'):
+            dept = Department.query.get(data.get('dept_id'))
+            if dept:
+                dept.hod_faculty_id = new_faculty.faculty_id
+        
+        db.session.commit()
+        return jsonify({
+            'message': 'Faculty added successfully',
+            'faculty_id': new_faculty.faculty_id
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@college_bp.route("/faculty/<int:faculty_id>", methods=['POST'])
+def update_faculty(faculty_id):
+    """Update faculty member details"""
+    try:
+        data = request.get_json()
+        
+        from models.user import User
+        from models.faculty import Faculty
+        from models.department import Department
+        
+        faculty = Faculty.query.get(faculty_id)
+        if not faculty:
+            return jsonify({'error': 'Faculty not found'}), 404
+        
+        # Update user details
+        user = faculty.user
+        if data.get('name'):
+            user.name = data.get('name')
+        if data.get('email'):
+            # Check if email is taken by another user
+            existing = User.query.filter(User.email == data.get('email'), User.user_id != user.user_id).first()
+            if existing:
+                return jsonify({'error': 'Email already exists'}), 400
+            user.email = data.get('email')
+        if data.get('phone'):
+            user.mobile = data.get('phone')
+        
+        # Update faculty details
+        if data.get('dept_id'):
+            # Remove HOD status from old department if changing department
+            if faculty.dept_id != data.get('dept_id'):
+                old_dept = Department.query.get(faculty.dept_id)
+                if old_dept and old_dept.hod_faculty_id == faculty_id:
+                    old_dept.hod_faculty_id = None
+            faculty.dept_id = data.get('dept_id')
+        
+        if 'short_name' in data:
+            faculty.short_name = data.get('short_name')
+        if 'specialization' in data:
+            faculty.designation = data.get('specialization')
+        
+        # Handle HOD status
+        if 'is_hod' in data:
+            dept = Department.query.get(faculty.dept_id)
+            if data.get('is_hod'):
+                # Make this faculty HOD
+                if dept:
+                    dept.hod_faculty_id = faculty_id
+            else:
+                # Remove HOD status
+                if dept and dept.hod_faculty_id == faculty_id:
+                    dept.hod_faculty_id = None
+        
+        db.session.commit()
+        return jsonify({'message': 'Faculty updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
 @college_bp.route("/faculty/hod-list")
 def college_faculty_hod_list():
     """College HOD List"""
