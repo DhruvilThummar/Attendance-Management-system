@@ -3,6 +3,7 @@ Parent routes - Child attendance tracking and profile
 """
 from flask import Blueprint, render_template, request, jsonify
 from datetime import datetime, timedelta
+from models.user import db, User
 from services.data_helper import DataHelper
 from attendance_system.utils.auth_decorators import login_required, parent_required
 from services.chart_helper import (
@@ -209,6 +210,67 @@ def attendance_data_api(student_id):
         data = DataHelper.get_child_attendance(student_id, subject_id)
     
     return jsonify({'attendance': data})
+
+
+@parent_bp.route("/profile/update", methods=['POST'])
+@parent_required
+def parent_update_profile():
+    """Update parent profile information"""
+    try:
+        data = request.get_json()
+        
+        # Get current user
+        user_data = DataHelper.get_user('parent')
+        if not user_data:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Get user record
+        user = User.query.get(user_data['user_id'])
+        
+        if not user:
+            return jsonify({'success': False, 'message': 'User record not found'}), 404
+        
+        # Update user information
+        user.name = data.get('name', user.name)
+        user.email = data.get('email', user.email)
+        user.mobile = data.get('mobile', user.mobile)
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Profile updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error updating profile: {str(e)}'}), 500
+
+
+@parent_bp.route("/profile/change-password", methods=['POST'])
+@parent_required
+def parent_change_password():
+    """Change parent password"""
+    try:
+        data = request.get_json()
+        
+        # Get current user
+        user_data = DataHelper.get_user('parent')
+        if not user_data:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        user = User.query.get(user_data['user_id'])
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Verify current password
+        if not user.check_password(data.get('current_password')):
+            return jsonify({'success': False, 'message': 'Current password is incorrect'}), 400
+        
+        # Update password
+        user.set_password(data.get('new_password'))
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Password changed successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error changing password: {str(e)}'}), 500
 
 
 @parent_bp.route("/profile")
