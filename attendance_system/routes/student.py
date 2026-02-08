@@ -268,8 +268,8 @@ def student_profile():
     mentor = None
     if student_data.get('mentor_id'):
         mentor_faculty = Faculty.query.get(student_data.get('mentor_id'))
-        if mentor_faculty and mentor_faculty.user:
-            mentor = {'name': mentor_faculty.user.name}
+        if mentor_faculty:
+            mentor = {'name': mentor_faculty.short_name or (mentor_faculty.user.name if mentor_faculty.user else 'N/A')}
     
     # Get attendance summary
     attendance_records = DataHelper.get_child_attendance(student_id)

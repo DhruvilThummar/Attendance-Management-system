@@ -189,7 +189,8 @@ class DataHelper:
     def _department_dict(dept):
         if not dept:
             return None
-        hod_name = dept.hod_faculty.user.name if dept.hod_faculty and dept.hod_faculty.user else 'Not Assigned'
+        hod_name = dept.hod_faculty.short_name if dept.hod_faculty and dept.hod_faculty.short_name else (
+            dept.hod_faculty.user.name if dept.hod_faculty and dept.hod_faculty.user else 'Not Assigned')
         return {
             'dept_id': dept.dept_id,
             'college_id': dept.college_id,
@@ -452,8 +453,8 @@ class DataHelper:
                 'division_name': proxy.lecture.timetable.division.division_name
                 if proxy.lecture and proxy.lecture.timetable and proxy.lecture.timetable.division else '',
                 'status': proxy.status.status_name if proxy.status else 'PENDING',
-                'original_faculty': proxy.original_faculty.user.name
-                if proxy.original_faculty and proxy.original_faculty.user else '',
+                'original_faculty': proxy.original_faculty.short_name if proxy.original_faculty and proxy.original_faculty.short_name else (
+                    proxy.original_faculty.user.name if proxy.original_faculty and proxy.original_faculty.user else ''),
                 'faculty_id': proxy.substitute_faculty_id,
                 'lecture_no': proxy.lecture_no
             })
@@ -644,7 +645,8 @@ class DataHelper:
                 'subject_name': entry.subject.subject_name if entry.subject else '',
                 'subject_code': entry.subject.subject_code if entry.subject else '',
                 'faculty_id': entry.faculty_id,
-                'faculty_name': entry.faculty.user.name if entry.faculty and entry.faculty.user else '',
+                'faculty_name': entry.faculty.short_name if entry.faculty and entry.faculty.short_name else (
+                    entry.faculty.user.name if entry.faculty and entry.faculty.user else ''),
                 'room_no': entry.room_no or '',
                 'mode': 'Lecture',
                 'semester_id': entry.subject.semester_id if entry.subject else None
@@ -744,7 +746,7 @@ class DataHelper:
             'subject_name': subject['subject_name'],
             'subject_code': subject['subject_code'],
             'faculty_id': faculty['faculty_id'],
-            'faculty_name': faculty.get('full_name') or faculty.get('short_name'),
+            'faculty_name': faculty.get('short_name') or faculty.get('full_name'),
             'room_no': entry_data.get('room_no', ''),
             'mode': entry_data.get('mode', 'Lecture'),
             'semester_id': subject.get('semester_id')

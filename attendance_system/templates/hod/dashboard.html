@@ -227,7 +227,7 @@
                                     <tbody>
                                         {% for member in faculty %}
                                         <tr>
-                                            <td><strong>{{ member.full_name or member.short_name }}</strong></td>
+                                            <td><strong>{{ member.short_name or member.full_name }}</strong></td>
                                             <td><code>{{ member.short_name }}</code></td>
                                             <td><small class="badge bg-info">{{ member.designation }}</small></td>
                                         </tr>

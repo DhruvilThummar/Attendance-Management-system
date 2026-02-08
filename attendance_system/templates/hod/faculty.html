@@ -68,7 +68,7 @@
                         </div>
 
                         <!-- Faculty Name -->
-                        <h5 class="fw-bold mb-1">{{ faculty.full_name or faculty.short_name }}</h5>
+                        <h5 class="fw-bold mb-1">{{ faculty.short_name or faculty.full_name }}</h5>
                         <div class="designation mb-3">
                             <span class="badge designation-badge text-white">{{ faculty.designation }}</span>
                         </div>
@@ -144,7 +144,7 @@
                                     <tbody>
                                         {% for faculty in faculty_cards %}
                                         <tr>
-                                            <td><strong>{{ faculty.full_name or faculty.short_name }}</strong></td>
+                                            <td><strong>{{ faculty.short_name or faculty.full_name }}</strong></td>
                                             <td>{{ faculty.designation }}</td>
                                             <td><code>{{ faculty.short_name }}</code></td>
                                             <td>
