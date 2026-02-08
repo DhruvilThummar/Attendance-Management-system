@@ -77,9 +77,6 @@
                     <select id="deptSelector" class="form-select form-select-sm bg-dark text-light border-secondary"
                         onchange="handleGlobalDeptChange()" title="Select Department">
                         <option value="">-- All Departments --</option>
-                        <option value="1">CSE - Computer Science</option>
-                        <option value="2">ECE - Electronics</option>
-                        <option value="3">ME - Mechanical</option>
                     </select>
 
                     <select id="divSelector" class="form-select form-select-sm bg-dark text-light border-secondary"
@@ -117,17 +114,62 @@
 </nav>
 
 <script>
-    const divisionsData = {
+    const fallbackDivisionsData = {
         '1': [{ id: 'A', name: 'Div A' }, { id: 'B', name: 'Div B' }, { id: 'C', name: 'Div C' }],
         '2': [{ id: 'D', name: 'Div D' }, { id: 'E', name: 'Div E' }],
         '3': [{ id: 'F', name: 'Div F' }, { id: 'G', name: 'Div G' }]
     };
 
-    const deptNames = {
+    const fallbackDeptNames = {
         '1': 'CSE - Computer Science',
         '2': 'ECE - Electronics',
         '3': 'ME - Mechanical'
     };
+
+    const departmentsData = Array.isArray(window.collegeDepartments) ? window.collegeDepartments : [];
+    const divisionsDataRaw = Array.isArray(window.collegeDivisions) ? window.collegeDivisions : [];
+
+    const deptNames = {};
+    const divisionsData = {};
+
+    departmentsData.forEach(dept => {
+        if (!dept || dept.dept_id == null) {
+            return;
+        }
+        const deptId = String(dept.dept_id);
+        deptNames[deptId] = dept.dept_name || fallbackDeptNames[deptId] || `Dept ${deptId}`;
+    });
+
+    divisionsDataRaw.forEach(div => {
+        if (!div || div.dept_id == null) {
+            return;
+        }
+        const deptId = String(div.dept_id);
+        const divId = div.division_id != null ? String(div.division_id) : String(div.div_id || '');
+        if (!divId) {
+            return;
+        }
+        if (!divisionsData[deptId]) {
+            divisionsData[deptId] = [];
+        }
+        divisionsData[deptId].push({
+            id: divId,
+            name: div.division_name || div.division_code || `Div ${divId}`
+        });
+    });
+
+    function populateDeptOptions() {
+        const deptSelector = document.getElementById('deptSelector');
+        if (!deptSelector) {
+            return;
+        }
+        let optionsHtml = '<option value="">-- All Departments --</option>';
+        const source = Object.keys(deptNames).length ? deptNames : fallbackDeptNames;
+        Object.keys(source).forEach(deptId => {
+            optionsHtml += `<option value="${deptId}">${source[deptId]}</option>`;
+        });
+        deptSelector.innerHTML = optionsHtml;
+    }
 
     function handleGlobalDeptChange() {
         const selector = document.getElementById('deptSelector');
@@ -176,9 +218,10 @@
     function updateDivisionOptions(deptId) {
         const divSelector = document.getElementById('divSelector');
         let optionsHtml = '<option value="">-- All Divisions --</option>';
+        const source = Object.keys(divisionsData).length ? divisionsData : fallbackDivisionsData;
 
-        if (deptId && divisionsData[deptId]) {
-            divisionsData[deptId].forEach(div => {
+        if (deptId && source[deptId]) {
+            source[deptId].forEach(div => {
                 optionsHtml += `<option value="${div.id}">${div.name}</option>`;
             });
         }
@@ -193,6 +236,7 @@
 
     // Load stored filters on page load
     document.addEventListener('DOMContentLoaded', function () {
+        populateDeptOptions();
         const storedDept = localStorage.getItem('selectedDept');
         const storedDiv = localStorage.getItem('selectedDiv');
 

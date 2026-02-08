@@ -167,6 +167,7 @@ class DataHelper:
             'email': user.email,
             'mobile': user.mobile,
             'role_id': user.role_id,
+            'role_name': user.role.role_name if user.role else None,
             'is_approved': user.is_approved,
             'created_at': user.created_at
         }

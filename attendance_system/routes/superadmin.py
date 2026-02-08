@@ -226,16 +226,18 @@ def users():
     }
     
     for user in all_users:
-        role_id = user.get('role_id')
-        if role_id == 1:
+        role_name = (user.get('role_name') or '').upper()
+        if role_name == 'SUPERADMIN':
             users_by_role['superadmin'].append(user)
-        elif role_id == 2:
+        elif role_name == 'ADMIN':
+            users_by_role['college_admin'].append(user)
+        elif role_name == 'HOD':
             users_by_role['hod'].append(user)
-        elif role_id == 3:
+        elif role_name == 'FACULTY':
             users_by_role['faculty'].append(user)
-        elif role_id == 4:
+        elif role_name == 'STUDENT':
             users_by_role['student'].append(user)
-        elif role_id == 5:
+        elif role_name == 'PARENT':
             users_by_role['parent'].append(user)
     
     return render_template("superadmin/users.html",

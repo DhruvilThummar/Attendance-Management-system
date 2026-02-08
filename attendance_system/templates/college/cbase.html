@@ -30,6 +30,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 
+    <script>
+        window.collegeDepartments = {{ departments | tojson if departments is not none else '[]' }};
+        window.collegeDivisions = {{ divisions | tojson if divisions is not none else '[]' }};
+    </script>
+
     <!-- Extra CSS Block -->
     {% block extra_css %}{% endblock %}
 
