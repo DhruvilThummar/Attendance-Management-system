@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 08, 2026 at 09:56 AM
+-- Generation Time: Feb 08, 2026 at 11:05 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -73,6 +73,18 @@ CREATE TABLE `attendance`
   `lecture_id` int
 (11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `attendance`
+--
+
+INSERT INTO `attendance` (`
+attendance_id`,
+`student_id
+`, `status_id`, `marked_at`, `lecture_id`) VALUES
+(1, 1, 2, '2026-02-08 04:26:52', 1),
+(2, 1, 2, '2026-02-08 04:27:20', 2),
+(3, 1, 2, '2026-02-08 04:27:31', 3);
 
 -- --------------------------------------------------------
 
@@ -271,6 +283,18 @@ CREATE TABLE `lecture`
 (11) NOT NULL,
   `lecture_date` date NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `lecture`
+--
+
+INSERT INTO `lecture` (`
+lecture_id`,
+`timetable_id
+`, `lecture_date`) VALUES
+(1, 0, '2026-02-02'),
+(3, 0, '2026-02-03'),
+(2, 1, '2026-02-02');
 
 -- --------------------------------------------------------
 
@@ -800,7 +824,7 @@ ADD KEY `fk_user_role`
 --
 ALTER TABLE `attendance`
   MODIFY `attendance_id` int
-(11) NOT NULL AUTO_INCREMENT;
+(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `attendance_status`
@@ -849,7 +873,7 @@ ALTER TABLE `faculty`
 --
 ALTER TABLE `lecture`
   MODIFY `lecture_id` int
-(11) NOT NULL AUTO_INCREMENT;
+(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `proxy_lecture`
