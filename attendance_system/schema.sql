@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 27, 2026 at 03:48 PM
+-- Generation Time: Feb 08, 2026 at 06:37 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,7 +20,7 @@ SET time_zone
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `databse`
+-- Database: `attendance_db`
 --
 
 -- --------------------------------------------------------
@@ -40,6 +40,18 @@ CREATE TABLE `academic_calendar`
 (255) DEFAULT NULL,
   `dept_id` int
 (11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `alembic_version`
+--
+
+CREATE TABLE `alembic_version`
+(
+  `version_num` varchar
+(32) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -85,6 +97,8 @@ status_id`,
 `status_name
 `) VALUES
 (2, 'ABSENT'),
+(4, 'EXCUSED'),
+(3, 'LATE'),
 (1, 'PRESENT');
 
 -- --------------------------------------------------------
@@ -108,8 +122,20 @@ CREATE TABLE `college`
   `phone` varchar
 (20) DEFAULT NULL,
   `website` varchar
-(255) DEFAULT NULL
+(255) DEFAULT NULL,
+  `is_approved` tinyint
+(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `college`
+--
+
+INSERT INTO `college` (`
+college_id`,
+`college_name
+`, `created_at`, `address`, `email`, `phone`, `website`, `is_approved`) VALUES
+(2, 'Demo Engineering College', '2026-02-06 23:22:46', '123 Engineering Road, Tech City', 'admin@college.edu', '+91-9876543210', 'https://demo-college.edu', 1);
 
 -- --------------------------------------------------------
 
@@ -128,6 +154,18 @@ CREATE TABLE `department`
   `hod_faculty_id` int
 (11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `department`
+--
+
+INSERT INTO `department` (`
+dept_id`,
+`college_id
+`, `dept_name`, `hod_faculty_id`) VALUES
+(1, 2, 'Computer Science', 1),
+(2, 2, 'Information Technology', NULL),
+(3, 2, 'Electronics', NULL);
 
 -- --------------------------------------------------------
 
@@ -151,6 +189,18 @@ CREATE TABLE `division`
 (100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `division`
+--
+
+INSERT INTO `division` (`
+division_id`,
+`dept_id
+`, `division_name`, `semester_id`, `capacity`, `class_teacher`) VALUES
+(1, 1, 'A', 3, 60, 'Faculty Member'),
+(2, 1, 'B', 3, 60, NULL),
+(3, 2, 'A', 3, 60, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -170,6 +220,16 @@ CREATE TABLE `faculty`
   `designation` varchar
 (100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `faculty`
+--
+
+INSERT INTO `faculty` (`
+faculty_id`,
+`user_id
+`, `dept_id`, `short_name`, `designation`) VALUES
+(1, 4, 1, 'FM', 'Assistant Professor');
 
 -- --------------------------------------------------------
 
@@ -199,6 +259,17 @@ CREATE TABLE `parent`
   `student_id` int
 (11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `parent`
+--
+
+INSERT INTO `parent` (`
+user_id`,
+`student_id
+`) VALUES
+(0, 1),
+(6, 1);
 
 -- --------------------------------------------------------
 
@@ -254,11 +325,12 @@ INSERT INTO `role` (`
 role_id`,
 `role_name
 `) VALUES
-(1, 'ADMIN'),
-(3, 'FACULTY'),
-(2, 'HOD'),
-(5, 'PARENT'),
-(4, 'STUDENT');
+(37, 'ADMIN'),
+(39, 'FACULTY'),
+(38, 'HOD'),
+(41, 'PARENT'),
+(40, 'STUDENT'),
+(36, 'SUPERADMIN');
 
 -- --------------------------------------------------------
 
@@ -275,6 +347,21 @@ CREATE TABLE `semester`
   `academic_year` varchar
 (9) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `semester`
+--
+
+INSERT INTO `semester` (`
+semester_id`,
+`semester_no
+`, `academic_year`) VALUES
+(1, 1, '2025-2026'),
+(2, 2, '2025-2026'),
+(3, 3, '2025-2026'),
+(4, 4, '2025-2026'),
+(5, 5, '2025-2026'),
+(6, 6, '2025-2026');
 
 -- --------------------------------------------------------
 
@@ -300,7 +387,17 @@ CREATE TABLE `student`
 (11) DEFAULT NULL,
   `semester_id` int
 (11) NOT NULL
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `student`
+--
+
+INSERT INTO `student` (`
+student_id`,
+`user_id
+`, `dept_id`, `division_id`, `enrollment_no`, `roll_no`, `mentor_id`, `semester_id`) VALUES
+(1, 5, 1, 1, 'CS2023001', 1, 1, 3);
 
 -- --------------------------------------------------------
 
@@ -323,6 +420,20 @@ CREATE TABLE `subject`
   `credits` int
 (11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `subject`
+--
+
+INSERT INTO `subject` (`
+subject_id`,
+`dept_id
+`, `subject_name`, `subject_code`, `semester_id`, `credits`) VALUES
+(1, 1, 'Data Structures', 'CS301', 3, 4),
+(2, 1, 'Database Management Systems', 'CS302', 3, 4),
+(3, 1, 'Operating Systems', 'CS303', 3, 4),
+(4, 1, 'Computer Networks', 'CS304', 3, 3),
+(5, 1, 'Web Development', 'CS305', 3, 3);
 
 -- --------------------------------------------------------
 
@@ -350,7 +461,22 @@ CREATE TABLE `timetable`
 (50) DEFAULT NULL,
   `start_time` time NOT NULL,
   `end_time` time NOT NULL
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `timetable`
+--
+
+INSERT INTO `timetable` (`
+timetable_id`,
+`subject_id
+`, `faculty_id`, `division_id`, `day_of_week`, `lecture_no`, `room_no`, `building_block`, `start_time`, `end_time`) VALUES
+(0, 2, 1, 1, 'MON', 1, 'B-202', NULL, '11:40:00', '13:43:00'),
+(1, 1, 1, 1, 'MON', 1, '101', 'A', '09:00:00', '10:00:00'),
+(2, 2, 1, 1, 'MON', 2, '101', 'A', '10:00:00', '11:00:00'),
+(3, 3, 1, 1, 'TUE', 1, '101', 'A', '09:00:00', '10:00:00'),
+(4, 4, 1, 1, 'TUE', 2, '102', 'A', '10:00:00', '11:00:00'),
+(5, 5, 1, 1, 'WED', 1, '103', 'A', '09:00:00', '10:00:00');
 
 -- --------------------------------------------------------
 
@@ -381,6 +507,21 @@ CREATE TABLE `users`
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`
+user_id`,
+`college_id
+`, `name`, `email`, `password_hash`, `mobile`, `role_id`, `is_approved`, `created_at`) VALUES
+(1, 2, 'System Administrator', 'Admin@edu.com', 'PW-289-09-97-321-67-031-37-421-07-721-76-97-46-26-16-16-85-06END', '+91-9000000001', 36, 1, '2026-02-07 04:48:45'),
+(2, 2, 'College Administrator', 'admin@college.edu', 'PW-289-09-97-321-67-031-37-421-07-721-76-97-46-26-16-16-85-06END', '+91-9000000002', 37, 1, '2026-02-07 04:48:45'),
+(3, 2, 'Computer Science HOD', 'hod@college.edu', 'PW-477-321-17-821-86-511-56-77-26-06-95-95-65-85END', '+91-9000000003', 38, 1, '2026-02-07 04:48:45'),
+(4, 2, 'Faculty Member', 'faculty@college.edu', 'PW-0811-331-78-621-48-621-18-241-87-131-57-731-27-041-96-18-66-46-36-36-06-26END', '+91-9000000004', 39, 1, '2026-02-07 04:48:45'),
+(5, 2, 'Student User', 'student@college.edu', 'PW-4812-941-18-841-88-741-58-821-28-721-97-431-67-831-37-48-07-76-76-66-46-56-16-54END', '+91-9000000005', 40, 1, '2026-02-07 04:48:45'),
+(6, 2, 'Demo Parent', 'parent@college.edu', 'PW-6810-041-38-321-08-831-77-321-47-031-17-431-86-08-56-36-26-26-95-16END', '9876543210', 41, 1, '2026-02-08 05:27:28');
+
+--
 -- Indexes for dumped tables
 --
 
@@ -392,6 +533,13 @@ ADD KEY `college_id`
 (`college_id`),
 ADD KEY `dept_id`
 (`dept_id`);
+
+--
+-- Indexes for table `alembic_version`
+--
+ALTER TABLE `alembic_version`
+ADD PRIMARY KEY
+(`version_num`);
 
 --
 -- Indexes for table `attendance`
@@ -582,35 +730,35 @@ ALTER TABLE `attendance`
 --
 ALTER TABLE `attendance_status`
   MODIFY `status_id` int
-(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `college`
 --
 ALTER TABLE `college`
   MODIFY `college_id` int
-(11) NOT NULL AUTO_INCREMENT;
+(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `department`
 --
 ALTER TABLE `department`
   MODIFY `dept_id` int
-(11) NOT NULL AUTO_INCREMENT;
+(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `division`
 --
 ALTER TABLE `division`
   MODIFY `division_id` int
-(11) NOT NULL AUTO_INCREMENT;
+(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `faculty`
 --
 ALTER TABLE `faculty`
   MODIFY `faculty_id` int
-(11) NOT NULL AUTO_INCREMENT;
+(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `lecture`
@@ -631,218 +779,28 @@ ALTER TABLE `proxy_lecture`
 --
 ALTER TABLE `role`
   MODIFY `role_id` int
-(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `semester`
 --
 ALTER TABLE `semester`
   MODIFY `semester_id` int
-(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `student`
---
-ALTER TABLE `student`
-  MODIFY `student_id` int
-(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `subject`
---
-ALTER TABLE `subject`
-  MODIFY `subject_id` int
-(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `timetable`
---
-ALTER TABLE `timetable`
-  MODIFY `timetable_id` int
-(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `users`
---
-ALTER TABLE `users`
-  MODIFY `user_id` int
-(11) NOT NULL AUTO_INCREMENT;
+(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables
 --
 
 --
--- Constraints for table `academic_calendar`
---
-ALTER TABLE `academic_calendar`
-ADD CONSTRAINT `academic_calendar_ibfk_1` FOREIGN KEY
-(`college_id`) REFERENCES `college`
-(`college_id`) ON
-DELETE CASCADE,
-ADD CONSTRAINT `academic_calendar_ibfk_2` FOREIGN KEY
-(`dept_id`) REFERENCES `department`
-(`dept_id`);
-
---
--- Constraints for table `attendance`
---
-ALTER TABLE `attendance`
-ADD CONSTRAINT `attendance_ibfk_1` FOREIGN KEY
-(`student_id`) REFERENCES `student`
-(`student_id`) ON
-DELETE CASCADE,
-ADD CONSTRAINT `fk_attendance_lecture` FOREIGN KEY
-(`lecture_id`) REFERENCES `lecture`
-(`lecture_id`) ON
-DELETE CASCADE,
-ADD CONSTRAINT `fk_attendance_status` FOREIGN KEY
-(`status_id`) REFERENCES `attendance_status`
-(`status_id`);
-
---
--- Constraints for table `department`
---
-ALTER TABLE `department`
-ADD CONSTRAINT `department_ibfk_1` FOREIGN KEY
-(`college_id`) REFERENCES `college`
-(`college_id`) ON
-DELETE CASCADE,
-ADD CONSTRAINT `fk_department_hod` FOREIGN KEY
-(`hod_faculty_id`) REFERENCES `faculty`
-(`faculty_id`) ON
-DELETE
-SET NULL;
-
---
 -- Constraints for table `division`
 --
 ALTER TABLE `division`
-ADD CONSTRAINT `division_ibfk_1` FOREIGN KEY
-(`dept_id`) REFERENCES `department`
-(`dept_id`) ON
-DELETE CASCADE,
 ADD CONSTRAINT `fk_division_semester` FOREIGN KEY
 (`semester_id`) REFERENCES `semester`
 (`semester_id`) ON
 DELETE
 SET NULL;
-
---
--- Constraints for table `faculty`
---
-ALTER TABLE `faculty`
-ADD CONSTRAINT `faculty_ibfk_1` FOREIGN KEY
-(`user_id`) REFERENCES `users`
-(`user_id`) ON
-DELETE CASCADE,
-ADD CONSTRAINT `faculty_ibfk_2` FOREIGN KEY
-(`dept_id`) REFERENCES `department`
-(`dept_id`) ON
-DELETE CASCADE;
-
---
--- Constraints for table `lecture`
---
-ALTER TABLE `lecture`
-ADD CONSTRAINT `lecture_ibfk_1` FOREIGN KEY
-(`timetable_id`) REFERENCES `timetable`
-(`timetable_id`) ON
-DELETE CASCADE;
-
---
--- Constraints for table `parent`
---
-ALTER TABLE `parent`
-ADD CONSTRAINT `parent_ibfk_1` FOREIGN KEY
-(`user_id`) REFERENCES `users`
-(`user_id`) ON
-DELETE CASCADE,
-ADD CONSTRAINT `parent_ibfk_2` FOREIGN KEY
-(`student_id`) REFERENCES `student`
-(`student_id`) ON
-DELETE CASCADE;
-
---
--- Constraints for table `proxy_lecture`
---
-ALTER TABLE `proxy_lecture`
-ADD CONSTRAINT `fk_proxy_lecture_id` FOREIGN KEY
-(`lecture_id`) REFERENCES `lecture`
-(`lecture_id`) ON
-DELETE CASCADE,
-ADD CONSTRAINT `proxy_lecture_ibfk_1` FOREIGN KEY
-(`original_faculty_id`) REFERENCES `faculty`
-(`faculty_id`),
-ADD CONSTRAINT `proxy_lecture_ibfk_2` FOREIGN KEY
-(`substitute_faculty_id`) REFERENCES `faculty`
-(`faculty_id`),
-ADD CONSTRAINT `proxy_lecture_ibfk_3` FOREIGN KEY
-(`subject_id`) REFERENCES `subject`
-(`subject_id`);
-
---
--- Constraints for table `student`
---
-ALTER TABLE `student`
-ADD CONSTRAINT `fk_student_semester` FOREIGN KEY
-(`semester_id`) REFERENCES `semester`
-(`semester_id`),
-ADD CONSTRAINT `student_ibfk_1` FOREIGN KEY
-(`user_id`) REFERENCES `users`
-(`user_id`) ON
-DELETE CASCADE,
-ADD CONSTRAINT `student_ibfk_2` FOREIGN KEY
-(`dept_id`) REFERENCES `department`
-(`dept_id`),
-ADD CONSTRAINT `student_ibfk_3` FOREIGN KEY
-(`division_id`) REFERENCES `division`
-(`division_id`),
-ADD CONSTRAINT `student_ibfk_4` FOREIGN KEY
-(`mentor_id`) REFERENCES `faculty`
-(`faculty_id`);
-
---
--- Constraints for table `subject`
---
-ALTER TABLE `subject`
-ADD CONSTRAINT `fk_subject_semester` FOREIGN KEY
-(`semester_id`) REFERENCES `semester`
-(`semester_id`) ON
-DELETE CASCADE,
-ADD CONSTRAINT `subject_ibfk_1` FOREIGN KEY
-(`dept_id`) REFERENCES `department`
-(`dept_id`) ON
-DELETE CASCADE;
-
---
--- Constraints for table `timetable`
---
-ALTER TABLE `timetable`
-ADD CONSTRAINT `timetable_ibfk_1` FOREIGN KEY
-(`subject_id`) REFERENCES `subject`
-(`subject_id`) ON
-DELETE CASCADE,
-ADD CONSTRAINT `timetable_ibfk_2` FOREIGN KEY
-(`faculty_id`) REFERENCES `faculty`
-(`faculty_id`) ON
-DELETE CASCADE,
-ADD CONSTRAINT `timetable_ibfk_3` FOREIGN KEY
-(`division_id`) REFERENCES `division`
-(`division_id`) ON
-DELETE CASCADE;
-
---
--- Constraints for table `users`
---
-ALTER TABLE `users`
-ADD CONSTRAINT `fk_user_role` FOREIGN KEY
-(`role_id`) REFERENCES `role`
-(`role_id`),
-ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY
-(`college_id`) REFERENCES `college`
-(`college_id`) ON
-DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
