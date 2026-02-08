@@ -242,13 +242,16 @@ class DataHelper:
             'user_id': student.user_id,
             'dept_id': student.dept_id,
             'division_id': student.division_id,
+            'div_id': student.division_id,  # Alias for compatibility
             'enrollment_no': student.enrollment_no,
             'roll_no': student.roll_no,
+            'roll_number': student.roll_no,  # Alias for template compatibility
             'mentor_id': student.mentor_id,
             'semester_id': student.semester_id,
             'name': user.name if user else '',
             'email': user.email if user else '',
             'mobile': user.mobile if user else '',
+            'phone': user.mobile if user else '',  # Alias for compatibility
             'dept_name': student.department.dept_name if student.department else '',
             'division_name': student.division.division_name if student.division else '',
             'semester': semester_no
@@ -915,6 +918,21 @@ class DataHelper:
     def get_total_departments_count():
         """Get total count of all departments"""
         return Department.query.count()
+    
+    @staticmethod
+    def get_total_colleges_count():
+        """Get total count of all colleges"""
+        return College.query.count()
+    
+    @staticmethod
+    def get_total_users_count():
+        """Get total count of all users"""
+        return User.query.count()
+    
+    @staticmethod
+    def get_active_admins_count():
+        """Get count of active admin users"""
+        return User.query.join(Role).filter(Role.role_name == 'ADMIN').count()
 
     @staticmethod
     def get_recent_users(limit=5):

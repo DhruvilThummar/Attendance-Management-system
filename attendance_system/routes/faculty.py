@@ -85,8 +85,9 @@ def fattendance():
     faculty = DataHelper.get_faculty()
     subjects = DataHelper.get_subjects()
     lectures = DataHelper.get_lectures()
+    divisions = DataHelper.get_divisions()
     return render_template("faculty/attendance.html", 
-                          faculty=faculty, subjects=subjects, lectures=lectures, datetime=datetime)
+                          faculty=faculty, subjects=subjects, lectures=lectures, divisions=divisions, datetime=datetime)
 
 
 @faculty_bp.route("/analytics")
@@ -200,6 +201,24 @@ def freports():
     students = DataHelper.get_students()
     attendance_data = DataHelper.get_attendance_records()
     
+    # Calculate attendance percentage for each student
+    student_attendance = {}
+    for record in (attendance_data or []):
+        student_id = record.get('student_id')
+        if student_id:
+            if student_id not in student_attendance:
+                student_attendance[student_id] = []
+            student_attendance[student_id].append(record.get('attendance_percentage', 0))
+    
+    # Add attendance percentage to each student
+    for student in (students or []):
+        student_id = student.get('student_id')
+        if student_id in student_attendance:
+            percentages = student_attendance[student_id]
+            student['attendance'] = round(sum(percentages) / len(percentages), 2) if percentages else 0
+        else:
+            student['attendance'] = 0
+    
     return render_template("faculty/reports.html",
                           faculty=faculty,
                           subjects=subjects,
@@ -225,10 +244,10 @@ def ftimetable():
 @faculty_required
 def fprofile():
     """View and edit faculty profile"""
-    from attendance_system.models.user import User
-    from attendance_system.models.college import College
-    from attendance_system.models.department import Department
-    from attendance_system.models.faculty import Faculty
+    from models.user import User
+    from models.college import College
+    from models.department import Department
+    from models.faculty import Faculty
     
     # Get current user
     user_data = DataHelper.get_user('faculty')
@@ -363,3 +382,70 @@ def faculty_reject_user(user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@faculty_bp.route("/profile/update", methods=['POST'])
+@faculty_required
+def faculty_update_profile():
+    """Update faculty profile information"""
+    from models.faculty import Faculty
+    
+    try:
+        data = request.get_json()
+        
+        # Get current user
+        user_data = DataHelper.get_user('faculty')
+        if not user_data:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Get user and faculty records
+        user = User.query.get(user_data['user_id'])
+        faculty = Faculty.query.filter_by(user_id=user_data['user_id']).first()
+        
+        if not user or not faculty:
+            return jsonify({'success': False, 'message': 'User or faculty record not found'}), 404
+        
+        # Update user information
+        user.name = data.get('name', user.name)
+        user.email = data.get('email', user.email)
+        user.mobile = data.get('mobile', user.mobile)
+        
+        # Update faculty information
+        faculty.short_name = data.get('short_name', faculty.short_name)
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Profile updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error updating profile: {str(e)}'}), 500
+
+
+@faculty_bp.route("/profile/change-password", methods=['POST'])
+@faculty_required
+def faculty_change_password():
+    """Change faculty password"""
+    try:
+        data = request.get_json()
+        
+        # Get current user
+        user_data = DataHelper.get_user('faculty')
+        if not user_data:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        user = User.query.get(user_data['user_id'])
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Verify current password
+        if not user.check_password(data.get('current_password')):
+            return jsonify({'success': False, 'message': 'Current password is incorrect'}), 400
+        
+        # Update password
+        user.set_password(data.get('new_password'))
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Password changed successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error changing password: {str(e)}'}), 500

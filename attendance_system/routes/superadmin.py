@@ -271,10 +271,17 @@ def superadmin_profile():
     context = _get_superadmin_context()
     
     # Get system statistics
+    pending_colleges_count = College.query.filter_by(is_approved=False).count()
+    
     system_stats = {
         'total_colleges': DataHelper.get_total_colleges_count(),
         'total_users': DataHelper.get_total_users_count(),
+        'total_students': DataHelper.get_total_students_count(),
+        'total_faculty': DataHelper.get_total_faculty_count(),
+        'total_departments': DataHelper.get_total_departments_count(),
         'active_admins': DataHelper.get_active_admins_count(),
+        'pending_approvals': pending_colleges_count,
+        'active_sessions': DataHelper.get_total_users_count(),  # Approximation
         'last_login': None  # Placeholder
     }
     

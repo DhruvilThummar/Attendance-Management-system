@@ -252,12 +252,12 @@ def student_profile():
     student_data = context['student']
     
     # Get related entities from database
-    from attendance_system.models.college import College
-    from attendance_system.models.department import Department
-    from attendance_system.models.division import Division
-    from attendance_system.models.subject import Semester
-    from attendance_system.models.faculty import Faculty
-    from attendance_system.models.user import User
+    from models.college import College
+    from models.department import Department
+    from models.division import Division
+    from models.subject import Semester
+    from models.faculty import Faculty
+    from models.user import User
     
     college = College.query.get(context['user']['college_id']) if context['user'] else None
     department = Department.query.get(student_data.get('dept_id')) if student_data.get('dept_id') else None

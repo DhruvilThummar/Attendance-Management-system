@@ -229,8 +229,219 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name"
+                            value="{{ user.name if user else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="short_name" class="form-label">Short Name</label>
+                        <input type="text" class="form-control" id="short_name" name="short_name"
+                            value="{{ faculty.short_name if faculty and faculty.short_name else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email"
+                            value="{{ user.email if user else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="mobile" class="form-label">Mobile Number</label>
+                        <input type="tel" class="form-control" id="mobile" name="mobile"
+                            value="{{ user.mobile if user and user.mobile else '' }}" pattern="[0-9]{10}">
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="changePasswordForm">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password"
+                            required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required
+                            minlength="8">
+                        <small id="passwordStrength" class="form-text"></small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                            required>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Change Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Edit Profile Modal
+        const editProfileBtn = document.getElementById('editProfileBtn');
+        if (editProfileBtn) {
+            editProfileBtn.addEventListener('click', function () {
+                const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+                modal.show();
+            });
+        }
+
+        // Change Password Modal
+        const changePasswordBtn = document.getElementById('changePasswordBtn');
+        if (changePasswordBtn) {
+            changePasswordBtn.addEventListener('click', function () {
+                const modal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+                modal.show();
+            });
+        }
+
+        // Edit Profile Form Submission
+        const editProfileForm = document.getElementById('editProfileForm');
+        if (editProfileForm) {
+            editProfileForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(editProfileForm);
+                const data = Object.fromEntries(formData.entries());
+
+                fetch('/hod/profile/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            alert('Profile updated successfully!');
+                            location.reload();
+                        } else {
+                            alert('Error: ' + result.message);
+                        }
+                    })
+                    .catch(error => {
+                        alert('Error updating profile: ' + error);
+                    });
+            });
+        }
+
+        // Change Password Form Submission
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(changePasswordForm);
+                const data = Object.fromEntries(formData.entries());
+
+                // Validate passwords match
+                if (data.new_password !== data.confirm_password) {
+                    alert('New passwords do not match');
+                    return;
+                }
+
+                fetch('/hod/profile/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        current_password: data.current_password,
+                        new_password: data.new_password
+                    })
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            alert('Password changed successfully!');
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
+                            modal.hide();
+                            changePasswordForm.reset();
+                        } else {
+                            alert('Error: ' + result.message);
+                        }
+                    })
+                    .catch(error => {
+                        alert('Error changing password: ' + error);
+                    });
+            });
+        }
+
+        // Password strength indicator
+        const newPasswordInput = document.getElementById('new_password');
+        if (newPasswordInput) {
+            newPasswordInput.addEventListener('input', function () {
+                const password = this.value;
+                const strengthText = document.getElementById('passwordStrength');
+
+                if (password.length < 8) {
+                    strengthText.textContent = 'Password must be at least 8 characters';
+                    strengthText.className = 'form-text text-danger';
+                } else if (password.length < 12) {
+                    strengthText.textContent = 'Weak password';
+                    strengthText.className = 'form-text text-warning';
+                } else {
+                    strengthText.textContent = 'Strong password';
+                    strengthText.className = 'form-text text-success';
+                }
+            });
+        }
+
+        // Avatar Upload
+        const avatarInput = document.getElementById('avatarInput');
+        if (avatarInput) {
+            avatarInput.addEventListener('change', function (event) {
+                const file = event.target.files[0];
+                if (file) {
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select a valid image file');
+                        return;
+                    }
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('Image size should be less than 5MB');
+                        return;
+                    }
+                    // Preview image
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const preview = document.getElementById('avatarPreview');
+                        if (preview) {
+                            preview.src = e.target.result;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

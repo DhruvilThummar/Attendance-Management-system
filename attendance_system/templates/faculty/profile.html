@@ -231,4 +231,136 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+<script>
+    // Faculty-specific profile edit functionality
+    document.addEventListener('DOMContentLoaded', function () {
+        // Edit Profile Button
+        const editProfileBtn = document.getElementById('editProfileBtn');
+        if (editProfileBtn) {
+            editProfileBtn.addEventListener('click', function () {
+                const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+                modal.show();
+            });
+        }
+
+        // Edit Profile Form Submission
+        const editProfileForm = document.getElementById('editProfileForm');
+        if (editProfileForm) {
+            editProfileForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                const formData = new FormData(event.target);
+                const data = Object.fromEntries(formData.entries());
+
+                // Validate data
+                if (!validateProfileData(data)) {
+                    return;
+                }
+
+                showLoading(true);
+
+                fetch('/faculty/profile/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        showLoading(false);
+                        if (data.success) {
+                            showAlert('Profile updated successfully! Please refresh the page.', 'success');
+                            // Close modal
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+                            modal.hide();
+                            // Refresh page after 2 seconds
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2000);
+                        } else {
+                            showAlert(data.message || 'Failed to update profile', 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        showLoading(false);
+                        console.error('Error:', error);
+                        showAlert('An error occurred while updating profile', 'danger');
+                    });
+            });
+        }
+
+        // Change Password Form (enhance existing)
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                const formData = new FormData(event.target);
+                const data = Object.fromEntries(formData.entries());
+
+                // Validate passwords
+                if (data.new_password !== data.confirm_password) {
+                    showAlert('New passwords do not match', 'danger');
+                    return;
+                }
+
+                if (data.new_password.length < 8) {
+                    showAlert('Password must be at least 8 characters long', 'danger');
+                    return;
+                }
+
+                showLoading(true);
+
+                fetch('/faculty/profile/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        current_password: data.current_password,
+                        new_password: data.new_password
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        showLoading(false);
+                        if (data.success) {
+                            showAlert('Password changed successfully!', 'success');
+                            // Close modal
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
+                            modal.hide();
+                            // Reset form
+                            event.target.reset();
+                        } else {
+                            showAlert(data.message || 'Failed to change password', 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        showLoading(false);
+                        console.error('Error:', error);
+                        showAlert('An error occurred while changing password', 'danger');
+                    });
+            });
+        }
+
+        function validateProfileData(data) {
+            // Validate email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(data.email)) {
+                showAlert('Please enter a valid email address', 'danger');
+                return false;
+            }
+
+            // Validate mobile
+            const mobileRegex = /^[0-9]{10}$/;
+            if (data.mobile && !mobileRegex.test(data.mobile)) {
+                showAlert('Please enter a valid 10-digit mobile number', 'danger');
+                return false;
+            }
+
+            return true;
+        }
+    });
+</script>
 {% endblock %}

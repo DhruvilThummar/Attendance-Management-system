@@ -187,6 +187,73 @@ def hod_subjects():
     )
 
 
+@hod_bp.route("/subjects/add", methods=['POST'])
+@hod_required
+def hod_add_subject():
+    """Add a new subject"""
+    from models.subject import Subject
+    try:
+        data = request.get_json()
+        context = _get_hod_context()
+        
+        new_subject = Subject(
+            dept_id=context['dept_id'],
+            semester_id=data.get('semester_id'),
+            subject_name=data.get('subject_name'),
+            subject_code=data.get('subject_code'),
+            credits=data.get('credits')
+        )
+        db.session.add(new_subject)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Subject added successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@hod_bp.route("/subjects/edit", methods=['POST'])
+@hod_required
+def hod_edit_subject():
+    """Edit an existing subject"""
+    from models.subject import Subject
+    try:
+        data = request.get_json()
+        subject = Subject.query.get(data.get('subject_id'))
+        
+        if not subject:
+            return jsonify({'success': False, 'message': 'Subject not found'}), 404
+        
+        subject.subject_name = data.get('subject_name')
+        subject.subject_code = data.get('subject_code')
+        subject.semester_id = data.get('semester_id')
+        subject.credits = data.get('credits')
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Subject updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@hod_bp.route("/subjects/delete/<int:subject_id>", methods=['DELETE'])
+@hod_required
+def hod_delete_subject(subject_id):
+    """Delete a subject"""
+    from models.subject import Subject
+    try:
+        subject = Subject.query.get(subject_id)
+        
+        if not subject:
+            return jsonify({'success': False, 'message': 'Subject not found'}), 404
+        
+        db.session.delete(subject)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Subject deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 @hod_bp.route("/attendance")
 def hod_attendance():
     """Division wise attendance analytics"""
@@ -355,6 +422,60 @@ def hod_profile():
         college=DataHelper.get_college(),
         dept_stats=dept_stats
     )
+
+
+@hod_bp.route("/profile/update", methods=['POST'])
+@hod_required
+def hod_update_profile():
+    """Update HOD profile"""
+    from models.faculty import Faculty
+    try:
+        data = request.get_json()
+        context = _get_hod_context()
+        
+        # Update user information
+        user = User.query.get(context['user']['user_id'])
+        if user:
+            user.name = data.get('name')
+            user.email = data.get('email')
+            user.mobile = data.get('mobile')
+        
+        # Update faculty information
+        faculty = Faculty.query.get(context['faculty']['faculty_id'])
+        if faculty:
+            faculty.short_name = data.get('short_name')
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Profile updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@hod_bp.route("/profile/change-password", methods=['POST'])
+@hod_required
+def hod_change_password():
+    """Change HOD password"""
+    try:
+        data = request.get_json()
+        context = _get_hod_context()
+        
+        user = User.query.get(context['user']['user_id'])
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Verify current password
+        if not user.check_password(data.get('current_password')):
+            return jsonify({'success': False, 'message': 'Current password is incorrect'}), 400
+        
+        # Set new password
+        user.set_password(data.get('new_password'))
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Password changed successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 @hod_bp.route("/approvals")

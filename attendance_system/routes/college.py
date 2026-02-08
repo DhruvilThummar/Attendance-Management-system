@@ -71,8 +71,8 @@ def college_dashboard():
 @college_admin_required
 def college_profile():
     """College Profile"""
-    from attendance_system.models.user import User
-    from attendance_system.models.college import College
+    from models.user import User
+    from models.college import College
     
     # Get current user
     user_data = DataHelper.get_user('college')
@@ -196,11 +196,20 @@ def college_students():
     divisions = DataHelper.get_divisions()
     students = DataHelper.get_students()
     
+    # Calculate total student count
+    student_count = len(students) if students else 0
+    
+    # Add student count to each department
+    for dept in departments if departments else []:
+        dept_students = [s for s in (students or []) if s.get('dept_id') == dept.get('dept_id')]
+        dept['student_count'] = len(dept_students)
+    
     return render_template("college/students.html",
                          title="Student Management",
                          departments=departments,
                          divisions=divisions,
-                         students=students)
+                         students=students,
+                         student_count=student_count)
 
 
 @college_bp.route("/students/by-division")
@@ -214,11 +223,20 @@ def college_students_by_division():
     if division_id:
         students = [s for s in students if s.get('div_id') == division_id]
     
+    # Calculate total student count
+    student_count = len(students) if students else 0
+    
+    # Add student count to each department
+    for dept in departments if departments else []:
+        dept_students = [s for s in (students or []) if s.get('dept_id') == dept.get('dept_id')]
+        dept['student_count'] = len(dept_students)
+    
     return render_template("college/students.html",
                          title="Student Management",
                          departments=departments,
                          divisions=divisions,
                          students=students,
+                         student_count=student_count,
                          selected_division=division_id)
 
 

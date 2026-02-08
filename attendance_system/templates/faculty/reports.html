@@ -119,14 +119,14 @@
                             <tbody id="reportTableBody">
                                 {% for student in students %}
                                 <tr>
-                                    <td class="ps-4 fw-bold text-primary">{{ student.roll_no }}</td>
-                                    <td>{{ student.name }}</td>
+                                    <td class="ps-4 fw-bold text-primary">{{ student['roll_no'] }}</td>
+                                    <td>{{ student['name'] }}</td>
                                     <td>45</td>
-                                    <td>{{ (45 * student.attendance / 100)|int }}</td>
+                                    <td>{{ (45 * student['attendance'] / 100)|int }}</td>
                                     <td>
                                         <span
-                                            class="badge {{ 'bg-success' if student.attendance >= 75 else 'bg-danger' }}">
-                                            {{ student.attendance }}%
+                                            class="badge {{ 'bg-success' if student['attendance'] >= 75 else 'bg-danger' }}">
+                                            {{ student['attendance'] }}%
                                         </span>
                                     </td>
                                     <td class="pe-4 text-end">

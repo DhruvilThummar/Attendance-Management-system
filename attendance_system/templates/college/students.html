@@ -113,31 +113,31 @@
                                         </thead>
                                         <tbody>
                                             {% for student in students %}
-                                            <tr class="student-row" data-dept-id="{{ student.dept_id }}"
-                                                data-div-id="{{ student.div_id }}"
-                                                data-name="{{ student.name.lower() }}"
-                                                data-roll="{{ student.roll_number.lower() }}">
-                                                <td><strong>{{ student.roll_number }}</strong></td>
-                                                <td>{{ student.name }}</td>
-                                                <td>{{ student.dept_name }}</td>
-                                                <td>{{ student.division_name }}</td>
-                                                <td>{{ student.email }}</td>
-                                                <td>{{ student.phone }}</td>
+                                            <tr class="student-row" data-dept-id="{{ student['dept_id'] }}"
+                                                data-div-id="{{ student['div_id'] }}"
+                                                data-name="{{ student['name']|lower }}"
+                                                data-roll="{{ student['roll_number']|lower }}">
+                                                <td><strong>{{ student['roll_number'] }}</strong></td>
+                                                <td>{{ student['name'] }}</td>
+                                                <td>{{ student['dept_name'] }}</td>
+                                                <td>{{ student['division_name'] }}</td>
+                                                <td>{{ student['email'] }}</td>
+                                                <td>{{ student['phone'] }}</td>
                                                 <td><span class="badge bg-success">Active</span></td>
                                                 <td>
                                                     <div class="btn-group">
                                                         <button class="btn btn-sm btn-outline-primary view-student-btn"
-                                                            data-student-id="{{ student.student_id }}"
-                                                            title="View details for {{ student.name }}">
+                                                            data-student-id="{{ student['student_id'] }}"
+                                                            title="View details for {{ student['name'] }}">
                                                             <i class="fas fa-eye me-1"></i>View
                                                         </button>
                                                         <button class="btn btn-sm btn-outline-info edit-student-btn"
-                                                            data-student-id="{{ student.student_id }}"
-                                                            title="Edit student {{ student.name }}">
+                                                            data-student-id="{{ student['student_id'] }}"
+                                                            title="Edit student {{ student['name'] }}">
                                                             <i class="fas fa-edit me-1"></i>Edit
                                                         </button>
                                                         <button class="btn btn-sm btn-outline-danger delete-student-btn"
-                                                            data-student-id="{{ student.student_id }}"
+                                                            data-student-id="{{ student['student_id'] }}"
                                                             title="Delete student {{ student.name }}">
                                                             <i class="fas fa-trash me-1"></i>Delete
                                                         </button>

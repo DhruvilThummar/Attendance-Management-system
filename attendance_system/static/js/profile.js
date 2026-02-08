@@ -5,39 +5,23 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function initializeProfile() {
-    // Edit Profile Modal
-    const editProfileBtn = document.getElementById('editProfileBtn');
-    if (editProfileBtn) {
-        editProfileBtn.addEventListener('click', openEditModal);
-    }
-
     // Change Password Modal
     const changePasswordBtn = document.getElementById('changePasswordBtn');
     if (changePasswordBtn) {
         changePasswordBtn.addEventListener('click', openPasswordModal);
     }
 
-    // Avatar Upload
+    // Avatar Upload (view only, no actual upload for superadmin)
     const avatarInput = document.getElementById('avatarInput');
     if (avatarInput) {
         avatarInput.addEventListener('change', handleAvatarUpload);
     }
 
     // Form Submissions
-    const editProfileForm = document.getElementById('editProfileForm');
-    if (editProfileForm) {
-        editProfileForm.addEventListener('submit', handleProfileUpdate);
-    }
-
     const changePasswordForm = document.getElementById('changePasswordForm');
     if (changePasswordForm) {
         changePasswordForm.addEventListener('submit', handlePasswordChange);
     }
-}
-
-function openEditModal() {
-    const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
-    modal.show();
 }
 
 function openPasswordModal() {
@@ -102,47 +86,6 @@ function uploadAvatar(file) {
             showLoading(false);
             console.error('Error:', error);
             showAlert('An error occurred while uploading avatar', 'danger');
-        });
-}
-
-function handleProfileUpdate(event) {
-    event.preventDefault();
-
-    const formData = new FormData(event.target);
-    const data = Object.fromEntries(formData.entries());
-
-    // Validate form data
-    if (!validateProfileData(data)) {
-        return;
-    }
-
-    showLoading(true);
-
-    fetch('/profile/update', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-        .then(response => response.json())
-        .then(data => {
-            showLoading(false);
-            if (data.success) {
-                showAlert('Profile updated successfully!', 'success');
-                // Close modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
-                modal.hide();
-                // Reload page to show updated data
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                showAlert(data.message || 'Failed to update profile', 'danger');
-            }
-        })
-        .catch(error => {
-            showLoading(false);
-            console.error('Error:', error);
-            showAlert('An error occurred while updating profile', 'danger');
         });
 }
 

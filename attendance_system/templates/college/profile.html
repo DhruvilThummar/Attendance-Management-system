@@ -16,7 +16,7 @@
                     {% if user and user.avatar %}
                     <img src="{{ url_for('static', filename='uploads/' + user.avatar) }}" alt="Profile"
                         class="profile-avatar" id="avatarPreview">
-                    {% else %}\n <div class="profile-avatar-placeholder">
+                    {% else %} <div class="profile-avatar-placeholder">
                         {{ (user.name[0].upper() if user.name else 'C') if user else 'C' }}
                     </div>
                     {% endif %}
