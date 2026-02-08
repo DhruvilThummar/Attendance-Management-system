@@ -166,12 +166,13 @@ def college_divisions_create():
 def college_faculty():
     """College Faculty List"""
     departments = DataHelper.get_departments()
-    faculty = DataHelper.get_faculty()
+    faculty_list = DataHelper.get_faculty()
     
     return render_template("college/faculty.html",
                          title="Faculty Management",
                          departments=departments,
-                         faculty=faculty)
+                         faculty_list=faculty_list,
+                         faculty=faculty_list)
 
 
 @college_bp.route("/faculty/hod-list")

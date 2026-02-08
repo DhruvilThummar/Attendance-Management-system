@@ -236,6 +236,20 @@ class DataHelper:
         if not faculty:
             return None
         user = faculty.user
+        
+        # Check if this faculty is a HOD
+        from models.department import Department
+        is_hod = Department.query.filter_by(hod_faculty_id=faculty.faculty_id).first() is not None
+        
+        # Get subjects taught by this faculty
+        from models.timetable import Timetable
+        subject_ids = db.session.query(Timetable.subject_id).filter_by(faculty_id=faculty.faculty_id).distinct().all()
+        subjects = []
+        if subject_ids:
+            from models.subject import Subject
+            subjects_objs = Subject.query.filter(Subject.subject_id.in_([s[0] for s in subject_ids])).all()
+            subjects = [s.subject_name for s in subjects_objs]
+        
         return {
             'faculty_id': faculty.faculty_id,
             'user_id': faculty.user_id,
@@ -247,7 +261,11 @@ class DataHelper:
             'email': user.email if user else '',
             'mobile': user.mobile if user else '',
             'phone': user.mobile if user else '',
-            'dept_name': faculty.department.dept_name if faculty.department else ''
+            'dept_name': faculty.department.dept_name if faculty.department else '',
+            'is_hod': is_hod,
+            'specialization': DataHelper._safe_attr(faculty, 'designation', None),
+            'subjects': subjects,
+            'appointed_date': None
         }
 
     @staticmethod
