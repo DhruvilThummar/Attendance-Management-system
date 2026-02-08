@@ -195,34 +195,104 @@ def fanalytics():
 
 @faculty_bp.route("/reports")
 def freports():
-    """View and manage attendance reports"""
+    """View and manage attendance reports with detailed subjectwise attendance"""
+    from models.lecture import Lecture
+    from models.timetable import Timetable
+    
     faculty = DataHelper.get_faculty()
     subjects = DataHelper.get_subjects()
     students = DataHelper.get_students()
     attendance_data = DataHelper.get_attendance_records()
     
-    # Calculate attendance percentage for each student
-    student_attendance = {}
-    for record in (attendance_data or []):
-        student_id = record.get('student_id')
-        if student_id:
-            if student_id not in student_attendance:
-                student_attendance[student_id] = []
-            student_attendance[student_id].append(record.get('attendance_percentage', 0))
+    # Build comprehensive attendance report with numpy calculations
+    student_reports = {}
     
-    # Add attendance percentage to each student
-    for student in (students or []):
-        student_id = student.get('student_id')
-        if student_id in student_attendance:
-            percentages = student_attendance[student_id]
-            student['attendance'] = round(sum(percentages) / len(percentages), 2) if percentages else 0
-        else:
-            student['attendance'] = 0
+    if students:
+        for student in students:
+            student_id = student.get('student_id')
+            mentor_name = None
+            
+            # Get mentor name if assigned
+            if student.get('mentor_id'):
+                mentor = DataHelper.get_faculty_member(faculty_id=student.get('mentor_id'))
+                mentor_name = mentor.get('full_name') if mentor else 'N/A'
+            
+            student_reports[student_id] = {
+                'student_id': student_id,
+                'roll_no': student.get('roll_no', ''),
+                'name': student.get('name', ''),
+                'enrollment_no': student.get('enrollment_no', ''),
+                'division_name': student.get('division_name', ''),
+                'dept_name': student.get('dept_name', ''),
+                'mentor_name': mentor_name or 'N/A',
+                'subjectwise_attendance': {},
+                'overall_attendance': 0,
+                'total_lectures': 0,
+                'attended_lectures': 0
+            }
+    
+    # Calculate subjectwise attendance using numpy
+    if attendance_data:
+        for record in attendance_data:
+            student_id = record.get('student_id')
+            subject_name = record.get('subject_name', 'Unknown')
+            subject_code = record.get('subject_code', '')
+            attendance_pct = record.get('attendance_percentage', 0)
+            total_lectures = record.get('total_lectures', 0)
+            attended_lectures = record.get('attended_lectures', 0)
+            
+            if student_id in student_reports:
+                student_reports[student_id]['subjectwise_attendance'][subject_name] = {
+                    'subject_code': subject_code,
+                    'attendance_percentage': round(attendance_pct, 2),
+                    'total_lectures': total_lectures,
+                    'attended_lectures': attended_lectures,
+                    'status': 'PASS' if attendance_pct >= 75 else 'FAIL'
+                }
+    
+    # Calculate overall attendance using numpy
+    for student_id, report in student_reports.items():
+        if report['subjectwise_attendance']:
+            percentages = np.array([
+                v['attendance_percentage'] 
+                for v in report['subjectwise_attendance'].values()
+            ], dtype=float)
+            
+            total_lecs = np.array([
+                v['total_lectures'] 
+                for v in report['subjectwise_attendance'].values()
+            ], dtype=int)
+            
+            attended_lecs = np.array([
+                v['attended_lectures'] 
+                for v in report['subjectwise_attendance'].values()
+            ], dtype=int)
+            
+            # Use numpy for calculations
+            report['overall_attendance'] = float(np.mean(percentages))
+            report['total_lectures'] = int(np.sum(total_lecs))
+            report['attended_lectures'] = int(np.sum(attended_lecs))
+            
+            # Round the overall percentage
+            report['overall_attendance'] = round(report['overall_attendance'], 2)
+    
+    # Convert to list and sort by roll_no
+    student_reports_list = sorted(
+        student_reports.values(),
+        key=lambda x: int(x.get('roll_no', 0)) if str(x.get('roll_no', '0')).isdigit() else 0
+    )
+    
+    # Get unique subjects sorted
+    unique_subjects = sorted(set(
+        subject_name 
+        for record in attendance_data or []
+        for subject_name in [record.get('subject_name', 'Unknown')]
+    )) if attendance_data else []
     
     return render_template("faculty/reports.html",
                           faculty=faculty,
-                          subjects=subjects,
-                          students=students,
+                          subjects=unique_subjects,
+                          students=student_reports_list,
                           attendance_data=attendance_data,
                           datetime=datetime)
 

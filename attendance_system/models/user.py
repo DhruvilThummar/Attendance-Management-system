@@ -5,7 +5,7 @@ User and Role models
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
-from utils.simple_hash import simple_hash, verify_simple_hash
+from attendance_system.utils.simple_hash import simple_hash, verify_simple_hash
 
 
 db = SQLAlchemy()

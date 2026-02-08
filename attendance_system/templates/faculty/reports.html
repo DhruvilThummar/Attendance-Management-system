@@ -5,164 +5,479 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/faculty.css') }}">
+<style>
+    .reports-container {
+        overflow-x: auto;
+        padding: 20px 0;
+    }
+
+    .reports-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        font-size: 0.85rem;
+    }
+
+    .reports-table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .reports-table th {
+        padding: 12px 8px;
+        text-align: center;
+        white-space: nowrap;
+        border: 1px solid #e0e0e0;
+        font-weight: 600;
+    }
+
+    .reports-table td {
+        padding: 10px 8px;
+        border: 1px solid #e0e0e0;
+        text-align: center;
+    }
+
+    .reports-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+    .reports-table tbody tr:hover {
+        background-color: #f5f5f5;
+    }
+
+    .reports-table tbody tr:nth-child(even) {
+        background-color: #fafafa;
+    }
+
+    /* Student info columns - left aligned and sticky */
+    .student-col-roll,
+    .student-col-div,
+    .student-col-name,
+    .student-col-enrollment,
+    .student-col-branch,
+    .student-col-mentor {
+        text-align: left;
+    }
+
+    .student-info-wrapper {
+        position: sticky;
+        left: 0;
+        background: white;
+        z-index: 5;
+        min-width: 400px;
+        display: flex;
+        gap: 8px;
+    }
+
+    .student-col-roll {
+        min-width: 50px;
+        font-weight: bold;
+        color: #667eea;
+    }
+
+    .student-col-div {
+        min-width: 40px;
+        color: #666;
+    }
+
+    .student-col-branch {
+        min-width: 60px;
+        color: #666;
+    }
+
+    .student-col-enrollment {
+        min-width: 90px;
+        color: #666;
+    }
+
+    .student-col-name {
+        min-width: 100px;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .student-col-mentor {
+        min-width: 80px;
+        color: #666;
+    }
+
+    /* Subject columns styling */
+    .subject-column {
+        min-width: 140px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .subject-header {
+        font-weight: 700;
+        color: white;
+        padding-bottom: 8px;
+    }
+
+    .subject-subheader {
+        font-size: 0.75rem;
+        font-weight: 500;
+        opacity: 0.9;
+        padding-top: 8px;
+    }
+
+    .attendance-percent {
+        font-weight: bold;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        min-width: 50px;
+    }
+
+    .attendance-percent.excellent {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .attendance-percent.good {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .attendance-percent.warning {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .attendance-percent.danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .total-column {
+        background-color: #f0f0f0;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .overall-column {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: bold;
+        position: sticky;
+        right: 0;
+        z-index: 5;
+        min-width: 100px;
+    }
+
+    .report-header {
+        margin-bottom: 30px;
+    }
+
+    .report-header h2 {
+        color: #333;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .report-header p {
+        color: #666;
+        margin: 0;
+    }
+
+    .report-filters {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .filter-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        flex-grow: 1;
+        min-width: 150px;
+    }
+
+    .filter-item label {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.9rem;
+    }
+
+    .filter-item input,
+    .filter-item select {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-export {
+        padding: 10px 20px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.3s;
+        white-space: nowrap;
+    }
+
+    .btn-export:hover {
+        background-color: #218838;
+    }
+
+    .btn-print {
+        padding: 10px 20px;
+        background-color: #667eea;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.3s;
+        white-space: nowrap;
+    }
+
+    .btn-print:hover {
+        background-color: #5568d3;
+    }
+
+    .legend {
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
+        font-size: 0.85rem;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .legend-box {
+        width: 20px;
+        height: 20px;
+        border-radius: 3px;
+    }
+
+    @media (max-width: 768px) {
+        .student-info-wrapper {
+            min-width: 300px;
+        }
+
+        .reports-table th,
+        .reports-table td {
+            padding: 8px 4px;
+            font-size: 0.75rem;
+        }
+
+        .subject-column {
+            min-width: 100px;
+        }
+
+        .filter-group {
+            flex-direction: column;
+        }
+
+        .filter-item {
+            min-width: 100%;
+        }
+
+        .btn-group {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .btn-export,
+        .btn-print {
+            width: 100%;
+        }
+    }
+
+    @media print {
+
+        .report-filters,
+        .btn-group {
+            display: none;
+        }
+
+        .reports-table {
+            box-shadow: none;
+            page-break-inside: avoid;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
     <div class="main-content">
-        <div class="container p-4">
+        <div class="container-fluid p-4">
             <!-- Header -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h1 class="page-title">Attendance Reports</h1>
-                    <p class="text-muted">Generate and view detailed attendance records</p>
-                </div>
+            <div class="report-header">
+                <h2><i class="fas fa-file-alt me-2"></i>Attendance Reports</h2>
+                <p class="text-muted">Comprehensive subjectwise attendance compilation for all students</p>
             </div>
 
-            <!-- Download All Reports Section -->
-            <div class="card border-0 shadow-sm mb-4 bg-gradient-light">
-                <div class="card-body p-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h5 class="fw-bold mb-3"><i class="fas fa-download me-2 text-primary"></i>Download
-                                Department Attendance Reports</h5>
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label class="form-label">Select Department</label>
-                                    <select class="form-select" id="departmentSelect" title="Select Department">
-                                        <option value="">-- Select Department --</option>
-                                        <option value="1">Computer Science & Engineering</option>
-                                        <option value="2">Electronics Engineering</option>
-                                        <option value="3">Mechanical Engineering</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Report Period</label>
-                                    <input type="month" class="form-control" id="reportMonth"
-                                        value="{{ datetime.now().strftime('%Y-%m') }}" title="Select Month">
-                                </div>
-                                <div class="col-md-4 d-flex gap-2 align-items-end">
-                                    <button class="btn btn-success flex-grow-1" onclick="downloadWeeklyReport()"
-                                        title="Download Weekly Report">
-                                        <i class="fas fa-calendar-week me-1"></i>Weekly
-                                    </button>
-                                    <button class="btn btn-primary flex-grow-1" onclick="downloadMonthlyReport()"
-                                        title="Download Monthly Report">
-                                        <i class="fas fa-calendar-alt me-1"></i>Monthly
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <div class="bg-white p-3 rounded-3 shadow-sm">
-                                <i class="fas fa-file-csv text-primary mb-2" style="font-size: 2.5rem;"></i>
-                                <p class="text-muted mb-0 small">Export as CSV</p>
-                                <p class="fw-bold mb-0">All Students</p>
-                            </div>
-                        </div>
+            <!-- Filters -->
+            <div class="report-filters">
+                <div class="filter-group">
+                    <div class="filter-item">
+                        <label for="divisionFilter">Filter by Division:</label>
+                        <select id="divisionFilter" onchange="filterReports()">
+                            <option value="">All Divisions</option>
+                            {% set divisions = students|map(attribute='division_name')|unique|list %}
+                            {% for div in divisions %}
+                            <option value="{{ div }}">{{ div }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-item" style="flex-grow: 2;">
+                        <label for="searchStudent">Search Student:</label>
+                        <input type="text" id="searchStudent" placeholder="Enter name or roll no..."
+                            onkeyup="filterReports()">
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn-export" onclick="exportToCSV()">
+                            <i class="fas fa-download me-1"></i>Export CSV
+                        </button>
+                        <button class="btn-print" onclick="window.print()">
+                            <i class="fas fa-print me-1"></i>Print
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-box" style="background-color: #d4edda;"></div>
+                        <span>Excellent (≥85%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-box" style="background-color: #d1ecf1;"></div>
+                        <span>Good (75-84%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-box" style="background-color: #fff3cd;"></div>
+                        <span>Warning (60-74%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-box" style="background-color: #f8d7da;"></div>
+                        <span>At Risk (<60%)< /span>
                     </div>
                 </div>
             </div>
 
-            <!-- Report Filters -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-3">
-                            <label class="form-label">Report Type</label>
-                            <select class="form-select" id="reportType" title="Select Report Type">
-                                <option value="individual">Individual Student</option>
-                                <option value="monthly">Monthly Summary</option>
-                                <option value="weekly">Weekly Summary</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label" for="reportPeriod">Month/Week</label>
-                            <input type="text" class="form-control" id="reportPeriod" placeholder="YYYY-MM"
-                                title="Select Period (YYYY-MM)">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Search Student (Name or Roll No)</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control" id="studentSearch" placeholder="Ex: 101 or Raj"
-                                    title="Search Student">
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-premium w-100" onclick="generateReport()">
-                                <i class="fas fa-file-download me-2"></i>Generate
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            <!-- Reports Table -->
+            <div class="reports-container">
+                <table class="reports-table" id="reportsTable">
+                    <thead>
+                        <tr>
+                            <!-- Student Info Headers -->
+                            <th class="student-col-roll">Roll No</th>
+                            <th class="student-col-div">Div</th>
+                            <th class="student-col-branch">Branch</th>
+                            <th class="student-col-enrollment">Enrollment No</th>
+                            <th class="student-col-name">Name</th>
+                            <th class="student-col-mentor">Mentor</th>
+
+                            <!-- Subject Headers -->
+                            {% for subject in subjects %}
+                            <th colspan="2" class="subject-column">
+                                <div class="subject-header">{{ subject }}</div>
+                            </th>
+                            {% endfor %}
+
+                            <!-- Overall Column -->
+                            <th colspan="2" class="overall-column">OVERALL</th>
+                        </tr>
+                        <tr>
+                            <!-- Empty cells for student info -->
+                            <th colspan="6" style="border: none;"></th>
+
+                            <!-- Subject Sub-headers (Total & %) -->
+                            {% for subject in subjects %}
+                            <th style="text-align: center; border-top: none; padding-top: 0; font-size: 0.8rem;">Total
+                            </th>
+                            <th style="text-align: center; border-top: none; padding-top: 0; font-size: 0.8rem;">%</th>
+                            {% endfor %}
+
+                            <!-- Overall Sub-headers -->
+                            <th style="text-align: center; border-top: none; padding-top: 0; font-size: 0.8rem;">Total
+                            </th>
+                            <th style="text-align: center; border-top: none; padding-top: 0; font-size: 0.8rem;">%</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportTableBody">
+                        {% for student in students %}
+                        <tr class="student-row" data-roll="{{ student.roll_no }}" data-name="{{ student.name }}"
+                            data-division="{{ student.division_name }}">
+                            <!-- Student Info -->
+                            <td class="student-col-roll">{{ student.roll_no }}</td>
+                            <td class="student-col-div">{{ student.division_name }}</td>
+                            <td class="student-col-branch">{{ student.dept_name }}</td>
+                            <td class="student-col-enrollment">{{ student.enrollment_no }}</td>
+                            <td class="student-col-name"><strong>{{ student.name }}</strong></td>
+                            <td class="student-col-mentor">{{ student.mentor_name }}</td>
+
+                            <!-- Subject Attendance Data -->
+                            {% for subject in subjects %}
+                            {% if subject in student.subjectwise_attendance %}
+                            {% set attendance = student.subjectwise_attendance[subject] %}
+                            <td class="total-column">{{ attendance.attended_lectures }}/{{ attendance.total_lectures }}
+                            </td>
+                            <td>
+                                <span
+                                    class="attendance-percent {% if attendance.attendance_percentage >= 85 %}excellent{% elif attendance.attendance_percentage >= 75 %}good{% elif attendance.attendance_percentage >= 60 %}warning{% else %}danger{% endif %}">
+                                    {{ "%.1f"|format(attendance.attendance_percentage) }}%
+                                </span>
+                            </td>
+                            {% else %}
+                            <td class="total-column">-</td>
+                            <td><span class="attendance-percent">-</span></td>
+                            {% endif %}
+                            {% endfor %}
+
+                            <!-- Overall Attendance -->
+                            <td class="overall-column">{{ student.attended_lectures }}/{{ student.total_lectures }}</td>
+                            <td class="overall-column">
+                                <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px;">
+                                    {{ "%.1f"|format(student.overall_attendance) }}%
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
 
-            <!-- Student Summary Table -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 fw-bold">Student Attendance Overview</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th class="ps-4">Roll No</th>
-                                    <th>Name</th>
-                                    <th>Total Lectures</th>
-                                    <th>Presence</th>
-                                    <th>Percentage</th>
-                                    <th class="pe-4 text-end">Details</th>
-                                </tr>
-                            </thead>
-                            <tbody id="reportTableBody">
-                                {% for student in students %}
-                                <tr>
-                                    <td class="ps-4 fw-bold text-primary">{{ student['roll_no'] }}</td>
-                                    <td>{{ student['name'] }}</td>
-                                    <td>45</td>
-                                    <td>{{ (45 * student['attendance'] / 100)|int }}</td>
-                                    <td>
-                                        <span
-                                            class="badge {{ 'bg-success' if student['attendance'] >= 75 else 'bg-danger' }}">
-                                            {{ student['attendance'] }}%
-                                        </span>
-                                    </td>
-                                    <td class="pe-4 text-end">
-                                        <button class="btn btn-sm btn-premium-light" title="View Detailed Report"
-                                            onclick="viewDetailedReport({{ student.id }})">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            {% if not students %}
+            <div class="alert alert-info mt-4" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>No Data Available</strong><br>
+                No attendance records found. Please ensure attendance has been marked for students.
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Detailed Report Modal -->
-<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold" id="modalTitle">Student Detailed Report</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Content loaded via JS -->
-            </div>
-            <div class="modal-footer border-0 p-4">
-                <button type="button" class="btn btn-premium-light px-4" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-premium px-4" onclick="window.print()">
-                    <i class="fas fa-print me-2"></i>Print Report
-                </button>
-            </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -170,121 +485,76 @@
 
 {% block extra_js %}
 <script>
-    function generateReport() {
-        const type = document.getElementById('reportType').value;
-        alert(`Generating ${type} report for the selected period...`);
-    }
-
-    function downloadWeeklyReport() {
-        const dept = document.getElementById('departmentSelect').value;
-        const month = document.getElementById('reportMonth').value;
-
-        if (!dept) {
-            alert('Please select a department first!');
-            return;
-        }
-
-        if (!month) {
-            alert('Please select a month!');
-            return;
-        }
-
-        // Trigger download
-        const url = `/faculty/download-report?type=weekly&dept=${dept}&month=${month}`;
-        window.location.href = url;
-    }
-
-    function downloadMonthlyReport() {
-        const dept = document.getElementById('departmentSelect').value;
-        const month = document.getElementById('reportMonth').value;
-
-        if (!dept) {
-            alert('Please select a department first!');
-            return;
-        }
-
-        if (!month) {
-            alert('Please select a month!');
-            return;
-        }
-
-        // Trigger download
-        const url = `/faculty/download-report?type=monthly&dept=${dept}&month=${month}`;
-        window.location.href = url;
-    }
-
-    function viewDetailedReport(id) {
-        const students = JSON.parse('{{ students|tojson|safe }}');
-        const student = students.find(s => s.id == id);
-        const modalBody = document.getElementById('modalBody');
-        const modalTitle = document.getElementById('modalTitle');
-
-        modalTitle.textContent = `Detailed Report: ${student.name} (${student.roll_no})`;
-
-        modalBody.innerHTML = `
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <p class="mb-1 text-muted">Current Attendance</p>
-                    <h2 class="fw-bold">${student.attendance}%</h2>
-                </div>
-                <div class="col-md-6 text-end">
-                    <p class="mb-1 text-muted">Status</p>
-                    <span class="badge ${student.attendance >= 75 ? 'bg-success' : 'bg-danger'} fs-6">
-                        ${student.attendance >= 75 ? 'Eligible' : 'De-barred'}
-                    </span>
-                </div>
-            </div>
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card border-0 shadow-sm bg-gradient-success text-white">
-                        <div class="card-body p-4">
-                            <h6 class="text-uppercase mb-2 opacity-75">Best Performance</h6>
-                            <h2 class="mb-0">CSE-A</h2>
-                            <p class="mb-0 mt-2 small">92% Attendance</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card border-0 shadow-sm bg-gradient-danger text-white">
-                        <div class="card-body p-4">
-                            <h6 class="text-uppercase mb-2 opacity-75">Lowest Participation</h6>
-                            <h2 class="mb-0">CSE-C</h2>
-                            <p class="mb-0 mt-2 small">75% Attendance</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-sm border">
-                    <thead class="bg-light">
-                        <tr>
-                            <th>Date</th>
-                            <th>Subject</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>2024-01-15</td><td>Web Tech</td><td><span class="text-success">PRESENT</span></td></tr>
-                        <tr><td>2024-01-14</td><td>Database</td><td><span class="text-danger">ABSENT</span></td></tr>
-                        <tr><td>2024-01-13</td><td>Web Tech</td><td><span class="text-success">PRESENT</span></td></tr>
-                        <tr><td>2024-01-12</td><td>Operating Systems</td><td><span class="text-success">PRESENT</span></td></tr>
-                        <tr><td>2024-01-11</td><td>Web Tech</td><td><span class="text-success">PRESENT</span></td></tr>
-                    </tbody>
-                </table>
-            </div>
-        `;
-
-        new bootstrap.Modal(document.getElementById('reportModal')).show();
-    }
-
-    document.getElementById('studentSearch').addEventListener('input', function () {
-        const query = this.value.toLowerCase();
-        const rows = document.querySelectorAll('#reportTableBody tr');
+    function filterReports() {
+        const divisionFilter = document.getElementById('divisionFilter').value.toLowerCase();
+        const searchFilter = document.getElementById('searchStudent').value.toLowerCase();
+        const rows = document.querySelectorAll('#reportTableBody .student-row');
 
         rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(query) ? '' : 'none';
+            const rollNo = row.getAttribute('data-roll').toLowerCase();
+            const name = row.getAttribute('data-name').toLowerCase();
+            const division = row.getAttribute('data-division').toLowerCase();
+
+            const divisionMatch = !divisionFilter || division.includes(divisionFilter);
+            const searchMatch = !searchFilter || rollNo.includes(searchFilter) || name.includes(searchFilter);
+
+            row.style.display = divisionMatch && searchMatch ? '' : 'none';
         });
+    }
+
+    function exportToCSV() {
+        const table = document.getElementById('reportsTable');
+        let csv = [];
+
+        // Get headers
+        const headers = [];
+
+        // Student info columns
+        const studentHeaders = ['Roll No', 'Division', 'Branch', 'Enrollment No', 'Name', 'Mentor'];
+        headers.push(...studentHeaders);
+
+        // Subject headers - get from visible rows
+        const subjects = [];
+        table.querySelectorAll('thead tr:first-child th.subject-column').forEach(th => {
+            const text = th.textContent.trim();
+            if (text && text !== 'OVERALL') {
+                subjects.push(text);
+            }
+        });
+
+        subjects.forEach(subject => {
+            headers.push(subject + ' (Total)');
+            headers.push(subject + ' (%)');
+        });
+
+        headers.push('Overall (Total)');
+        headers.push('Overall (%)');
+
+        csv.push('"' + headers.join('","') + '"');
+
+        // Get data rows
+        document.querySelectorAll('#reportTableBody .student-row').forEach(row => {
+            if (row.style.display !== 'none') {
+                const rowData = [];
+                row.querySelectorAll('td').forEach(td => {
+                    const text = td.textContent.trim();
+                    rowData.push(`"${text}"`);
+                });
+                csv.push(rowData.join(','));
+            }
+        });
+
+        // Download
+        const csvContent = 'data:text/csv;charset=utf-8,' + csv.join('\n');
+        const link = document.createElement('a');
+        link.setAttribute('href', encodeURI(csvContent));
+        link.setAttribute('download', `attendance_report_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.click();
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('Reports page loaded');
     });
 </script>
 {% endblock %}

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 08, 2026 at 06:37 AM
+-- Generation Time: Feb 08, 2026 at 09:56 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -34,12 +34,12 @@ CREATE TABLE `academic_calendar`
   `college_id` int
 (11) NOT NULL,
   `event_date` date NOT NULL,
-  `event_type` enum
-('REGULAR','EXAM','HOLIDAY') NOT NULL,
   `description` varchar
 (255) DEFAULT NULL,
   `dept_id` int
-(11) NOT NULL
+(11) NOT NULL,
+  `event_type_id` int
+(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -185,8 +185,8 @@ CREATE TABLE `division`
 (11) DEFAULT NULL,
   `capacity` int
 (11) DEFAULT NULL,
-  `class_teacher` varchar
-(100) DEFAULT NULL
+  `class_teacher_id` int
+(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -196,10 +196,36 @@ CREATE TABLE `division`
 INSERT INTO `division` (`
 division_id`,
 `dept_id
-`, `division_name`, `semester_id`, `capacity`, `class_teacher`) VALUES
-(1, 1, 'A', 3, 60, 'Faculty Member'),
+`, `division_name`, `semester_id`, `capacity`, `class_teacher_id`) VALUES
+(1, 1, 'A', 3, 60, 1),
 (2, 1, 'B', 3, 60, NULL),
 (3, 2, 'A', 3, 60, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `event_type`
+--
+
+CREATE TABLE `event_type`
+(
+  `event_type_id` int
+(11) NOT NULL,
+  `event_name` varchar
+(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `event_type`
+--
+
+INSERT INTO `event_type` (`
+event_type_id`,
+`event_name
+`) VALUES
+(2, 'EXAM'),
+(3, 'HOLIDAY'),
+(1, 'REGULAR');
 
 -- --------------------------------------------------------
 
@@ -297,11 +323,38 @@ CREATE TABLE `proxy_lecture`
   `building_block` varchar
 (50) DEFAULT NULL,
   `reason` text DEFAULT NULL,
-  `status` enum
-('PENDING','ACCEPTED','REJECTED','COMPLETED') DEFAULT 'PENDING',
   `assigned_at` timestamp NOT NULL DEFAULT current_timestamp
-()
+(),
+  `status_id` int
+(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `proxy_status`
+--
+
+CREATE TABLE `proxy_status`
+(
+  `status_id` int
+(11) NOT NULL,
+  `status_name` varchar
+(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `proxy_status`
+--
+
+INSERT INTO `proxy_status` (`
+status_id`,
+`status_name
+`) VALUES
+(2, 'ACCEPTED'),
+(4, 'COMPLETED'),
+(1, 'PENDING'),
+(3, 'REJECTED');
 
 -- --------------------------------------------------------
 
@@ -532,7 +585,9 @@ ALTER TABLE `academic_calendar`
 ADD KEY `college_id`
 (`college_id`),
 ADD KEY `dept_id`
-(`dept_id`);
+(`dept_id`),
+ADD KEY `fk_calendar_event_type`
+(`event_type_id`);
 
 --
 -- Indexes for table `alembic_version`
@@ -592,7 +647,18 @@ ADD PRIMARY KEY
 ADD KEY `dept_id`
 (`dept_id`),
 ADD KEY `fk_division_semester`
-(`semester_id`);
+(`semester_id`),
+ADD KEY `fk_division_class_teacher`
+(`class_teacher_id`);
+
+--
+-- Indexes for table `event_type`
+--
+ALTER TABLE `event_type`
+ADD PRIMARY KEY
+(`event_type_id`),
+ADD UNIQUE KEY `event_name`
+(`event_name`);
 
 --
 -- Indexes for table `faculty`
@@ -618,8 +684,8 @@ ADD UNIQUE KEY `timetable_id`
 -- Indexes for table `parent`
 --
 ALTER TABLE `parent`
-ADD UNIQUE KEY `user_id`
-(`user_id`),
+ADD PRIMARY KEY
+(`user_id`,`student_id`),
 ADD KEY `student_id`
 (`student_id`);
 
@@ -636,7 +702,18 @@ ADD KEY `substitute_faculty_id`
 ADD KEY `subject_id`
 (`subject_id`),
 ADD KEY `fk_proxy_lecture_id`
-(`lecture_id`);
+(`lecture_id`),
+ADD KEY `fk_proxy_status`
+(`status_id`);
+
+--
+-- Indexes for table `proxy_status`
+--
+ALTER TABLE `proxy_status`
+ADD PRIMARY KEY
+(`status_id`),
+ADD UNIQUE KEY `status_name`
+(`status_name`);
 
 --
 -- Indexes for table `role`
@@ -754,6 +831,13 @@ ALTER TABLE `division`
 (11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT for table `event_type`
+--
+ALTER TABLE `event_type`
+  MODIFY `event_type_id` int
+(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT for table `faculty`
 --
 ALTER TABLE `faculty`
@@ -775,6 +859,13 @@ ALTER TABLE `proxy_lecture`
 (11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `proxy_status`
+--
+ALTER TABLE `proxy_status`
+  MODIFY `status_id` int
+(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
 -- AUTO_INCREMENT for table `role`
 --
 ALTER TABLE `role`
@@ -793,14 +884,169 @@ ALTER TABLE `semester`
 --
 
 --
+-- Constraints for table `academic_calendar`
+--
+ALTER TABLE `academic_calendar`
+ADD CONSTRAINT `fk_calendar_college` FOREIGN KEY
+(`college_id`) REFERENCES `college`
+(`college_id`) ON
+DELETE CASCADE,
+ADD CONSTRAINT `fk_calendar_dept` FOREIGN KEY
+(`dept_id`) REFERENCES `department`
+(`dept_id`) ON
+DELETE CASCADE,
+ADD CONSTRAINT `fk_calendar_event_type` FOREIGN KEY
+(`event_type_id`) REFERENCES `event_type`
+(`event_type_id`);
+
+--
+-- Constraints for table `attendance`
+--
+ALTER TABLE `attendance`
+ADD CONSTRAINT `fk_attendance_lecture` FOREIGN KEY
+(`lecture_id`) REFERENCES `lecture`
+(`lecture_id`) ON
+DELETE CASCADE,
+ADD CONSTRAINT `fk_attendance_status` FOREIGN KEY
+(`status_id`) REFERENCES `attendance_status`
+(`status_id`),
+ADD CONSTRAINT `fk_attendance_student` FOREIGN KEY
+(`student_id`) REFERENCES `student`
+(`student_id`) ON
+DELETE CASCADE;
+
+--
+-- Constraints for table `department`
+--
+ALTER TABLE `department`
+ADD CONSTRAINT `fk_department_college` FOREIGN KEY
+(`college_id`) REFERENCES `college`
+(`college_id`) ON
+DELETE CASCADE;
+
+--
 -- Constraints for table `division`
 --
 ALTER TABLE `division`
+ADD CONSTRAINT `fk_division_class_teacher` FOREIGN KEY
+(`class_teacher_id`) REFERENCES `faculty`
+(`faculty_id`) ON
+DELETE
+SET NULL
+,
+ADD CONSTRAINT `fk_division_dept` FOREIGN KEY
+(`dept_id`) REFERENCES `department`
+(`dept_id`) ON
+DELETE CASCADE,
 ADD CONSTRAINT `fk_division_semester` FOREIGN KEY
 (`semester_id`) REFERENCES `semester`
 (`semester_id`) ON
 DELETE
 SET NULL;
+
+--
+-- Constraints for table `faculty`
+--
+ALTER TABLE `faculty`
+ADD CONSTRAINT `fk_faculty_dept` FOREIGN KEY
+(`dept_id`) REFERENCES `department`
+(`dept_id`) ON
+DELETE CASCADE,
+ADD CONSTRAINT `fk_faculty_user` FOREIGN KEY
+(`user_id`) REFERENCES `users`
+(`user_id`) ON
+DELETE CASCADE;
+
+--
+-- Constraints for table `lecture`
+--
+ALTER TABLE `lecture`
+ADD CONSTRAINT `fk_lecture_timetable` FOREIGN KEY
+(`timetable_id`) REFERENCES `timetable`
+(`timetable_id`) ON
+DELETE CASCADE;
+
+--
+-- Constraints for table `proxy_lecture`
+--
+ALTER TABLE `proxy_lecture`
+ADD CONSTRAINT `fk_proxy_lecture` FOREIGN KEY
+(`lecture_id`) REFERENCES `lecture`
+(`lecture_id`) ON
+DELETE CASCADE,
+ADD CONSTRAINT `fk_proxy_original_faculty` FOREIGN KEY
+(`original_faculty_id`) REFERENCES `faculty`
+(`faculty_id`),
+ADD CONSTRAINT `fk_proxy_status` FOREIGN KEY
+(`status_id`) REFERENCES `proxy_status`
+(`status_id`),
+ADD CONSTRAINT `fk_proxy_sub_faculty` FOREIGN KEY
+(`substitute_faculty_id`) REFERENCES `faculty`
+(`faculty_id`),
+ADD CONSTRAINT `fk_proxy_subject` FOREIGN KEY
+(`subject_id`) REFERENCES `subject`
+(`subject_id`);
+
+--
+-- Constraints for table `student`
+--
+ALTER TABLE `student`
+ADD CONSTRAINT `fk_student_dept` FOREIGN KEY
+(`dept_id`) REFERENCES `department`
+(`dept_id`),
+ADD CONSTRAINT `fk_student_division` FOREIGN KEY
+(`division_id`) REFERENCES `division`
+(`division_id`),
+ADD CONSTRAINT `fk_student_mentor` FOREIGN KEY
+(`mentor_id`) REFERENCES `faculty`
+(`faculty_id`) ON
+DELETE
+SET NULL
+,
+ADD CONSTRAINT `fk_student_user` FOREIGN KEY
+(`user_id`) REFERENCES `users`
+(`user_id`) ON
+DELETE CASCADE,
+ADD CONSTRAINT `student_ibfk_1` FOREIGN KEY
+(`mentor_id`) REFERENCES `faculty`
+(`faculty_id`);
+
+--
+-- Constraints for table `subject`
+--
+ALTER TABLE `subject`
+ADD CONSTRAINT `fk_subject_dept` FOREIGN KEY
+(`dept_id`) REFERENCES `department`
+(`dept_id`),
+ADD CONSTRAINT `fk_subject_semester` FOREIGN KEY
+(`semester_id`) REFERENCES `semester`
+(`semester_id`);
+
+--
+-- Constraints for table `timetable`
+--
+ALTER TABLE `timetable`
+ADD CONSTRAINT `fk_timetable_division` FOREIGN KEY
+(`division_id`) REFERENCES `division`
+(`division_id`),
+ADD CONSTRAINT `fk_timetable_faculty` FOREIGN KEY
+(`faculty_id`) REFERENCES `faculty`
+(`faculty_id`),
+ADD CONSTRAINT `fk_timetable_subject` FOREIGN KEY
+(`subject_id`) REFERENCES `subject`
+(`subject_id`);
+
+--
+-- Constraints for table `users`
+--
+ALTER TABLE `users`
+ADD CONSTRAINT `fk_user_college` FOREIGN KEY
+(`college_id`) REFERENCES `college`
+(`college_id`) ON
+DELETE CASCADE,
+ADD CONSTRAINT `fk_user_role` FOREIGN KEY
+(`role_id`) REFERENCES `role`
+(`role_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

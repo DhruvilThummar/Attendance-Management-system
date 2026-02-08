@@ -15,6 +15,8 @@ from .lecture import Lecture
 from .attendance import Attendance, AttendanceStatus
 from .academic_calendar import AcademicCalendar
 from .proxy_lecture import ProxyLecture
+from .event_type import EventType
+from .proxy_status import ProxyStatus
 
 __all__ = [
     'User',
@@ -33,4 +35,6 @@ __all__ = [
     'AttendanceStatus',
     'AcademicCalendar',
     'ProxyLecture',
+    'EventType',
+    'ProxyStatus',
 ]

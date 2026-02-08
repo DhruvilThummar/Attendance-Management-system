@@ -209,7 +209,8 @@ class DataHelper:
             'division_name': division.division_name,
             'semester_id': DataHelper._safe_attr(division, 'semester_id', None),
             'capacity': DataHelper._safe_attr(division, 'capacity', None),
-            'class_teacher': DataHelper._safe_attr(division, 'class_teacher', None)
+            'class_teacher_id': DataHelper._safe_attr(division, 'class_teacher_id', None),
+            'class_teacher_name': division.class_teacher.user.name if division.class_teacher and division.class_teacher.user else None
         }
 
     @staticmethod
@@ -450,9 +451,10 @@ class DataHelper:
                 'subject_name': proxy.subject.subject_name if proxy.subject else '',
                 'division_name': proxy.lecture.timetable.division.division_name
                 if proxy.lecture and proxy.lecture.timetable and proxy.lecture.timetable.division else '',
-                'status': proxy.status.title() if proxy.status else 'Pending',
+                'status': proxy.status.status_name if proxy.status else 'PENDING',
                 'original_faculty': proxy.original_faculty.user.name
                 if proxy.original_faculty and proxy.original_faculty.user else '',
+                'faculty_id': proxy.substitute_faculty_id,
                 'lecture_no': proxy.lecture_no
             })
         return requests

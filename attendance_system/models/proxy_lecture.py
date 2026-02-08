@@ -21,10 +21,7 @@ class ProxyLecture(db.Model):
     room_no = db.Column(db.String(20))
     building_block = db.Column(db.String(50))
     reason = db.Column(db.Text)
-    status = db.Column(
-        db.Enum('PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED'),
-        default='PENDING'
-    )
+    status_id = db.Column(db.Integer, db.ForeignKey('proxy_status.status_id'))
     assigned_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
     # Relationships
@@ -32,6 +29,7 @@ class ProxyLecture(db.Model):
     original_faculty = db.relationship('Faculty', foreign_keys=[original_faculty_id], back_populates='original_proxy_lectures')
     substitute_faculty = db.relationship('Faculty', foreign_keys=[substitute_faculty_id], back_populates='substitute_proxy_lectures')
     subject = db.relationship('Subject', back_populates='proxy_lectures')
+    status = db.relationship('ProxyStatus', backref='proxy_lectures')
     
     def __repr__(self):
         return f'<ProxyLecture {self.original_faculty.user.name} -> {self.substitute_faculty.user.name}>'
