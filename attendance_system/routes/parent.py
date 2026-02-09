@@ -53,7 +53,7 @@ def pdashboard():
         
         # Calculate overall percentage
         if attendance_records:
-            overall_pct = sum(r.get('attendance_percentage', 0) for r in attendance_records) / len(attendance_records)
+            overall_pct = sum(float(r.get('attendance_percentage', 0)) for r in attendance_records) / len(attendance_records)
         else:
             overall_pct = 0
         
@@ -158,9 +158,9 @@ def child_attendance(student_id):
     
     # Calculate overall percentage
     if attendance_records:
-        overall_pct = sum(r.get('attendance_percentage', 0) for r in attendance_records) / len(attendance_records)
+        overall_pct = sum(float(r.get('attendance_percentage', 0)) for r in attendance_records) / len(attendance_records)
         total_lectures = sum(r.get('total_lectures', 0) for r in attendance_records)
-        attended = sum(int((r.get('attendance_percentage', 0) / 100) * r.get('total_lectures', 0)) for r in attendance_records)
+        attended = sum(int((float(r.get('attendance_percentage', 0)) / 100) * r.get('total_lectures', 0)) for r in attendance_records)
     else:
         overall_pct = 0
         total_lectures = 0
@@ -307,7 +307,7 @@ def parent_profile():
         attendance_records = DataHelper.get_child_attendance(student_id)
         
         if attendance_records:
-            overall_pct = sum(r.get('attendance_percentage', 0) for r in attendance_records) / len(attendance_records)
+            overall_pct = sum(float(r.get('attendance_percentage', 0)) for r in attendance_records) / len(attendance_records)
             
             # Calculate attendance stats from records
             for record in attendance_records:
