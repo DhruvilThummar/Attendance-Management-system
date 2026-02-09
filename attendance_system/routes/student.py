@@ -72,7 +72,9 @@ def sdashboard():
     
     # Calculate overall percentage
     if attendance_records:
-        overall_pct = sum(r.get('attendance_percentage', 0) for r in attendance_records) / len(attendance_records)
+        # Convert Decimal values to float to avoid type mismatch
+        percentages = [float(r.get('attendance_percentage', 0)) for r in attendance_records]
+        overall_pct = sum(percentages) / len(percentages)
         total_lectures = sum(r.get('total_lectures', 0) for r in attendance_records)
         attended = sum(r.get('attended_lectures', 0) for r in attendance_records)
     else:
@@ -169,7 +171,9 @@ def student_attendance():
     
     # Calculate overall percentage
     if attendance_records:
-        overall_pct = sum(r.get('attendance_percentage', 0) for r in attendance_records) / len(attendance_records)
+        # Convert Decimal values to float to avoid type mismatch
+        percentages = [float(r.get('attendance_percentage', 0)) for r in attendance_records]
+        overall_pct = sum(percentages) / len(percentages)
         total_lectures = sum(r.get('total_lectures', 0) for r in attendance_records)
         attended = sum(r.get('attended_lectures', 0) for r in attendance_records)
     else:
@@ -275,7 +279,9 @@ def student_profile():
     attendance_records = DataHelper.get_child_attendance(student_id)
     
     if attendance_records:
-        overall_pct = sum(r.get('attendance_percentage', 0) for r in attendance_records) / len(attendance_records)
+        # Convert Decimal values to float to avoid type mismatch
+        percentages = [float(r.get('attendance_percentage', 0)) for r in attendance_records]
+        overall_pct = sum(percentages) / len(percentages)
         total_lectures = sum(r.get('total_lectures', 0) for r in attendance_records)
         attended = sum(r.get('attended_lectures', 0) for r in attendance_records)
     else:

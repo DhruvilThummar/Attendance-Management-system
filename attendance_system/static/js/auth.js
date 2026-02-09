@@ -1,7 +1,10 @@
 
 // Initialize login page features
 document.addEventListener("DOMContentLoaded", () => {
-    initCollegeSearch();
+    const collegeInput = document.getElementById("college");
+    if (collegeInput) {
+        initCollegeSearch();
+    }
     initFormValidation();
 });
 
@@ -66,6 +69,7 @@ function initFormValidation() {
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
     const collegeInput = document.getElementById("college");
+    const collegeSelectInput = document.getElementById("college_id");
 
     if (!form) return;
 
@@ -80,9 +84,14 @@ function initFormValidation() {
         passwordInput.addEventListener("input", validatePassword);
     }
 
-    // College validation
+    // College validation (only if college field exists)
     if (collegeInput) {
         collegeInput.addEventListener("blur", validateCollege);
+    }
+
+    // College select validation (for registration form)
+    if (collegeSelectInput) {
+        collegeSelectInput.addEventListener("change", validateCollege);
     }
 
     // Form submission
@@ -96,6 +105,8 @@ function initFormValidation() {
 // Validate email format
 function validateEmail() {
     const emailInput = document.getElementById("email");
+    if (!emailInput) return true;
+
     const emailError = document.getElementById("emailError");
     const email = emailInput.value.trim();
 
@@ -118,6 +129,8 @@ function validateEmail() {
 // Validate password strength
 function validatePassword() {
     const passwordInput = document.getElementById("password");
+    if (!passwordInput) return true;
+
     const passwordError = document.getElementById("passwordError");
     const password = passwordInput.value;
 
@@ -156,11 +169,35 @@ function validatePassword() {
 // Validate college selection
 function validateCollege() {
     const collegeInput = document.getElementById("college");
+
+    // If college autocomplete field doesn't exist (registration form), skip validation
+    if (!collegeInput) {
+        const collegeSelectInput = document.getElementById("college_id");
+        if (!collegeSelectInput) return true;
+
+        const collegeError = document.getElementById("collegeError");
+        const college = collegeSelectInput.value.trim();
+
+        if (college === "") {
+            if (collegeError) {
+                showError(collegeSelectInput, collegeError, "Please select a college");
+            }
+            return false;
+        }
+
+        if (collegeError) {
+            clearError(collegeSelectInput, collegeError);
+        }
+        return true;
+    }
+
     const collegeError = document.getElementById("collegeError");
     const college = collegeInput.value.trim();
 
     if (college === "") {
-        showError(collegeInput, collegeError, "Please select a college");
+        if (collegeError) {
+            showError(collegeInput, collegeError, "Please select a college");
+        }
         return false;
     }
 
@@ -169,11 +206,15 @@ function validateCollege() {
     );
 
     if (!isValidCollege) {
-        showError(collegeInput, collegeError, "Please select a valid college from the suggestions");
+        if (collegeError) {
+            showError(collegeInput, collegeError, "Please select a valid college from the suggestions");
+        }
         return false;
     }
 
-    clearError(collegeInput, collegeError);
+    if (collegeError) {
+        clearError(collegeInput, collegeError);
+    }
     return true;
 }
 
@@ -181,7 +222,15 @@ function validateCollege() {
 function validateForm() {
     const emailValid = validateEmail();
     const passwordValid = validatePassword();
-    const collegeValid = validateCollege();
+    const collegeInput = document.getElementById("college");
+    const collegeSelectInput = document.getElementById("college_id");
+
+    let collegeValid = true;
+
+    // Only validate college if either autocomplete or select field exists
+    if (collegeInput || collegeSelectInput) {
+        collegeValid = validateCollege();
+    }
 
     return emailValid && passwordValid && collegeValid;
 }
