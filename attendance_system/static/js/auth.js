@@ -1,14 +1,3 @@
-// College autocomplete data
-const colleges = [
-    { id: 1, name: "Engineering College Mumbai" },
-    { id: 2, name: "Delhi Institute of Technology" },
-    { id: 3, name: "IIT Bombay" },
-    { id: 4, name: "NIT Trichy" },
-    { id: 5, name: "Pune University College" },
-    { id: 6, name: "Bangalore Institute of Science" },
-    { id: 7, name: "Chennai Engineering College" },
-    { id: 8, name: "Hyderabad Tech Institute" },
-];
 
 // Initialize login page features
 document.addEventListener("DOMContentLoaded", () => {

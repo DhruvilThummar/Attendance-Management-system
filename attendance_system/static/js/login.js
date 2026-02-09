@@ -80,23 +80,4 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Redirect to dashboard if already logged in - REMOVED to prevent loops
-    // Server-side will handle redirects
-    /*
-    if (SessionManager.isLoggedIn()) {
-        const roleRedirects = {
-            'SUPERADMIN': '/superadmin/dashboard',
-            'ADMIN': '/college/dashboard',
-            'HOD': '/hod/dashboard',
-            'FACULTY': '/faculty/dashboard',
-            'STUDENT': '/student/dashboard',
-            'PARENT': '/parent/dashboard'
-        };
-
-        const role = SessionManager.getUserRole();
-        const redirectUrl = roleRedirects[role] || '/';
-        console.log('Already logged in as', role, '- redirecting to', redirectUrl);
-        window.location.href = redirectUrl;
-    }
-    */
 });
