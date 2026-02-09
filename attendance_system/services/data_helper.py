@@ -65,7 +65,15 @@ class DataHelper:
     def _np_mean(values):
         if not values:
             return 0.0
-        return float(np.mean(np.array(values, dtype=float)))
+        clean_values = [DataHelper._to_float(value) for value in values]
+        return float(np.mean(np.array(clean_values, dtype=float)))
+
+    @staticmethod
+    def _to_float(value, default=0.0):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return default
 
     @staticmethod
     def _plot_to_base64(fig):
@@ -598,8 +606,9 @@ class DataHelper:
             )
 
             division['records'] += 1
-            division['total_percentage'] += record['attendance_percentage']
-            if record['attendance_percentage'] < 75:
+            percentage = DataHelper._to_float(record['attendance_percentage'])
+            division['total_percentage'] += percentage
+            if percentage < 75:
                 division['low_attendance'] += 1
             if record['last_updated'] > division['last_updated']:
                 division['last_updated'] = record['last_updated']
@@ -613,7 +622,7 @@ class DataHelper:
                     'count': 0
                 }
             )
-            subject_meta['total_percentage'] += record['attendance_percentage']
+            subject_meta['total_percentage'] += percentage
             subject_meta['count'] += 1
 
         for division in summary.values():

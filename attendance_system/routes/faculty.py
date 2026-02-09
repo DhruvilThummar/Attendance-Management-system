@@ -42,7 +42,7 @@ def fdashboard():
     
     # Calculate average attendance from actual data
     attendance_percentages = [a.get('attendance_percentage', 0) for a in (attendance_data or [])]
-    avg_attendance = round(float(np.mean(attendance_percentages)), 2) if attendance_percentages else 0.0
+    avg_attendance = round(DataHelper._np_mean(attendance_percentages), 2) if attendance_percentages else 0.0
     
     # Compute stats for dashboard
     stats = {
