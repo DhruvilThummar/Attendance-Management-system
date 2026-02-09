@@ -166,6 +166,27 @@ class DataHelper:
         return str(value)
 
     @staticmethod
+    def is_holiday(event_date, college_id, dept_id):
+        """Check if a date is a holiday in the academic calendar"""
+        if not event_date or not college_id or not dept_id:
+            return False
+        
+        from models.academic_calendar import AcademicCalendar
+        holiday = AcademicCalendar.query.filter_by(
+            event_date=event_date,
+            college_id=college_id,
+            dept_id=dept_id
+        ).first()
+        return holiday is not None
+
+    @staticmethod
+    def is_working_day(day_name):
+        """Check if a day is a working day (not Sunday or Saturday)"""
+        # Sunday and Saturday are non-working days
+        non_working_days = ['Sunday', 'Saturday']
+        return day_name not in non_working_days
+
+    @staticmethod
     def _user_dict(user):
         if not user:
             return None

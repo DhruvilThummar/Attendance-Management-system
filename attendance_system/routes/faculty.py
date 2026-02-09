@@ -53,14 +53,21 @@ def fdashboard():
     today = date.today()
     day_name = DataHelper.DAY_MAP.get(today.strftime('%a').upper(), today.strftime('%A'))
     
+    # Check if today is a holiday or non-working day
+    is_working_day = DataHelper.is_working_day(day_name)
+    is_holiday = False
+    if is_working_day and current_faculty and current_faculty.department:
+        is_holiday = DataHelper.is_holiday(today, current_faculty.department.college_id, current_faculty.dept_id)
+    
     timetable_entries = []
-    if faculty and faculty.get('faculty_id'):
+    if is_working_day and not is_holiday and faculty and faculty.get('faculty_id'):
         # Get all timetable entries for this faculty
         all_timetable_entries = Timetable.query.filter_by(faculty_id=faculty.get('faculty_id')).all()
         
         for timetable_entry in all_timetable_entries:
             # Check if it's today's day
             entry_day = DataHelper.DAY_MAP.get(timetable_entry.day_of_week, timetable_entry.day_of_week)
+            
             if entry_day == day_name:
                 # Check if lecture has been marked (completed)
                 lecture = Lecture.query.filter_by(
