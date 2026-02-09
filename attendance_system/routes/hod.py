@@ -695,7 +695,7 @@ def hod_attendance():
     
     divisions = [d for d in divisions if d.get('subjects')]
     
-    return render_template("hod/attendance.html", divisions=divisions, datetime=dt)
+    return render_template("hod/attendance.html", context=context, divisions=divisions, datetime=dt)
 
 
 @hod_bp.route("/attendance/mark", methods=['POST'])

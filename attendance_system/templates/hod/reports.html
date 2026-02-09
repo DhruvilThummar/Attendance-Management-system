@@ -1,0 +1,459 @@
+{% extends 'hod/hbase.html' %}
+
+{% block title %}Department Reports{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/faculty.css') }}">
+<style>
+    .reports-container {
+        overflow-x: auto;
+        padding: 20px 0;
+    }
+
+    .reports-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        font-size: 0.9rem;
+    }
+
+    .reports-table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .reports-table th {
+        padding: 12px 8px;
+        text-align: center;
+        white-space: nowrap;
+        border: 1px solid #e0e0e0;
+        font-weight: 600;
+    }
+
+    .reports-table td {
+        padding: 10px 8px;
+        border: 1px solid #e0e0e0;
+        text-align: center;
+    }
+
+    .reports-table tbody tr:hover {
+        background-color: #f5f5f5;
+    }
+
+    .reports-table tbody tr:nth-child(even) {
+        background-color: #fafafa;
+    }
+
+    .student-info-wrapper {
+        position: sticky;
+        left: 0;
+        background: white;
+        z-index: 5;
+        min-width: 400px;
+        display: flex;
+        gap: 8px;
+    }
+
+    .student-col-roll {
+        min-width: 50px;
+        font-weight: bold;
+        color: #667eea;
+        text-align: left;
+    }
+
+    .student-col-name {
+        min-width: 150px;
+        color: #333;
+        font-weight: 500;
+        text-align: left;
+    }
+
+    .student-col-div {
+        min-width: 50px;
+        color: #666;
+        text-align: left;
+    }
+
+    .student-col-mentor {
+        min-width: 100px;
+        color: #666;
+        text-align: left;
+    }
+
+    .report-header {
+        margin-bottom: 30px;
+    }
+
+    .report-header h2 {
+        color: #333;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .report-header p {
+        color: #666;
+        margin: 0;
+    }
+
+    .report-filters {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .filter-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        flex-grow: 1;
+        min-width: 150px;
+    }
+
+    .filter-item label {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.9rem;
+    }
+
+    .filter-item input,
+    .filter-item select {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-export {
+        padding: 10px 20px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.3s;
+        white-space: nowrap;
+    }
+
+    .btn-export:hover {
+        background-color: #218838;
+    }
+
+    .btn-print {
+        padding: 10px 20px;
+        background-color: #667eea;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.3s;
+        white-space: nowrap;
+    }
+
+    .btn-print:hover {
+        background-color: #5568d3;
+    }
+
+    .attendance-percent {
+        font-weight: bold;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        min-width: 50px;
+    }
+
+    .attendance-percent.excellent {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .attendance-percent.good {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .attendance-percent.warning {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .attendance-percent.danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .overall-column {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: bold;
+        position: sticky;
+        right: 0;
+        z-index: 5;
+        min-width: 100px;
+    }
+
+    @media (max-width: 768px) {
+        .student-info-wrapper {
+            min-width: 300px;
+        }
+
+        .reports-table th,
+        .reports-table td {
+            padding: 6px 3px;
+            font-size: 0.75rem;
+        }
+
+        .filter-group {
+            flex-direction: column;
+        }
+
+        .filter-item {
+            min-width: 100%;
+        }
+
+        .btn-group {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .btn-export,
+        .btn-print {
+            width: 100%;
+        }
+    }
+
+    @media print {
+
+        .report-filters,
+        .btn-group {
+            display: none;
+        }
+
+        .reports-table {
+            box-shadow: none;
+            page-break-inside: avoid;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .container-fluid {
+            max-width: 100%;
+        }
+    }
+
+    @media print and (orientation: landscape) {
+        .reports-table {
+            font-size: 0.8rem;
+        }
+
+        .reports-table th,
+        .reports-table td {
+            padding: 8px 4px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="main-content">
+        <div class="container-fluid p-4">
+            <!-- Header -->
+            <div class="report-header">
+                <h2><i class="fas fa-file-alt me-2"></i>Department Reports</h2>
+                <p class="text-muted">Comprehensive attendance report for {{ context.department.dept_name if
+                    context.department else 'Department' }}</p>
+            </div>
+
+            <!-- Filters -->
+            <div class="report-filters">
+                <div class="filter-group">
+                    <div class="filter-item">
+                        <label for="divisionFilter">Filter by Division:</label>
+                        <select id="divisionFilter" onchange="filterReports()">
+                            <option value="">All Divisions</option>
+                            {% set divisions = students|map(attribute='division_short')|unique|list %}
+                            {% for div in divisions %}
+                            <option value="{{ div }}">{{ div }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-item" style="flex-grow: 2;">
+                        <label for="searchStudent">Search Student:</label>
+                        <input type="text" id="searchStudent" placeholder="Enter name or roll no..."
+                            onkeyup="filterReports()">
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn-export" onclick="exportToCSV()">
+                            <i class="fas fa-download me-1"></i>Export CSV
+                        </button>
+                        <button class="btn-print" onclick="window.print()">
+                            <i class="fas fa-print me-1"></i>Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Table -->
+            <div class="reports-container">
+                <table class="reports-table" id="reportsTable">
+                    <thead>
+                        <tr>
+                            <th>Roll No</th>
+                            <th>Student Name</th>
+                            <th>Division</th>
+                            <th>Mentor</th>
+                            <th>Total Lectures</th>
+                            <th>Attended</th>
+                            <th>Overall Attendance %</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if students %}
+                        {% for student in students %}
+                        <tr class="report-row" data-division="{{ student.division_short }}"
+                            data-search="{{ student.name|lower }}-{{ student.roll_no|lower }}">
+                            <td class="student-col-roll">{{ student.roll_no }}</td>
+                            <td class="student-col-name">{{ student.name }}</td>
+                            <td class="student-col-div">{{ student.division_short }}</td>
+                            <td class="student-col-mentor">{{ student.mentor_short_name if student.mentor_short_name
+                                else '-' }}</td>
+                            <td>{{ student.total_lectures }}</td>
+                            <td>{{ student.attended_lectures }}</td>
+                            <td>
+                                <span
+                                    class="attendance-percent {% if student.overall_attendance >= 85 %}excellent{% elif student.overall_attendance >= 75 %}good{% elif student.overall_attendance >= 60 %}warning{% else %}danger{% endif %}">
+                                    {{ "%.2f"|format(student.overall_attendance) }}%
+                                </span>
+                            </td>
+                            <td>
+                                {% if student.overall_attendance >= 75 %}
+                                <span style="color: #155724; font-weight: 600;">PASS</span>
+                                {% else %}
+                                <span style="color: #721c24; font-weight: 600;">FAIL</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">No attendance data available</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary Section -->
+            {% if students %}
+            <div class="row mt-4">
+                <div class="col-md-3 mb-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <h3 class="text-primary">{{ students|length }}</h3>
+                            <p class="text-muted mb-0">Total Students</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <h3 class="text-success">{{ students|selectattr('overall_attendance', 'ge', 75)|list|length
+                                }}</h3>
+                            <p class="text-muted mb-0">Passed (≥75%)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <h3 class="text-danger">{{ students|selectattr('overall_attendance', 'lt', 75)|list|length
+                                }}</h3>
+                            <p class="text-muted mb-0">At Risk (<75%)< /p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <h3 class="text-info">{{ "%.2f"|format((students|map(attribute='overall_attendance')|sum /
+                                students|length)|float) }}%</h3>
+                            <p class="text-muted mb-0">Average Attendance</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function filterReports() {
+        const divisionFilter = document.getElementById('divisionFilter').value.toLowerCase();
+        const searchInput = document.getElementById('searchStudent').value.toLowerCase();
+        const rows = document.querySelectorAll('.report-row');
+
+        rows.forEach(row => {
+            const division = row.getAttribute('data-division').toLowerCase();
+            const search = row.getAttribute('data-search').toLowerCase();
+
+            const divisionMatch = !divisionFilter || division.includes(divisionFilter);
+            const searchMatch = !searchInput || search.includes(searchInput);
+
+            row.style.display = (divisionMatch && searchMatch) ? '' : 'none';
+        });
+    }
+
+    function exportToCSV() {
+        let csv = 'Roll No,Student Name,Division,Mentor,Total Lectures,Attended,Overall Attendance %,Status\n';
+
+        document.querySelectorAll('.report-row:not([style*="display: none"])').forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const rowData = Array.from(cells).map(cell => {
+                const text = cell.textContent.trim().replace(/"/g, '""');
+                return `"${text}"`;
+            }).join(',');
+            csv += rowData + '\n';
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'department_attendance_report.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+{% endblock %}

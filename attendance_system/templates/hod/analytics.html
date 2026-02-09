@@ -1,0 +1,301 @@
+{% extends 'hod/hbase.html' %}
+
+{% block title %}Department Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .stat-card.stat-secondary {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .stat-card.stat-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .stat-card.stat-warning {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: #333;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    .chart-img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+    }
+
+    .table-responsive {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .attendance-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .attendance-table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .attendance-table th {
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+    }
+
+    .attendance-table td {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .attendance-table tbody tr:hover {
+        background-color: #f5f5f5;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .status-good {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .status-average {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .status-warning {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        color: #333;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .page-header p {
+        color: #666;
+        margin: 0;
+    }
+
+    @media print {
+        .page-header {
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            page-break-inside: avoid;
+            box-shadow: none;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stat-card {
+            margin-bottom: 15px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="main-content">
+        <div class="container-fluid p-4">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1><i class="fas fa-chart-line me-2"></i>Department Analytics</h1>
+                <p>Attendance insights and statistics for {{ context.department.dept_name if context.department else
+                    'Department' }}</p>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="stat-card">
+                        <i class="fas fa-chalkboard-user fa-2x mb-2"></i>
+                        <div class="stat-label">Total Lectures</div>
+                        <div class="stat-value">{{ total_lectures }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="stat-card stat-secondary">
+                        <i class="fas fa-percentage fa-2x mb-2"></i>
+                        <div class="stat-label">Average Attendance</div>
+                        <div class="stat-value">{{ avg_attendance }}%</div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="stat-card stat-success">
+                        <i class="fas fa-users fa-2x mb-2"></i>
+                        <div class="stat-label">Total Records</div>
+                        <div class="stat-value">{{ attendance_data|length }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="stat-card stat-warning">
+                        <i class="fas fa-info-circle fa-2x mb-2"></i>
+                        <div class="stat-label">Status</div>
+                        <div class="stat-value">{% if avg_attendance >= 75 %}Good{% else %}Alert{% endif %}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="row">
+                <!-- Monthly Attendance Chart -->
+                {% if charts.monthly_attendance %}
+                <div class="col-lg-6">
+                    <div class="chart-container">
+                        <div class="chart-title"><i class="fas fa-calendar-alt me-2"></i>Monthly Attendance Trend</div>
+                        <img src="{{ charts.monthly_attendance }}" class="chart-img" alt="Monthly Attendance Chart">
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Subject Attendance Chart -->
+                {% if charts.subject_attendance %}
+                <div class="col-lg-6">
+                    <div class="chart-container">
+                        <div class="chart-title"><i class="fas fa-book me-2"></i>Subject-wise Attendance</div>
+                        <img src="{{ charts.subject_attendance }}" class="chart-img" alt="Subject Attendance Chart">
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Class Strength Chart -->
+                {% if charts.class_strength %}
+                <div class="col-lg-12">
+                    <div class="chart-container">
+                        <div class="chart-title"><i class="fas fa-door-open me-2"></i>Division Attendance Comparison
+                        </div>
+                        <img src="{{ charts.class_strength }}" class="chart-img" alt="Class Strength Chart">
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Detailed Records Table -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="chart-container">
+                        <div class="chart-title"><i class="fas fa-table me-2"></i>Detailed Attendance Records</div>
+                        <div class="table-responsive">
+                            <table class="attendance-table">
+                                <thead>
+                                    <tr>
+                                        <th>Student Name</th>
+                                        <th>Roll No</th>
+                                        <th>Division</th>
+                                        <th>Subject</th>
+                                        <th>Total Lectures</th>
+                                        <th>Attended</th>
+                                        <th>Attendance %</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if attendance_data %}
+                                    {% for record in attendance_data[:50] %}
+                                    <tr>
+                                        <td><strong>{{ record.get('student_name', 'N/A') }}</strong></td>
+                                        <td>{{ record.get('roll_no', '-') }}</td>
+                                        <td>{{ record.get('division_name', '-') }}</td>
+                                        <td>{{ record.get('subject_name', '-') }}</td>
+                                        <td class="text-center">{{ record.get('total_lectures', 0) }}</td>
+                                        <td class="text-center">{{ record.get('attended_lectures', 0) }}</td>
+                                        <td class="text-center">
+                                            <strong>{{ "%.2f"|format(float(record.get('attendance_percentage', 0)))
+                                                }}%</strong>
+                                        </td>
+                                        <td>
+                                            {% set pct = float(record.get('attendance_percentage', 0)) %}
+                                            {% if pct >= 85 %}
+                                            <span class="status-badge status-good">Good</span>
+                                            {% elif pct >= 75 %}
+                                            <span class="status-badge status-average">Average</span>
+                                            {% else %}
+                                            <span class="status-badge status-warning">At Risk</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">No attendance data available
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if attendance_data|length > 50 %}
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Showing 50 of {{ attendance_data|length }} records. Export data to view all records.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
