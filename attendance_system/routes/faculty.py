@@ -678,26 +678,43 @@ def fprofile():
 
 
 @faculty_bp.route("/download-report", methods=['GET', 'POST'])
+@faculty_bp.route("/download-report")
 def download_report():
     """Download attendance report as CSV"""
-    attendance_data = DataHelper.get_attendance_records()
-    students = DataHelper.get_students()
+    from models.faculty import Faculty
+    
+    # Get current faculty and their college
+    faculty_user_id = session.get('user_id')
+    current_faculty = Faculty.query.filter_by(user_id=faculty_user_id).first()
+    faculty_college_id = current_faculty.department.college_id if current_faculty and current_faculty.department else None
+    
+    # Get attendance data filtered by college
+    attendance_data = DataHelper.get_attendance_records(college_id=faculty_college_id)
     
     # Create CSV
     output = io.StringIO()
     writer = csv.writer(output)
     
-    # Write header
-    writer.writerow(['Student ID', 'Student Name', 'Subject', 'Attendance Percentage', 'Status'])
+    # Write header with additional columns
+    writer.writerow([
+        'Student ID', 'Student Name', 'Roll No', 'Division', 'Department',
+        'Subject', 'Subject Code', 'Attendance %', 'Attended Lectures', 'Total Lectures', 'Status'
+    ])
     
     # Write data
     for record in attendance_data:
         writer.writerow([
             record.get('student_id', ''),
             record.get('student_name', ''),
-            record.get('subject', ''),
-            f"{record.get('attendance_percentage', 0):.2f}%",
-            record.get('status', '')
+            record.get('roll_no', ''),
+            record.get('division_name', ''),
+            record.get('dept_name', ''),
+            record.get('subject_name', ''),
+            record.get('subject_code', ''),
+            f"{float(record.get('attendance_percentage', 0)):.2f}%",
+            record.get('attended_lectures', 0),
+            record.get('total_lectures', 0),
+            'PASS' if float(record.get('attendance_percentage', 0)) >= 75 else 'FAIL'
         ])
     
     # Convert to bytes
