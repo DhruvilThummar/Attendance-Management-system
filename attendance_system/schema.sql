@@ -45,18 +45,6 @@ CREATE TABLE `academic_calendar`
 -- --------------------------------------------------------
 
 --
--- Table structure for table `alembic_version`
---
-
-CREATE TABLE `alembic_version`
-(
-  `version_num` varchar
-(32) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `attendance`
 --
 
