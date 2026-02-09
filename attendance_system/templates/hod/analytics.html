@@ -8,7 +8,7 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border-radius: 12px;
-        padding: 24px;
+        padding: 20px;
         text-align: center;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         transition: transform 0.3s ease;
@@ -34,7 +34,7 @@
     .stat-value {
         font-size: 2.5rem;
         font-weight: bold;
-        margin: 10px 0;
+        margin: 8px 0;
     }
 
     .stat-label {
@@ -45,15 +45,15 @@
     .chart-container {
         background: white;
         border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 20px;
+        padding: 15px;
+        margin-bottom: 15px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .chart-title {
         font-size: 1.1rem;
         font-weight: 600;
-        margin-bottom: 15px;
+        margin-bottom: 12px;
         color: #333;
     }
 
@@ -80,13 +80,13 @@
     }
 
     .attendance-table th {
-        padding: 12px;
+        padding: 10px;
         text-align: left;
         font-weight: 600;
     }
 
     .attendance-table td {
-        padding: 12px;
+        padding: 10px;
         border-bottom: 1px solid #eee;
     }
 
@@ -118,7 +118,7 @@
     }
 
     .page-header {
-        margin-bottom: 30px;
+        margin-bottom: 20px;
     }
 
     .page-header h1 {
@@ -133,13 +133,148 @@
     }
 
     @media print {
-        .page-header {
-            margin-bottom: 20px;
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
         }
 
+        body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .page-header {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .page-header h1 {
+            font-size: 20pt;
+        }
+
+        .page-header p {
+            font-size: 10pt;
+        }
+
+        /* Hide navigation and non-essential elements */
+        .sidebar,
+        .navbar,
+        .btn,
+        button {
+            display: none !important;
+        }
+
+        /* Statistics cards - optimize for print */
+        .stat-card {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            page-break-inside: avoid;
+            margin-bottom: 10px;
+            padding: 15px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+        }
+
+        /* Chart containers */
         .chart-container {
             page-break-inside: avoid;
             box-shadow: none;
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+            padding: 15px;
+        }
+
+        .chart-title {
+            font-size: 11pt;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .chart-img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Table optimizations */
+        .table-responsive {
+            overflow: visible;
+        }
+
+        .attendance-table {
+            width: 100%;
+            font-size: 8pt;
+            border-collapse: collapse;
+        }
+
+        .attendance-table thead {
+            background-color: #667eea !important;
+            color: white !important;
+        }
+
+        .attendance-table th {
+            padding: 8px 6px;
+            font-size: 8pt;
+            font-weight: 600;
+            border: 1px solid #999;
+        }
+
+        .attendance-table td {
+            padding: 6px 4px;
+            font-size: 8pt;
+            border: 1px solid #ddd;
+        }
+
+        .attendance-table tbody tr {
+            page-break-inside: avoid;
+        }
+
+        /* Ensure status badges print correctly */
+        .status-badge {
+            border: 1px solid;
+            font-size: 7pt;
+            padding: 2px 8px;
+        }
+
+        .status-good {
+            border-color: #155724;
+        }
+
+        .status-average {
+            border-color: #856404;
+        }
+
+        .status-warning {
+            border-color: #721c24;
+        }
+
+        /* Remove excessive spacing */
+        .container-fluid {
+            padding: 0 !important;
+        }
+
+        .row {
+            margin: 0 !important;
+        }
+
+        .col-md-6,
+        .col-lg-3,
+        .col-lg-6,
+        .col-lg-12,
+        .col-12 {
+            padding: 5px !important;
+        }
+
+        /* Alert messages */
+        .alert {
+            padding: 8px;
+            font-size: 8pt;
+            margin-top: 10px;
         }
     }
 
@@ -158,7 +293,7 @@
 {% block content %}
 <div class="dashboard-container">
     <div class="main-content">
-        <div class="container-fluid p-4">
+        <div class="container-fluid p-3">
             <!-- Page Header -->
             <div class="page-header">
                 <h1><i class="fas fa-chart-line me-2"></i>Department Analytics</h1>
@@ -167,29 +302,29 @@
             </div>
 
             <!-- Statistics Cards -->
-            <div class="row mb-4">
-                <div class="col-md-6 col-lg-3 mb-3">
+            <div class="row mb-3">
+                <div class="col-md-6 col-lg-3 mb-2">
                     <div class="stat-card">
                         <i class="fas fa-chalkboard-user fa-2x mb-2"></i>
                         <div class="stat-label">Total Lectures</div>
                         <div class="stat-value">{{ total_lectures }}</div>
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-3 mb-3">
+                <div class="col-md-6 col-lg-3 mb-2">
                     <div class="stat-card stat-secondary">
                         <i class="fas fa-percentage fa-2x mb-2"></i>
                         <div class="stat-label">Average Attendance</div>
                         <div class="stat-value">{{ avg_attendance }}%</div>
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-3 mb-3">
+                <div class="col-md-6 col-lg-3 mb-2">
                     <div class="stat-card stat-success">
                         <i class="fas fa-users fa-2x mb-2"></i>
                         <div class="stat-label">Total Records</div>
                         <div class="stat-value">{{ attendance_data|length }}</div>
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-3 mb-3">
+                <div class="col-md-6 col-lg-3 mb-2">
                     <div class="stat-card stat-warning">
                         <i class="fas fa-info-circle fa-2x mb-2"></i>
                         <div class="stat-label">Status</div>
@@ -233,7 +368,7 @@
             </div>
 
             <!-- Detailed Records Table -->
-            <div class="row mt-4">
+            <div class="row mt-3">
                 <div class="col-12">
                     <div class="chart-container">
                         <div class="chart-title"><i class="fas fa-table me-2"></i>Detailed Attendance Records</div>
@@ -262,11 +397,11 @@
                                         <td class="text-center">{{ record.get('total_lectures', 0) }}</td>
                                         <td class="text-center">{{ record.get('attended_lectures', 0) }}</td>
                                         <td class="text-center">
-                                            <strong>{{ "%.2f"|format(float(record.get('attendance_percentage', 0)))
+                                            <strong>{{ "%.2f"|format(record.get('attendance_percentage', 0))
                                                 }}%</strong>
                                         </td>
                                         <td>
-                                            {% set pct = float(record.get('attendance_percentage', 0)) %}
+                                            {% set pct = record.get('attendance_percentage', 0) %}
                                             {% if pct >= 85 %}
                                             <span class="status-badge status-good">Good</span>
                                             {% elif pct >= 75 %}

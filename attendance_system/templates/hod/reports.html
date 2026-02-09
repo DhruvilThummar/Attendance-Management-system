@@ -244,35 +244,124 @@
     }
 
     @media print {
-
-        .report-filters,
-        .btn-group {
-            display: none;
-        }
-
-        .reports-table {
-            box-shadow: none;
-            page-break-inside: avoid;
+        @page {
+            size: A4 landscape;
+            margin: 8mm;
         }
 
         body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
             margin: 0;
             padding: 0;
         }
 
+        /* Hide non-essential elements */
+        .sidebar,
+        .navbar,
+        .report-filters,
+        .btn-group,
+        button,
+        .btn {
+            display: none !important;
+        }
+
         .container-fluid {
             max-width: 100%;
+            padding: 0 !important;
+        }
+
+        .report-header {
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .report-header h2 {
+            font-size: 16pt;
+            margin-bottom: 5px;
+        }
+
+        .report-header p {
+            font-size: 9pt;
+        }
+
+        /* Table optimizations */
+        .reports-container {
+            padding: 0;
+        }
+
+        .reports-table {
+            width: 100%;
+            box-shadow: none;
+            border: 1px solid #333;
+            font-size: 8pt;
+        }
+
+        .reports-table thead {
+            background-color: #667eea !important;
+            color: white !important;
+            display: table-header-group;
+        }
+
+        .reports-table th {
+            padding: 6px 4px;
+            font-size: 8pt;
+            border: 1px solid #666;
+            position: static;
+        }
+
+        .reports-table td {
+            padding: 5px 3px;
+            font-size: 7.5pt;
+            border: 1px solid #999;
+        }
+
+        .reports-table tbody tr {
+            page-break-inside: avoid;
+        }
+
+        /* Reset sticky columns for print */
+        .student-info-wrapper {
+            position: static;
+            min-width: auto;
+        }
+
+        .student-col-roll,
+        .student-col-name,
+        .student-col-div,
+        .student-col-mentor {
+            min-width: auto;
+        }
+
+        /* Stat cards */
+        .stat-card {
+            page-break-inside: avoid;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+        }
+
+        .stat-icon {
+            font-size: 20pt;
+        }
+
+        .stat-value {
+            font-size: 16pt;
+        }
+
+        .stat-label {
+            font-size: 8pt;
         }
     }
 
     @media print and (orientation: landscape) {
         .reports-table {
-            font-size: 0.8rem;
+            font-size: 8pt;
         }
 
         .reports-table th,
         .reports-table td {
-            padding: 8px 4px;
+            padding: 5px 3px;
         }
     }
 </style>

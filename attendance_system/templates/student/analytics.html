@@ -63,6 +63,66 @@
         padding: 40px 0;
         margin-bottom: 30px;
     }
+
+    .accordion-button {
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .accordion-button:not(.collapsed) {
+        background-color: #e7f1ff;
+        color: #0d6efd;
+    }
+
+    .accordion-body {
+        padding: 1.5rem;
+    }
+
+    .accordion-item {
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    @media print {
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+
+        .page-header {
+            background: none;
+            color: #333;
+            padding: 20px 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .sidebar,
+        .navbar,
+        .btn,
+        button {
+            display: none !important;
+        }
+
+        .accordion-button {
+            display: none;
+        }
+
+        .accordion-collapse {
+            display: block !important;
+        }
+
+        .chart-card {
+            page-break-inside: avoid;
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+
+        table {
+            font-size: 9pt;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -162,44 +222,109 @@
             <div class="col-12">
                 <div class="chart-card">
                     <h5 class="chart-title">
-                        <i class="bi bi-table me-2"></i>Detailed Records
+                        <i class="bi bi-calendar-check me-2"></i>Today's Attendance
                     </h5>
-                    {% if attendance_records %}
+                    {% if today_attendance %}
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead class="table-light">
                                 <tr>
                                     <th>Subject</th>
                                     <th>Subject Code</th>
-                                    <th>Total Lectures</th>
-                                    <th>Attended</th>
-                                    <th>Attendance %</th>
+                                    <th>Date</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for record in attendance_records %}
+                                {% for record in today_attendance %}
                                 <tr>
                                     <td><strong>{{ record.subject_name }}</strong></td>
                                     <td>{{ record.subject_code }}</td>
-                                    <td>{{ record.total_lectures }}</td>
-                                    <td>{{ record.attended_lectures }}</td>
+                                    <td>{{ record.lecture_date.strftime('%d %b %Y') }}</td>
                                     <td>
                                         <span
-                                            class="badge bg-{{ 'success' if record.attendance_percentage >= 85 else 'warning' if record.attendance_percentage >= 75 else 'danger' }}">
-                                            {{ "%.2f"|format(record.attendance_percentage) }}%
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span
-                                            class="badge bg-{{ 'success' if record.attendance_percentage >= 75 else 'danger' }}">
-                                            {{ 'PASS' if record.attendance_percentage >= 75 else 'FAIL' }}
+                                            class="badge bg-{{ 'success' if record.status == 'Present' else 'danger' if record.status == 'Absent' else 'secondary' }}">
+                                            {{ record.status }}
                                         </span>
                                     </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No lectures scheduled for today</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Records with Lecture Dates -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-card">
+                    <h5 class="chart-title">
+                        <i class="bi bi-table me-2"></i>Detailed Subject Records
+                    </h5>
+                    {% if subject_details %}
+                    <div class="accordion" id="subjectAccordion">
+                        {% for subject in subject_details %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ loop.index }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapse{{ loop.index }}" aria-expanded="false"
+                                    aria-controls="collapse{{ loop.index }}">
+                                    <div class="d-flex justify-content-between align-items-center w-100 pe-3">
+                                        <div>
+                                            <strong>{{ subject.subject_name }}</strong>
+                                            <span class="text-muted ms-2">({{ subject.subject_code }})</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <span class="badge bg-info">
+                                                {{ subject.attended_lectures }}/{{ subject.total_lectures }} Lectures
+                                            </span>
+                                            <span
+                                                class="badge bg-{{ 'success' if subject.attendance_percentage >= 85 else 'warning' if subject.attendance_percentage >= 75 else 'danger' }}">
+                                                {{ "%.2f"|format(subject.attendance_percentage) }}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapse{{ loop.index }}" class="accordion-collapse collapse"
+                                aria-labelledby="heading{{ loop.index }}" data-bs-parent="#subjectAccordion">
+                                <div class="accordion-body">
+                                    {% if subject.lectures %}
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Lecture Date</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for lecture in subject.lectures %}
+                                                <tr>
+                                                    <td>{{ lecture.date }}</td>
+                                                    <td>
+                                                        <span
+                                                            class="badge bg-{{ 'success' if lecture.status == 'Present' else 'danger' if lecture.status == 'Absent' else 'secondary' }}">
+                                                            {{ lecture.status }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted mb-0">No lecture data available</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                     {% else %}
                     <div class="alert alert-info">No attendance records available</div>

@@ -10,6 +10,7 @@ from services.chart_helper import (
     generate_attendance_monthly_chart,
     generate_subject_attendance_chart
 )
+from models.user import db
 
 student_bp = Blueprint('student', __name__, url_prefix='/student')
 
@@ -327,12 +328,51 @@ def sanalytics():
         return render_template("student/analytics.html",
                              context=context,
                              charts={},
-                             stats={})
+                             stats={},
+                             today_attendance=[],
+                             subject_details=[])
     
     student_id = context['student']['student_id']
     
     # Get student's attendance records only
     attendance_records = DataHelper.get_child_attendance(student_id)
+    
+    # Get today's attendance from Attendance model
+    from datetime import datetime as dt
+    from models.attendance import Attendance
+    from models.lecture import Lecture
+    from models.timetable import Timetable
+    from models.subject import Subject
+    
+    today = dt.today().date()
+    today_attendance = []
+    
+    # Query today's lectures and attendance
+    today_lectures = db.session.query(
+        Lecture.lecture_id,
+        Lecture.lecture_date,
+        Subject.subject_name,
+        Subject.subject_code,
+        Attendance.status_id
+    ).join(Timetable, Lecture.timetable_id == Timetable.timetable_id)\
+     .join(Subject, Timetable.subject_id == Subject.subject_id)\
+     .outerjoin(Attendance, (Attendance.lecture_id == Lecture.lecture_id) & (Attendance.student_id == student_id))\
+     .filter(Lecture.lecture_date == today)\
+     .all()
+    
+    for lec in today_lectures:
+        status_name = 'Not Marked'
+        if lec.status_id == 1:
+            status_name = 'Present'
+        elif lec.status_id == 2:
+            status_name = 'Absent'
+        
+        today_attendance.append({
+            'subject_name': lec.subject_name,
+            'subject_code': lec.subject_code,
+            'lecture_date': lec.lecture_date,
+            'status': status_name
+        })
     
     # Calculate statistics
     stats = {
@@ -359,23 +399,23 @@ def sanalytics():
     subject_data = {}
     
     # Weekly attendance data
-    from datetime import datetime as dt, timedelta
-    today = dt.today()
+    from datetime import timedelta
     one_week_ago = today - timedelta(days=7)
     
     weekly_records = [r for r in (attendance_records or []) 
                      if r.get('last_updated') and 
-                     dt.fromisoformat(str(r.get('last_updated'))).date() >= one_week_ago.date()]
+                     dt.fromisoformat(str(r.get('last_updated'))).date() >= one_week_ago]
     
-    days_map = {0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun'}
+    days_map = {0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat'}
     for record in weekly_records:
         if record.get('last_updated'):
             try:
                 date_obj = dt.fromisoformat(str(record.get('last_updated')))
-                day_name = days_map.get(date_obj.weekday(), 'Unknown')
-                if day_name not in weekly_data:
-                    weekly_data[day_name] = []
-                weekly_data[day_name].append(float(record.get('attendance_percentage', 0)))
+                day_name = days_map.get(date_obj.weekday())
+                if day_name:  # Only process if day is valid (Mon-Sun)
+                    if day_name not in weekly_data:
+                        weekly_data[day_name] = []
+                    weekly_data[day_name].append(float(record.get('attendance_percentage', 0)))
             except:
                 pass
     
@@ -384,21 +424,90 @@ def sanalytics():
         weekly_data[day] = round(sum(percentages) / len(percentages), 1) if percentages else 0.0
     
     # Add missing days
-    for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']:
+    for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']:
         if day not in weekly_data:
             weekly_data[day] = 0.0
     
-    # Subject-wise attendance
+    # Subject-wise attendance - aggregate by subject properly
+    subject_aggregation = {}
     for record in (attendance_records or []):
-        subject_name = record.get('subject_name', 'Unknown')
-        pct = float(record.get('attendance_percentage', 0))
-        subject_data[subject_name] = pct
+        subject_name = record.get('subject_name')
+        if subject_name:
+            if subject_name not in subject_aggregation:
+                subject_aggregation[subject_name] = {
+                    'total_lectures': 0,
+                    'attended_lectures': 0
+                }
+            subject_aggregation[subject_name]['total_lectures'] += record.get('total_lectures', 0)
+            subject_aggregation[subject_name]['attended_lectures'] += record.get('attended_lectures', 0)
+    
+    # Calculate percentages for each subject
+    for subject_name, data in subject_aggregation.items():
+        if data['total_lectures'] > 0:
+            pct = (data['attended_lectures'] / data['total_lectures']) * 100
+            subject_data[subject_name] = round(pct, 2)
+        else:
+            subject_data[subject_name] = 0.0
+    
+    # Get detailed lecture information by subject - fetch ALL lectures once (not per subject)
+    subject_details = []
+    
+    # Single query to get all lectures for this student at once
+    all_student_lectures = db.session.query(
+        Lecture.lecture_id,
+        Lecture.lecture_date,
+        Subject.subject_name,
+        Subject.subject_code,
+        Attendance.status_id
+    ).join(Timetable, Lecture.timetable_id == Timetable.timetable_id)\
+     .join(Subject, Timetable.subject_id == Subject.subject_id)\
+     .outerjoin(Attendance, (Attendance.lecture_id == Lecture.lecture_id) & (Attendance.student_id == student_id))\
+     .order_by(Lecture.lecture_date.desc())\
+     .all()
+    
+    # Group lectures by subject in Python (no more DB queries)
+    lectures_by_subject = {}
+    for lec in all_student_lectures:
+        subject_name = lec.subject_name
+        if subject_name not in lectures_by_subject:
+            lectures_by_subject[subject_name] = {
+                'subject_code': lec.subject_code,
+                'lectures': []
+            }
+        
+        status_name = 'Not Marked'
+        if lec.status_id == 1:
+            status_name = 'Present'
+        elif lec.status_id == 2:
+            status_name = 'Absent'
+        
+        lectures_by_subject[subject_name]['lectures'].append({
+            'date': lec.lecture_date.strftime('%d %b %Y'),
+            'status': status_name
+        })
+    
+    # Build subject_details from attendance_records + grouped lectures
+    processed_subjects = set()
+    for record in (attendance_records or []):
+        subject_name = record.get('subject_name')
+        if subject_name and subject_name not in processed_subjects:
+            processed_subjects.add(subject_name)
+            
+            lecture_list = lectures_by_subject.get(subject_name, {}).get('lectures', [])
+            subject_details.append({
+                'subject_name': subject_name,
+                'subject_code': record.get('subject_code'),
+                'total_lectures': record.get('total_lectures', 0),
+                'attended_lectures': record.get('attended_lectures', 0),
+                'attendance_percentage': float(record.get('attendance_percentage', 0)),
+                'lectures': lecture_list
+            })
     
     # Monthly attendance (last 4 weeks)
     four_weeks_ago = today - timedelta(days=28)
     monthly_records = [r for r in (attendance_records or []) 
                       if r.get('last_updated') and 
-                      dt.fromisoformat(str(r.get('last_updated'))).date() >= four_weeks_ago.date()]
+                      dt.fromisoformat(str(r.get('last_updated'))).date() >= four_weeks_ago]
     
     week_attendance = {}
     for record in monthly_records:
@@ -431,4 +540,5 @@ def sanalytics():
                          context=context,
                          charts=charts,
                          stats=stats,
-                         attendance_records=attendance_records)
+                         today_attendance=today_attendance,
+                         subject_details=subject_details)

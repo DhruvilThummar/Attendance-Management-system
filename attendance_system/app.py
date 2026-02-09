@@ -63,11 +63,44 @@ def inject_user():
         })()
     return dict(user=user)
 
+def initialize_roles():
+    """Initialize default roles in the database if they don't exist"""
+    from models.user import Role
+    
+    default_roles = [
+        {'role_id': 36, 'role_name': 'SUPERADMIN'},
+        {'role_id': 37, 'role_name': 'ADMIN'},
+        {'role_id': 38, 'role_name': 'HOD'},
+        {'role_id': 39, 'role_name': 'FACULTY'},
+        {'role_id': 40, 'role_name': 'STUDENT'},
+        {'role_id': 41, 'role_name': 'PARENT'},
+    ]
+    
+    try:
+        for role_data in default_roles:
+            # Check if role already exists
+            existing_role = Role.query.filter_by(role_id=role_data['role_id']).first()
+            if not existing_role:
+                new_role = Role(
+                    role_id=role_data['role_id'],
+                    role_name=role_data['role_name']
+                )
+                db.session.add(new_role)
+        
+        db.session.commit()
+        print("✓ Default roles initialized successfully")
+    except Exception as e:
+        db.session.rollback()
+        print(f"✗ Role initialization error: {e}")
+
 # Create all database tables if they don't exist
 with app.app_context():
     try:
         db.create_all()
         print("✓ Database tables created/verified successfully")
+        
+        # Initialize default roles
+        initialize_roles()
     except Exception as e:
         print(f"✗ Database initialization error: {e}")
         print("  Make sure MySQL is running and DATABASE_URL is correct in .env")

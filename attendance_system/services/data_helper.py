@@ -373,9 +373,12 @@ class DataHelper:
         return DataHelper._college_dict(college)
 
     @staticmethod
-    def get_departments():
-        """Get all departments"""
-        departments = Department.query.order_by(Department.dept_name.asc()).all()
+    def get_departments(college_id=None):
+        """Get all departments, optionally filtered by college"""
+        query = Department.query
+        if college_id:
+            query = query.filter_by(college_id=college_id)
+        departments = query.order_by(Department.dept_name.asc()).all()
         return [DataHelper._department_dict(dept) for dept in departments]
 
     @staticmethod
@@ -391,11 +394,19 @@ class DataHelper:
         return DataHelper._department_dict(dept)
 
     @staticmethod
-    def get_divisions(dept_id=None):
-        """Get divisions, optionally filtered by department"""
+    def get_divisions(dept_id=None, college_id=None):
+        """Get divisions, optionally filtered by department and/or college"""
         query = Division.query
+        
+        if college_id:
+            # Join with Department to filter by college_id
+            from models.department import Department
+            query = query.join(Department, Division.dept_id == Department.dept_id)
+            query = query.filter(Department.college_id == college_id)
+        
         if dept_id:
             query = query.filter_by(dept_id=dept_id)
+        
         divisions = query.order_by(Division.division_name.asc()).all()
         return [DataHelper._division_dict(division) for division in divisions]
 
@@ -406,11 +417,19 @@ class DataHelper:
         return DataHelper._division_dict(division)
 
     @staticmethod
-    def get_faculty(dept_id=None):
-        """Get faculty members, optionally filtered by department"""
+    def get_faculty(dept_id=None, college_id=None):
+        """Get faculty members, optionally filtered by department and/or college"""
         query = Faculty.query
+        
+        if college_id:
+            # Join with User to filter by college_id
+            from models.user import User
+            query = query.join(User, Faculty.user_id == User.user_id)
+            query = query.filter(User.college_id == college_id)
+        
         if dept_id:
-            query = query.filter_by(dept_id=dept_id)
+            query = query.filter(Faculty.dept_id == dept_id)
+        
         faculty_members = query.order_by(Faculty.faculty_id.asc()).all()
         return [DataHelper._faculty_dict(member) for member in faculty_members]
 
@@ -448,13 +467,22 @@ class DataHelper:
         return DataHelper._student_dict(student)
 
     @staticmethod
-    def get_subjects(dept_id=None, semester_id=None):
+    def get_subjects(dept_id=None, semester_id=None, college_id=None):
         """Get subjects with optional filters"""
         query = Subject.query
+        
+        if college_id:
+            # Join with Department to filter by college_id
+            from models.department import Department
+            query = query.join(Department, Subject.dept_id == Department.dept_id)
+            query = query.filter(Department.college_id == college_id)
+        
         if dept_id:
             query = query.filter_by(dept_id=dept_id)
+        
         if semester_id:
             query = query.filter_by(semester_id=semester_id)
+        
         subjects = query.order_by(Subject.subject_name.asc()).all()
         return [DataHelper._subject_dict(subject) for subject in subjects]
 
