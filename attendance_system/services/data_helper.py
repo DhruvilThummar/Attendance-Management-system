@@ -1308,3 +1308,89 @@ class DataHelper:
                 '#38bdf8'
             )
         }
+
+    @staticmethod
+    def get_compiled_attendance_report(dept_id, semester_id=None, division_id=None):
+        """Generate compiled attendance report by student and subject
+        
+        Returns student attendance data aggregated by subject with faculty names.
+        Used for generating attendance sheets like the compiled reports.
+        """
+        query = Student.query.filter_by(dept_id=dept_id)
+        
+        if division_id:
+            query = query.filter_by(division_id=division_id)
+        
+        if semester_id:
+            query = query.filter_by(semester_id=semester_id)
+        
+        students = query.all()
+        subjects = Subject.query.all()
+        
+        if semester_id:
+            subjects = [s for s in subjects if s.semester_id == semester_id]
+        
+        report_data = []
+        
+        for student in students:
+            student_record = {
+                'roll_no': student.roll_no,
+                'enrollment_no': student.enrollment_no,
+                'name': student.user.name if student.user else 'N/A',
+                'division': student.division.division_name if student.division else 'N/A',
+                'branch': student.department.dept_name if student.department else 'N/A',
+                'mentor': student.mentor.faculty_short_name if student.mentor else 'N/A',
+                'subjects': {},
+                'total_attended': 0,
+                'total_lectures': 0,
+                'overall_percentage': 0.0
+            }
+            
+            for subject in subjects:
+                # Get all lectures for this subject and student's division
+                lectures = Lecture.query.filter(
+                    Lecture.division_id == student.division_id,
+                    Lecture.subject_id == subject.subject_id
+                ).all()
+                
+                if not lectures:
+                    continue
+                
+                total_lectures_count = len(lectures)
+                
+                # Count attended lectures
+                attended_count = Attendance.query.filter(
+                    Attendance.student_id == student.student_id,
+                    Attendance.lecture_id.in_([l.lecture_id for l in lectures]),
+                    Attendance.status_id == 1  # PRESENT
+                ).count()
+                
+                percentage = (attended_count / total_lectures_count * 100) if total_lectures_count > 0 else 0
+                
+                # Get faculty name
+                faculty_name = ''
+                if lectures and lectures[0].timetable:
+                    faculty = lectures[0].timetable.faculty
+                    faculty_name = faculty.faculty_short_name if faculty else ''
+                
+                student_record['subjects'][subject.subject_id] = {
+                    'subject_name': subject.subject_name,
+                    'subject_code': subject.subject_code,
+                    'faculty_name': faculty_name,
+                    'attended': attended_count,
+                    'total': total_lectures_count,
+                    'percentage': round(percentage, 2)
+                }
+                
+                student_record['total_attended'] += attended_count
+                student_record['total_lectures'] += total_lectures_count
+            
+            # Calculate overall percentage
+            if student_record['total_lectures'] > 0:
+                student_record['overall_percentage'] = round(
+                    (student_record['total_attended'] / student_record['total_lectures'] * 100), 2
+                )
+            
+            report_data.append(student_record)
+        
+        return report_data

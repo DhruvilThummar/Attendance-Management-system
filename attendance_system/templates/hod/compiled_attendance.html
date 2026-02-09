@@ -1,0 +1,384 @@
+{% extends 'hod/hbase.html' %}
+
+{% block title %}Compiled Attendance Report{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+
+    .filter-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+
+    .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .attendance-table {
+        font-size: 0.9rem;
+        background: white;
+    }
+
+    .attendance-table thead {
+        background: #667eea;
+        color: white;
+        font-weight: 600;
+    }
+
+    .attendance-table th {
+        vertical-align: middle;
+        border: 1px solid #dee2e6;
+        padding: 12px 8px;
+    }
+
+    .attendance-table td {
+        border: 1px solid #dee2e6;
+        padding: 10px 8px;
+        vertical-align: middle;
+    }
+
+    .attendance-table tbody tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    .attendance-table tbody tr:hover {
+        background-color: #e9ecef;
+    }
+
+    .percentage-cell {
+        font-weight: 600;
+        min-width: 50px;
+        text-align: center;
+    }
+
+    .percentage-high {
+        color: #198754;
+    }
+
+    .percentage-medium {
+        color: #ff9800;
+    }
+
+    .percentage-low {
+        color: #dc3545;
+    }
+
+    .subject-header {
+        background: #e8eaf6 !important;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .student-roll {
+        font-weight: 600;
+        color: #667eea;
+    }
+
+    .export-btn {
+        margin-bottom: 20px;
+    }
+
+    .overall-percentage {
+        background: #f0f3ff;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .subject-faculty {
+        font-size: 0.85rem;
+        color: #6c757d;
+        display: block;
+        margin-top: 3px;
+    }
+
+    .stats-row {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 15px;
+    }
+
+    .stat-value {
+        font-size: 2em;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        margin-top: 5px;
+    }
+
+    @media print {
+
+        .filter-section,
+        .export-btn {
+            display: none;
+        }
+
+        .table-responsive {
+            box-shadow: none;
+            border: 1px solid #dee2e6;
+        }
+
+        .attendance-table {
+            font-size: 0.75rem;
+        }
+
+        .attendance-table th,
+        .attendance-table td {
+            padding: 6px 4px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="main-content">
+        <div class="container-fluid p-4">
+            <!-- Header -->
+            <div class="report-header">
+                <h1 class="mb-2">Compiled Attendance Report</h1>
+                <p class="mb-0">SY ({{ context.department.dept_name }}) - Week-Wise Detailed Attendance</p>
+                <small class="d-block mt-2">Report Generated: {{ 'now'|date('Y-m-d H:i') }}</small>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-section">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="divisionFilter" class="form-label">Division</label>
+                        <select id="divisionFilter" class="form-select">
+                            <option value="">All Divisions</option>
+                            {% for division in divisions %}
+                            <option value="{{ division.division_id }}" {% if selected_division_id==division.division_id
+                                %}selected{% endif %}>
+                                {{ division.division_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="semesterFilter" class="form-label">Semester</label>
+                        <select id="semesterFilter" class="form-select">
+                            <option value="">All Semesters</option>
+                            {% for semester in semesters %}
+                            <option value="{{ semester.semester_id }}" {% if selected_semester_id==semester.semester_id
+                                %}selected{% endif %}>
+                                Sem-{{ semester.semester_id }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <button class="btn btn-primary w-100" onclick="filterReport()">
+                            <i class="fas fa-filter"></i> Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Button -->
+            <div class="export-btn">
+                <button class="btn btn-success" onclick="exportReport()">
+                    <i class="fas fa-download"></i> Export as CSV
+                </button>
+                <button class="btn btn-secondary" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+            </div>
+
+            <!-- Statistics -->
+            {% if report_data %}
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-row">
+                        <div class="stat-value">{{ report_data|length }}</div>
+                        <div class="stat-label">Total Students</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-row">
+                        <div class="stat-value">{{ report_data[0].subjects|length }}</div>
+                        <div class="stat-label">Subjects</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-row">
+                        <div class="stat-value" id="avgPercentage">-</div>
+                        <div class="stat-label">Avg Attendance %</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-row">
+                        <div class="stat-value" id="lowAttendance">-</div>
+                        <div class="stat-label">Below 75%</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Attendance Table -->
+            {% if report_data %}
+            <div class="table-responsive">
+                <table class="table table-hover attendance-table mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 4%;" class="text-center">Roll No</th>
+                            <th style="width: 8%;">Enrollment No</th>
+                            <th style="width: 20%;">Name</th>
+                            <th style="width: 6%;">Division</th>
+                            <th style="width: 8%;">Branch</th>
+                            {% if report_data[0].subjects %}
+                            {% for subject_id, subject in report_data[0].subjects.items() %}
+                            <th class="subject-header" style="width: 12%;">
+                                <span>{{ subject.subject_code }}</span>
+                                <br>
+                                <small>({{ subject.faculty_name }})</small>
+                            </th>
+                            {% endfor %}
+                            {% endif %}
+                            <th class="subject-header" style="width: 12%;">Overall %</th>
+                            <th style="width: 6%;">Mentor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in report_data %}
+                        <tr>
+                            <td class="text-center student-roll">{{ student.roll_no }}</td>
+                            <td>{{ student.enrollment_no }}</td>
+                            <td>{{ student.name }}</td>
+                            <td>{{ student.division }}</td>
+                            <td>{{ student.branch }}</td>
+                            {% if student.subjects %}
+                            {% for subject_id in student.subjects|dictsort %}
+                            {% set subject = student.subjects[subject_id[0]] %}
+                            <td class="percentage-cell">
+                                <span
+                                    class="{% if subject.percentage >= 75 %}percentage-high{% elif subject.percentage >= 60 %}percentage-medium{% else %}percentage-low{% endif %}">
+                                    {{ subject.attended }}/{{ subject.total }}<br>
+                                    <small>{{ subject.percentage }}%</small>
+                                </span>
+                            </td>
+                            {% endfor %}
+                            {% endif %}
+                            <td class="percentage-cell overall-percentage">
+                                {% if student.overall_percentage >= 75 %}
+                                <span class="percentage-high">{{ student.overall_percentage }}%</span>
+                                {% elif student.overall_percentage >= 60 %}
+                                <span class="percentage-medium">{{ student.overall_percentage }}%</span>
+                                {% else %}
+                                <span class="percentage-low">{{ student.overall_percentage }}%</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ student.mentor }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary Statistics -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Attendance Summary</h5>
+                        <ul class="mb-0">
+                            <li><strong>Total Students:</strong> {{ report_data|length }}</li>
+                            <li><strong>Subjects:</strong> {{ report_data[0].subjects|length if report_data else 0 }}
+                            </li>
+                            <li><strong>Average Attendance:</strong> <span id="summaryAvg">-</span>%</li>
+                            <li><strong>Students with <75% Attendance:</strong> <span id="summaryLow">-</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {% else %}
+            <div class="alert alert-warning text-center py-5">
+                <i class="fas fa-info-circle fa-3x mb-3"></i>
+                <h5>No Data Available</h5>
+                <p class="text-muted">Please select appropriate filters to view attendance data.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function filterReport() {
+        const divisionId = document.getElementById('divisionFilter').value;
+        const semesterId = document.getElementById('semesterFilter').value;
+
+        let url = '/hod/compiled-attendance?';
+        if (divisionId) url += `division_id=${divisionId}&`;
+        if (semesterId) url += `semester_id=${semesterId}`;
+
+        window.location.href = url;
+    }
+
+    function exportReport() {
+        const divisionId = document.getElementById('divisionFilter').value;
+        const semesterId = document.getElementById('semesterFilter').value;
+
+        let url = '/hod/compiled-attendance/export?';
+        if (divisionId) url += `division_id=${divisionId}&`;
+        if (semesterId) url += `semester_id=${semesterId}`;
+
+        window.location.href = url;
+    }
+
+    // Calculate and display statistics
+    function calculateStatistics() {
+        const table = document.querySelector('.attendance-table');
+        if (!table) return;
+
+        const rows = table.querySelectorAll('tbody tr');
+        if (rows.length === 0) return;
+
+        let totalPercentage = 0;
+        let lowAttendanceCount = 0;
+
+        rows.forEach(row => {
+            const overallPercentageCell = row.querySelectorAll('td')[row.querySelectorAll('td').length - 2];
+            const percentageText = overallPercentageCell.textContent.trim().split('%')[0];
+            const percentage = parseFloat(percentageText);
+
+            if (!isNaN(percentage)) {
+                totalPercentage += percentage;
+                if (percentage < 75) lowAttendanceCount++;
+            }
+        });
+
+        const avgPercentage = (totalPercentage / rows.length).toFixed(2);
+
+        document.getElementById('avgPercentage').textContent = avgPercentage;
+        document.getElementById('lowAttendance').textContent = lowAttendanceCount;
+        document.getElementById('summaryAvg').textContent = avgPercentage;
+        document.getElementById('summaryLow').textContent = lowAttendanceCount;
+    }
+
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', calculateStatistics);
+</script>
+{% endblock %}

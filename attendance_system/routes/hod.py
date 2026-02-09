@@ -600,3 +600,128 @@ def hod_reject_user(user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@hod_bp.route("/compiled-attendance")
+def hod_compiled_attendance():
+    """View compiled attendance report by student and subject"""
+    context = _get_hod_context()
+    
+    if not context['dept_id']:
+        return render_template(
+            "hod/compiled_attendance.html",
+            context=context,
+            report_data=[],
+            divisions=[],
+            subjects=[]
+        )
+    
+    # Get filter parameters
+    division_id = request.args.get('division_id', type=int)
+    semester_id = request.args.get('semester_id', type=int)
+    
+    # Get report data
+    report_data = DataHelper.get_compiled_attendance_report(
+        dept_id=context['dept_id'],
+        semester_id=semester_id,
+        division_id=division_id
+    )
+    
+    # Sort by roll number
+    report_data = sorted(report_data, key=lambda x: x['roll_no'])
+    
+    divisions = DataHelper.get_divisions(dept_id=context['dept_id'])
+    semesters = DataHelper.get_semesters()
+    
+    return render_template(
+        "hod/compiled_attendance.html",
+        context=context,
+        report_data=report_data,
+        divisions=divisions,
+        semesters=semesters,
+        selected_division_id=division_id,
+        selected_semester_id=semester_id
+    )
+
+
+@hod_bp.route("/compiled-attendance/export")
+def hod_compiled_attendance_export():
+    """Export compiled attendance as CSV"""
+    context = _get_hod_context()
+    
+    if not context['dept_id']:
+        return jsonify({'success': False, 'message': 'Department not configured'}), 400
+    
+    division_id = request.args.get('division_id', type=int)
+    semester_id = request.args.get('semester_id', type=int)
+    
+    report_data = DataHelper.get_compiled_attendance_report(
+        dept_id=context['dept_id'],
+        semester_id=semester_id,
+        division_id=division_id
+    )
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    subjects = list(set([
+        subj for student in report_data 
+        for subj in student['subjects'].keys()
+    ]))
+    
+    header = [
+        'Roll No',
+        'Enrollment No',
+        'Name',
+        'Division',
+        'Branch',
+        'Mentor'
+    ]
+    
+    for subject_id in sorted(subjects):
+        for student in report_data:
+            if subject_id in student['subjects']:
+                subject = student['subjects'][subject_id]
+                header.extend([
+                    f"{subject['subject_code']} Attended",
+                    f"{subject['subject_code']} Total",
+                    f"{subject['subject_code']} %"
+                ])
+                break
+    
+    header.extend(['Total Attended', 'Total Lectures', 'Overall %'])
+    writer.writerow(header)
+    
+    # Write data rows
+    for student in report_data:
+        row = [
+            student['roll_no'],
+            student['enrollment_no'],
+            student['name'],
+            student['division'],
+            student['branch'],
+            student['mentor']
+        ]
+        
+        for subject_id in sorted(subjects):
+            if subject_id in student['subjects']:
+                subject = student['subjects'][subject_id]
+                row.extend([
+                    subject['attended'],
+                    subject['total'],
+                    f"{subject['percentage']:.2f}"
+                ])
+        
+        row.extend([
+            student['total_attended'],
+            student['total_lectures'],
+            f"{student['overall_percentage']:.2f}"
+        ])
+        
+        writer.writerow(row)
+    
+    response = make_response(output.getvalue())
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = 'attachment; filename=compiled_attendance_report.csv'
+    return response
