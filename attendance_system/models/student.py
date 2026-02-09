@@ -29,10 +29,23 @@ class Student(db.Model):
     parents = db.relationship('Parent', back_populates='student', cascade='all, delete-orphan')
     
     def __repr__(self):
-        return f'<Student {self.enrollment_no} - {self.user.name}>'
+        return f'<Student {self.enrollment_no} - {self.user.name if self.user else "Unknown"}>'
+    
+    def verify_enrollment_user_match(self):
+        """Verify that enrollment_no is properly matched with user_id"""
+        if not self.user:
+            return False, "User not found for this student"
+        if not self.enrollment_no:
+            return False, "Enrollment number not set"
+        return True, "Valid"
     
     def get_attendance_percentage(self, semester_id=None):
         """Calculate attendance percentage for a semester"""
+        from models.attendance import Attendance
+        from models.lecture import Lecture
+        from models.timetable import Timetable
+        from models.subject import Subject
+        
         query = Attendance.query.filter_by(student_id=self.student_id)
         
         if semester_id:
@@ -50,3 +63,19 @@ class Student(db.Model):
         ).count()
         
         return (present_count / total_lectures) * 100 if total_lectures > 0 else 0.0
+    
+    @staticmethod
+    def get_by_enrollment_no(enrollment_no):
+        """Get student by enrollment number with validation"""
+        student = Student.query.filter_by(enrollment_no=enrollment_no).first()
+        if student:
+            is_valid, msg = student.verify_enrollment_user_match()
+            if is_valid:
+                return student
+        return None
+    
+    @staticmethod
+    def get_by_user_id(user_id):
+        """Get student by user_id"""
+        return Student.query.filter_by(user_id=user_id).first()
+

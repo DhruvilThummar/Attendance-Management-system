@@ -394,10 +394,19 @@ def college_students():
     # Calculate total student count
     student_count = len(students) if students else 0
     
-    # Add student count to each department
+    # Group divisions by department and add counts
     for dept in departments if departments else []:
+        dept_divisions = [div for div in (divisions or []) if div.get('dept_id') == dept.get('dept_id')]
+        dept['divisions'] = dept_divisions
+        
+        # Add student count to department
         dept_students = [s for s in (students or []) if s.get('dept_id') == dept.get('dept_id')]
         dept['student_count'] = len(dept_students)
+        
+        # Add student count to each division
+        for div in dept_divisions:
+            div_students = [s for s in dept_students if s.get('division_id') == div.get('div_id')]
+            div['student_count'] = len(div_students)
     
     return render_template("college/students.html",
                          title="Student Management",
@@ -421,10 +430,19 @@ def college_students_by_division():
     # Calculate total student count
     student_count = len(students) if students else 0
     
-    # Add student count to each department
+    # Group divisions by department and add counts
     for dept in departments if departments else []:
+        dept_divisions = [div for div in (divisions or []) if div.get('dept_id') == dept.get('dept_id')]
+        dept['divisions'] = dept_divisions
+        
+        # Add student count to department
         dept_students = [s for s in (students or []) if s.get('dept_id') == dept.get('dept_id')]
         dept['student_count'] = len(dept_students)
+        
+        # Add student count to each division
+        for div in dept_divisions:
+            div_students = [s for s in dept_students if s.get('division_id') == div.get('div_id')]
+            div['student_count'] = len(div_students)
     
     return render_template("college/students.html",
                          title="Student Management",

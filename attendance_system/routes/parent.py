@@ -392,6 +392,7 @@ def panalytics():
         return render_template("parent/analytics.html",
                              context=context,
                              children=[],
+                             selected_child={},
                              charts={},
                              stats={})
     
