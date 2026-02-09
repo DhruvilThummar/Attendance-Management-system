@@ -13,6 +13,7 @@ from functools import lru_cache
 import matplotlib
 import numpy as np
 from sqlalchemy import case, func
+from flask import session
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -312,7 +313,15 @@ class DataHelper:
     def get_user(user_type='student'):
         """Get user by type"""
         role_name = DataHelper.ROLE_MAP.get(user_type, 'STUDENT')
-        user = User.query.join(Role).filter(Role.role_name == role_name).order_by(User.user_id.asc()).first()
+        user = None
+        user_id = session.get('user_id')
+        if user_id:
+            user = User.query.get(user_id)
+            if user and user.role and user.role.role_name != role_name:
+                user = None
+
+        if not user:
+            user = User.query.join(Role).filter(Role.role_name == role_name).order_by(User.user_id.asc()).first()
         return DataHelper._user_dict(user)
 
     @staticmethod
