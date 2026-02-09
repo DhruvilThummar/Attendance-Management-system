@@ -259,8 +259,8 @@ def hod_delete_subject(subject_id):
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-@hod_bp.route("/analytics")
-def hod_analytics():
+@hod_bp.route("/analytics/data")
+def hod_analytics_data():
     """Provide filtered attendance data as JSON"""
     context = _get_hod_context()
     
