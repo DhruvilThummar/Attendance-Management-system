@@ -530,20 +530,46 @@ def college_settings():
 
 @college_bp.route("/approvals")
 def college_approvals():
-    """View pending faculty and HOD approvals"""
+    """View pending faculty, HOD, and parent approvals"""
+    from models.user import User
+    from models.parent import Parent
+    from models.student import Student
+    
     college = DataHelper.get_college()
     
     # Get pending faculty and HOD users
-    pending_users = User.query.filter(
+    pending_faculty_hod = User.query.filter(
         User.college_id == college['college_id'],
         User.is_approved == False,
         User.role_id.in_([3, 4])  # HOD=3, FACULTY=4
     ).all()
     
+    # Get pending parent users with their student info
+    pending_parents_query = db.session.query(User, Parent, Student).outerjoin(
+        Parent, User.user_id == Parent.user_id
+    ).outerjoin(
+        Student, Parent.student_id == Student.student_id
+    ).filter(
+        User.college_id == college['college_id'],
+        User.is_approved == False,
+        User.role_id == 6  # PARENT=6
+    ).all()
+    
+    pending_parents = []
+    for user, parent, student in pending_parents_query:
+        pending_parents.append({
+            'user': user,
+            'parent': parent,
+            'student': student,
+            'student_name': student.user.name if student and student.user else 'N/A',
+            'enrollment_no': student.enrollment_no if student else 'N/A'
+        })
+    
     return render_template("college/approvals.html",
                           title="Pending Approvals",
                           college=college,
-                          pending_users=pending_users)
+                          pending_faculty_hod=pending_faculty_hod,
+                          pending_parents=pending_parents)
 
 
 @college_bp.route("/approve/user/<int:user_id>", methods=['POST'])
@@ -563,15 +589,76 @@ def approve_user(user_id):
 
 @college_bp.route("/reject/user/<int:user_id>", methods=['POST'])
 def reject_user(user_id):
-    """Reject/Delete a user"""
+    \"\"\"Reject/Delete a user\"\"\"
     try:
         user = User.query.get(user_id)
         if user:
             user_name = user.name
             db.session.delete(user)
             db.session.commit()
-            return jsonify({'success': True, 'message': f'User "{user_name}" rejected and removed'})
+            return jsonify({'success': True, 'message': f'User \"{user_name}\" rejected and removed'})
         return jsonify({'success': False, 'message': 'User not found'}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@college_bp.route("/approve/parent/<int:user_id>", methods=['POST'])
+@college_admin_required
+def approve_parent(user_id):
+    """Approve a parent user"""
+    try:
+        from models.parent import Parent
+        
+        user = User.query.get(user_id)
+        if not user or user.role_id != 6:  # PARENT role
+            return jsonify({'success': False, 'message': 'Parent user not found'}), 404
+        
+        # Verify parent has a valid student link
+        parent = Parent.query.filter_by(user_id=user_id).first()
+        if not parent or not parent.student:
+            return jsonify({
+                'success': False, 
+                'message': 'Parent is not linked to any student. Cannot approve.'
+            }), 400
+        
+        user.is_approved = True
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Parent "{user.name}" approved successfully. They can now access their child\'s information.'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@college_bp.route("/reject/parent/<int:user_id>", methods=['POST'])
+@college_admin_required
+def reject_parent(user_id):
+    """Reject/Delete a parent user"""
+    try:
+        from models.parent import Parent
+        
+        user = User.query.get(user_id)
+        if not user or user.role_id != 6:  # PARENT role
+            return jsonify({'success': False, 'message': 'Parent user not found'}), 404
+        
+        user_name = user.name
+        
+        # Also delete parent link if exists
+        parent = Parent.query.filter_by(user_id=user_id).first()
+        if parent:
+            db.session.delete(parent)
+        
+        db.session.delete(user)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Parent "{user_name}" rejected and removed'
+        })
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500

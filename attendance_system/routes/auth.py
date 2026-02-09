@@ -162,6 +162,9 @@ def register():
             })
         
         try:
+            from models.student import Student
+            from models.parent import Parent
+            
             # Create new user
             new_user = User(
                 name=name,
@@ -177,13 +180,49 @@ def register():
             
             # Add to database
             db.session.add(new_user)
-            db.session.commit()
+            db.session.flush()  # Get the user_id
             
-            flash('Registration successful! Your account is pending admin approval.', 'success')
+            # Handle parent-specific linking
+            if int(role_id) == 6:  # PARENT role
+                student_enrollment = request.form.get('student_enrollment_number', '').strip()
+                
+                if not student_enrollment:
+                    db.session.rollback()
+                    return jsonify({
+                        'success': False,
+                        'message': 'Student enrollment number is required for parent registration'
+                    })
+                
+                # Find student by enrollment number
+                student = Student.get_by_enrollment_no(student_enrollment)
+                
+                if not student:
+                    db.session.rollback()
+                    return jsonify({
+                        'success': False,
+                        'message': f'Student with enrollment number "{student_enrollment}" not found. Please verify the enrollment number.'
+                    })
+                
+                # Verify student is in the same college
+                if student.department.college_id != int(college_id):
+                    db.session.rollback()
+                    return jsonify({
+                        'success': False,
+                        'message': 'Student enrollment number does not match the selected college'
+                    })
+                
+                # Create parent-student link
+                parent_link = Parent(
+                    user_id=new_user.user_id,
+                    student_id=student.student_id
+                )
+                db.session.add(parent_link)
+            
+            db.session.commit()
             
             return jsonify({
                 'success': True,
-                'message': 'Registration successful! Your account is pending admin approval.'
+                'message': 'Registration successful! Your account is pending admin approval. You will receive an email once approved.'
             })
         
         except Exception as e:
