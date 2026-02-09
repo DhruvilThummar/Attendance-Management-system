@@ -1,0 +1,245 @@
+{% extends "parent/pbase.html" %}
+
+{% block title %}Analytics - Child's Attendance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/college-dashboard.css') }}">
+<style>
+    .analytics-container {
+        padding-top: 80px;
+        padding-bottom: 40px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    .status-good {
+        color: #28a745;
+    }
+
+    .status-average {
+        color: #ffc107;
+    }
+
+    .status-warning {
+        color: #dc3545;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 0;
+        margin-bottom: 30px;
+    }
+
+    .child-selector {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1 class="mb-2">
+                <i class="bi bi-graph-up me-2"></i>Child's Attendance Analytics
+            </h1>
+            <p class="mb-0">Monitor {{ selected_child.name }}'s attendance and performance</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Child Selector -->
+        {% if children|length > 1 %}
+        <div class="child-selector">
+            <form method="get" class="d-flex align-items-center gap-2">
+                <label for="childSelect" class="form-label mb-0">Select Child:</label>
+                <select id="childSelect" name="child_id" class="form-select form-select-sm" style="width: 200px;">
+                    {% for child in children %}
+                    <option value="{{ child.student_id }}" {% if child.student_id==selected_child.student_id
+                        %}selected{% endif %}>
+                        {{ child.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary">View</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div
+                        class="stat-value status-{{ 'good' if stats.overall_attendance >= 85 else 'average' if stats.overall_attendance >= 75 else 'warning' }}">
+                        {{ "%.1f"|format(stats.overall_attendance) }}%
+                    </div>
+                    <div class="stat-label">Overall Attendance</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.attended_lectures }}</div>
+                    <div class="stat-label">Lectures Attended</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.total_lectures }}</div>
+                    <div class="stat-label">Total Lectures</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value status-{{ stats.status.lower().replace(' ', '-') }}">
+                        {{ stats.status }}
+                    </div>
+                    <div class="stat-label">Status</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <h5 class="chart-title">
+                        <i class="bi bi-calendar-week me-2"></i>Weekly Attendance
+                    </h5>
+                    {% if charts.weekly_attendance %}
+                    <img src="{{ charts.weekly_attendance }}" alt="Weekly Attendance Chart" class="img-fluid">
+                    {% else %}
+                    <div class="alert alert-info">No weekly data available</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <h5 class="chart-title">
+                        <i class="bi bi-graph-up me-2"></i>Monthly Trend
+                    </h5>
+                    {% if charts.monthly_trend %}
+                    <img src="{{ charts.monthly_trend }}" alt="Monthly Trend Chart" class="img-fluid">
+                    {% else %}
+                    <div class="alert alert-info">No monthly data available</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-card">
+                    <h5 class="chart-title">
+                        <i class="bi bi-book me-2"></i>Subject-wise Attendance
+                    </h5>
+                    {% if charts.subject_attendance %}
+                    <img src="{{ charts.subject_attendance }}" alt="Subject Attendance Chart" class="img-fluid">
+                    {% else %}
+                    <div class="alert alert-info">No subject attendance data available</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Records Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-card">
+                    <h5 class="chart-title">
+                        <i class="bi bi-table me-2"></i>Detailed Records for {{ selected_child.name }}
+                    </h5>
+                    {% if attendance_records %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Subject Code</th>
+                                    <th>Total Lectures</th>
+                                    <th>Attended</th>
+                                    <th>Attendance %</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in attendance_records %}
+                                <tr>
+                                    <td><strong>{{ record.subject_name }}</strong></td>
+                                    <td>{{ record.subject_code }}</td>
+                                    <td>{{ record.total_lectures }}</td>
+                                    <td>{{ record.attended_lectures }}</td>
+                                    <td>
+                                        <span
+                                            class="badge bg-{{ 'success' if record.attendance_percentage >= 85 else 'warning' if record.attendance_percentage >= 75 else 'danger' }}">
+                                            {{ "%.2f"|format(record.attendance_percentage) }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span
+                                            class="badge bg-{{ 'success' if record.attendance_percentage >= 75 else 'danger' }}">
+                                            {{ 'PASS' if record.attendance_percentage >= 75 else 'FAIL' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No attendance records available for {{ selected_child.name }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-submit form when child is selected
+    document.getElementById('childSelect').addEventListener('change', function () {
+        this.form.submit();
+    });
+</script>
+{% endblock %}

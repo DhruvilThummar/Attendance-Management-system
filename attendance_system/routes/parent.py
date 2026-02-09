@@ -380,3 +380,134 @@ def parent_profile():
                          attendance_stats=attendance_stats,
                          total_alerts=len(all_alerts),
                          all_alerts=all_alerts)
+
+
+@parent_bp.route("/analytics")
+@parent_required
+def panalytics():
+    """Parent Analytics - Child's attendance analytics dashboard"""
+    context = _get_parent_context()
+    
+    if not context['children']:
+        return render_template("parent/analytics.html",
+                             context=context,
+                             children=[],
+                             charts={},
+                             stats={})
+    
+    # Get selected child (first child or from query params)
+    selected_child_id = request.args.get('child_id')
+    selected_child = context['children'][0]
+    
+    if selected_child_id:
+        for child in context['children']:
+            if str(child.get('student_id')) == str(selected_child_id):
+                selected_child = child
+                break
+    
+    student_id = selected_child.get('student_id', selected_child.get('id'))
+    
+    # Get child's attendance records only
+    attendance_records = DataHelper.get_child_attendance(student_id)
+    
+    # Calculate statistics
+    stats = {
+        'total_lectures': 0,
+        'attended_lectures': 0,
+        'overall_attendance': 0.0,
+        'status': 'Good',
+        'child_name': selected_child.get('name', 'Unknown')
+    }
+    
+    if attendance_records:
+        stats['total_lectures'] = sum(r.get('total_lectures', 0) for r in attendance_records)
+        stats['attended_lectures'] = sum(r.get('attended_lectures', 0) for r in attendance_records)
+        
+        if stats['total_lectures'] > 0:
+            stats['overall_attendance'] = round(
+                (stats['attended_lectures'] / stats['total_lectures']) * 100, 2
+            )
+            stats['status'] = 'Good' if stats['overall_attendance'] >= 85 else \
+                            'Average' if stats['overall_attendance'] >= 75 else 'Warning'
+    
+    # Prepare data for charts
+    weekly_data = {}
+    monthly_data = {}
+    subject_data = {}
+    
+    # Weekly attendance data
+    from datetime import datetime as dt, timedelta
+    today = dt.today()
+    one_week_ago = today - timedelta(days=7)
+    
+    weekly_records = [r for r in (attendance_records or []) 
+                     if r.get('last_updated') and 
+                     dt.fromisoformat(str(r.get('last_updated'))).date() >= one_week_ago.date()]
+    
+    days_map = {0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun'}
+    for record in weekly_records:
+        if record.get('last_updated'):
+            try:
+                date_obj = dt.fromisoformat(str(record.get('last_updated')))
+                day_name = days_map.get(date_obj.weekday(), 'Unknown')
+                if day_name not in weekly_data:
+                    weekly_data[day_name] = []
+                weekly_data[day_name].append(float(record.get('attendance_percentage', 0)))
+            except:
+                pass
+    
+    # Calculate averages for weekly
+    for day, percentages in weekly_data.items():
+        weekly_data[day] = round(sum(percentages) / len(percentages), 1) if percentages else 0.0
+    
+    # Add missing days
+    for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']:
+        if day not in weekly_data:
+            weekly_data[day] = 0.0
+    
+    # Subject-wise attendance
+    for record in (attendance_records or []):
+        subject_name = record.get('subject_name', 'Unknown')
+        pct = float(record.get('attendance_percentage', 0))
+        subject_data[subject_name] = pct
+    
+    # Monthly attendance (last 4 weeks)
+    four_weeks_ago = today - timedelta(days=28)
+    monthly_records = [r for r in (attendance_records or []) 
+                      if r.get('last_updated') and 
+                      dt.fromisoformat(str(r.get('last_updated'))).date() >= four_weeks_ago.date()]
+    
+    week_attendance = {}
+    for record in monthly_records:
+        if record.get('last_updated'):
+            try:
+                date_obj = dt.fromisoformat(str(record.get('last_updated')))
+                week_num = date_obj.isocalendar()[1]
+                week_key = f'Week {week_num % 4 if week_num % 4 > 0 else 4}'
+                if week_key not in week_attendance:
+                    week_attendance[week_key] = []
+                week_attendance[week_key].append(float(record.get('attendance_percentage', 0)))
+            except:
+                pass
+    
+    for week, percentages in week_attendance.items():
+        monthly_data[week] = round(sum(percentages) / len(percentages), 1) if percentages else 0.0
+    
+    if not monthly_data:
+        for i in range(1, 5):
+            monthly_data[f'Week {i}'] = 0.0
+    
+    # Generate charts
+    charts = {
+        'weekly_attendance': generate_attendance_weekly_chart(weekly_data) if weekly_data else None,
+        'monthly_trend': generate_attendance_monthly_chart(monthly_data) if monthly_data else None,
+        'subject_attendance': generate_subject_attendance_chart(subject_data) if subject_data else None
+    }
+    
+    return render_template("parent/analytics.html",
+                         context=context,
+                         children=context['children'],
+                         selected_child=selected_child,
+                         charts=charts,
+                         stats=stats,
+                         attendance_records=attendance_records)
