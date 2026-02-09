@@ -19,7 +19,7 @@ from flask import Flask, g, session
 from dotenv import load_dotenv
 import os
 
-from .models.user import db, User
+from models.user import db, User
 
 
 # Load environment variables
