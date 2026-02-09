@@ -88,6 +88,15 @@
     </div>
 
     <div class="container">
+        <!-- No Children Message -->
+        {% if not children or children|length == 0 %}
+        <div class="alert alert-info text-center mt-4" role="alert">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>No Children Linked</strong>
+            <p class="mb-0">No students are linked to your account. Please contact the administration to link your
+                children's profiles.</p>
+        </div>
+        {% else %}
         <!-- Child Selector -->
         {% if children|length > 1 %}
         <div class="child-selector">
@@ -234,6 +243,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 
