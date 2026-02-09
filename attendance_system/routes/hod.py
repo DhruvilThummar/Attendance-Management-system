@@ -885,14 +885,36 @@ def hod_reports():
     if not context['dept_id']:
         return render_template("hod/reports.html", context=context, students=[])
     
-    # Get attendance for all students in department
-    attendance_data = DataHelper.get_attendance_records(dept_id=context['dept_id'])
+    # Get college_id from department
+    college_id = context['department'].get('college_id') if context['department'] else None
+    
+    # Get attendance for all students in department (college-filtered)
+    attendance_data = DataHelper.get_attendance_records(
+        dept_id=context['dept_id'],
+        college_id=college_id
+    )
     students = DataHelper.get_students(dept_id=context['dept_id'])
+    
+    # Filter students to only those in the same college
+    filtered_students = [
+        s for s in students 
+        if s.get('college_id') == college_id
+    ] if students else []
     
     # Build report
     student_reports = {}
-    for student in students:
+    for student in filtered_students:
         student_id = student.get('student_id')
+        mentor_name = None
+        mentor_short_name = None
+        
+        # Get mentor name and short name if assigned
+        if student.get('mentor_id'):
+            mentor = DataHelper.get_faculty_member(faculty_id=student.get('mentor_id'))
+            if mentor:
+                mentor_name = mentor.get('name', 'N/A')
+                mentor_short_name = mentor.get('short_name', 'N/A')
+        
         student_records = [r for r in attendance_data if r['student_id'] == student_id]
         
         student_reports[student_id] = {
@@ -901,6 +923,11 @@ def hod_reports():
             'name': student.get('name', ''),
             'enrollment_no': student.get('enrollment_no', ''),
             'division_name': student.get('division_name', ''),
+            'division_short': student.get('division_short', ''),
+            'mentor_name': mentor_name or 'N/A',
+            'mentor_short_name': mentor_short_name or 'N/A',
+            'dept_name': student.get('dept_name', ''),
+            'college_id': student.get('college_id'),
             'subjectwise_attendance': {},
             'overall_attendance': 0,
             'total_lectures': 0,
@@ -911,24 +938,29 @@ def hod_reports():
             subject_name = record.get('subject_name', 'Unknown')
             student_reports[student_id]['subjectwise_attendance'][subject_name] = {
                 'subject_code': record.get('subject_code', ''),
-                'attendance_percentage': round(record.get('attendance_percentage', 0), 2),
+                'attendance_percentage': round(float(record.get('attendance_percentage', 0)), 2),
                 'total_lectures': record.get('total_lectures', 0),
-                'attended_lectures': record.get('attended_lectures', 0)
+                'attended_lectures': record.get('attended_lectures', 0),
+                'status': 'PASS' if float(record.get('attendance_percentage', 0)) >= 75 else 'FAIL'
             }
         
         if student_records:
-            percentages = [r.get('attendance_percentage', 0) for r in student_records]
+            percentages = [float(r.get('attendance_percentage', 0)) for r in student_records]
             student_reports[student_id]['overall_attendance'] = round(DataHelper._np_mean(percentages), 2)
             student_reports[student_id]['total_lectures'] = sum(r.get('total_lectures', 0) for r in student_records)
             student_reports[student_id]['attended_lectures'] = sum(r.get('attended_lectures', 0) for r in student_records)
     
-    student_reports_list = sorted(student_reports.values(), key=lambda x: (x.get('division_name'), int(x.get('roll_no', 0) or 0)))
+    student_reports_list = sorted(
+        student_reports.values(),
+        key=lambda x: (x.get('division_short', ''), int(x.get('roll_no', 0) or 0))
+    )
     
     return render_template(
         "hod/reports.html",
         context=context,
         students=student_reports_list,
-        attendance_data=attendance_data
+        attendance_data=attendance_data,
+        college_id=college_id
     )
 
 
