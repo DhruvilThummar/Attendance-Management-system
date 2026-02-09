@@ -541,7 +541,7 @@ def college_approvals():
     pending_faculty_hod = User.query.filter(
         User.college_id == college['college_id'],
         User.is_approved == False,
-        User.role_id.in_([3, 4])  # HOD=3, FACULTY=4
+        User.role_id.in_([38, 39])  # HOD=38, FACULTY=39
     ).all()
     
     # Get pending parent users with their student info
@@ -552,7 +552,7 @@ def college_approvals():
     ).filter(
         User.college_id == college['college_id'],
         User.is_approved == False,
-        User.role_id == 6  # PARENT=6
+        User.role_id == 41  # PARENT=41
     ).all()
     
     pending_parents = []
@@ -577,7 +577,7 @@ def approve_user(user_id):
     """Approve a faculty or HOD user"""
     try:
         user = User.query.get(user_id)
-        if user and user.role_id in [3, 4]:  # HOD or FACULTY
+        if user and user.role_id in [38, 39]:  # HOD=38 or FACULTY=39
             user.is_approved = True
             db.session.commit()
             return jsonify({'success': True, 'message': f'User "{user.name}" approved successfully'})
