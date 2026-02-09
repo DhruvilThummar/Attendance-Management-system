@@ -60,39 +60,13 @@
                     </div>
 
                     <!-- Statistics -->
-                    <div class="row text-center mt-4 mb-3">
-                        <div class="col-3">
-                            <div class="stat-item">
-                                <h4 class="text-success">{{ college.stats.total_students }}</h4>
-                                <small class="text-muted">Students</small>
-                            </div>
+                    <div class="row text-center mt-4 mb-3" id="stats-{{ college.college_id }}">
+                        <div class="col-12">
+                            <button class="btn btn-sm btn-outline-primary"
+                                onclick="loadCollegeStats({{ college.college_id }})">
+                                <i class="bi bi-bar-chart"></i> Load Statistics
+                            </button>
                         </div>
-                        <div class="col-3">
-                            <div class="stat-item">
-                                <h4 class="text-info">{{ college.stats.total_faculty }}</h4>
-                                <small class="text-muted">Faculty</small>
-                            </div>
-                        </div>
-                        <div class="col-3">
-                            <div class="stat-item">
-                                <h4 class="text-warning">{{ college.stats.total_departments }}</h4>
-                                <small class="text-muted">Departments</small>
-                            </div>
-                        </div>
-                        <div class="col-3">
-                            <div class="stat-item">
-                                <h4 class="text-primary">{{ college.stats.total_divisions }}</h4>
-                                <small class="text-muted">Divisions</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Attendance Badge -->
-                    <div class="text-center mb-3">
-                        <span
-                            class="badge {% if college.stats.average_attendance >= 85 %}bg-success{% elif college.stats.average_attendance >= 75 %}bg-warning{% else %}bg-danger{% endif %} fs-6 px-3 py-2">
-                            Average Attendance: {{ college.stats.average_attendance }}%
-                        </span>
                     </div>
                 </div>
                 <div class="card-footer bg-light">
@@ -169,4 +143,59 @@
         font-weight: bold;
     }
 </style>
+
+<script>
+    function loadCollegeStats(collegeId) {
+        const statsDiv = document.getElementById('stats-' + collegeId);
+        statsDiv.innerHTML = '<div class="col-12"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Loading...</div>';
+
+        fetch('/superadmin/api/college/' + collegeId + '/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const stats = data.stats;
+                    const attendanceClass = stats.average_attendance >= 85 ? 'bg-success' :
+                        stats.average_attendance >= 75 ? 'bg-warning' : 'bg-danger';
+
+                    statsDiv.innerHTML = `
+                    <div class="col-3">
+                        <div class="stat-item">
+                            <h4 class="text-success">${stats.total_students}</h4>
+                            <small class="text-muted">Students</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="stat-item">
+                            <h4 class="text-info">${stats.total_faculty}</h4>
+                            <small class="text-muted">Faculty</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="stat-item">
+                            <h4 class="text-warning">${stats.total_departments}</h4>
+                            <small class="text-muted">Departments</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="stat-item">
+                            <h4 class="text-primary">${stats.total_divisions}</h4>
+                            <small class="text-muted">Divisions</small>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-3">
+                        <span class="badge ${attendanceClass} fs-6 px-3 py-2">
+                            Average Attendance: ${stats.average_attendance}%
+                        </span>
+                    </div>
+                `;
+                } else {
+                    statsDiv.innerHTML = '<div class="col-12 text-danger">Failed to load statistics</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading stats:', error);
+                statsDiv.innerHTML = '<div class="col-12 text-danger">Error loading statistics</div>';
+            });
+    }
+</script>
 {% endblock %}

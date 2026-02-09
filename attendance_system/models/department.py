@@ -17,7 +17,7 @@ class Department(db.Model):
     
     # Relationships
     college = db.relationship('College', back_populates='departments')
-    hod_faculty = db.relationship('Faculty', foreign_keys=[hod_faculty_id])
+    hod_faculty = db.relationship('Faculty', foreign_keys=[hod_faculty_id], back_populates='hod_of_department')
     divisions = db.relationship('Division', back_populates='department', cascade='all, delete-orphan')
     faculty_members = db.relationship('Faculty', foreign_keys='Faculty.dept_id', back_populates='department')
     students = db.relationship('Student', back_populates='department')

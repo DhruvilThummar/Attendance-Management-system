@@ -19,6 +19,7 @@ class Faculty(db.Model):
     # Relationships
     user = db.relationship('User', back_populates='faculty')
     department = db.relationship('Department', foreign_keys=[dept_id], back_populates='faculty_members')
+    hod_of_department = db.relationship('Department', foreign_keys='Department.hod_faculty_id', back_populates='hod_faculty')
     timetables = db.relationship('Timetable', back_populates='faculty', cascade='all, delete-orphan')
     students_mentored = db.relationship('Student', foreign_keys='Student.mentor_id', back_populates='mentor')
     original_proxy_lectures = db.relationship(

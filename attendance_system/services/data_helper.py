@@ -1076,12 +1076,8 @@ class DataHelper:
         total_departments = Department.query.filter_by(college_id=college_id).count()
         total_divisions = Division.query.join(Department).filter(Department.college_id == college_id).count()
 
-        attendance_records = [
-            record for record in DataHelper.get_attendance_records()
-            if record.get('dept_id') in {
-                dept.dept_id for dept in Department.query.filter_by(college_id=college_id).all()
-            }
-        ]
+        # Use college_id parameter to fetch only relevant attendance records
+        attendance_records = DataHelper.get_attendance_records(college_id=college_id)
         if attendance_records:
             avg_attendance = DataHelper._np_mean([r['attendance_percentage'] for r in attendance_records])
         else:

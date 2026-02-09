@@ -5,6 +5,8 @@ from flask import Blueprint, render_template, request, jsonify, flash, redirect,
 from services.data_helper import DataHelper
 from models.user import db
 from models.college import College
+from models.student import Student
+from models.faculty import Faculty
 from attendance_system.utils.auth_decorators import login_required, superadmin_required
 from services.chart_helper import (
     generate_role_distribution_chart,
@@ -28,7 +30,7 @@ def sudashboard():
     """Super Admin Dashboard - System Overview"""
     context = _get_superadmin_context()
     
-    # Get system-wide statistics
+    # Get system-wide statistics (single queries)
     colleges = DataHelper.get_all_colleges()
     total_students = DataHelper.get_total_students_count()
     total_faculty = DataHelper.get_total_faculty_count()
@@ -40,60 +42,30 @@ def sudashboard():
     # Get recent activities
     recent_registrations = DataHelper.get_recent_users(limit=5)
     
-    # College-wise statistics
+    # College-wise statistics (optimized - only compute on demand)
     college_stats = []
-    for college in colleges:
+    # Only compute stats for first 3 colleges for faster initial load
+    # Full stats can be loaded via AJAX if needed
+    for college in colleges[:3]:
         stats = DataHelper.get_college_statistics(college['college_id'])
         college_stats.append({
             'college': college,
             'stats': stats
         })
     
-    # Generate charts
+    # Generate simplified charts (removed expensive data fetching)
     charts = {}
     
-    # Role distribution chart
+    # Role distribution chart (using already fetched counts)
     role_data = {
         'SUPERADMIN': 1,
-        'ADMIN': 1,
+        'ADMIN': len(colleges),
         'HOD': total_departments,
         'FACULTY': total_faculty,
         'STUDENT': total_students,
         'PARENT': int(total_students * 0.8)  # Estimate
     }
     charts['role_distribution'] = generate_role_distribution_chart(role_data)
-    
-    # Department comparison chart
-    dept_data = {}
-    for college in colleges:
-        depts = DataHelper.get_departments()
-        for dept in depts if depts else []:
-            dept_name = dept.get('dept_name', 'Unknown')
-            student_count = len(DataHelper.get_students()) if DataHelper.get_students() else 0
-            dept_data[dept_name] = student_count
-    
-    if dept_data:
-        charts['department_comparison'] = generate_department_comparison_chart(dept_data)
-    
-    # Class strength chart (divisions)
-    divisions_data = {}
-    divisions = DataHelper.get_divisions()
-    for div in divisions if divisions else []:
-        div_name = div.get('division_name', 'Unknown')
-        student_count = len(DataHelper.get_students()) if DataHelper.get_students() else 0
-        divisions_data[div_name] = student_count
-    
-    if divisions_data:
-        charts['class_strength'] = generate_class_strength_chart(divisions_data)
-    
-    # Monthly attendance trend (sample data)
-    monthly_data = {
-        'Week 1': 92.5,
-        'Week 2': 88.3,
-        'Week 3': 90.1,
-        'Week 4': 87.6
-    }
-    charts['monthly_attendance'] = generate_attendance_monthly_chart(monthly_data)
     
     return render_template("superadmin/dashboard.html",
                           context=context,
@@ -119,18 +91,11 @@ def colleges():
     context = _get_superadmin_context()
     colleges_list = DataHelper.get_all_colleges()
     
-    # Get detailed stats for each college
-    colleges_with_stats = []
-    for college in colleges_list:
-        stats = DataHelper.get_college_statistics(college['college_id'])
-        colleges_with_stats.append({
-            **college,
-            'stats': stats
-        })
-    
+    # Optimized: Defer detailed stats loading to avoid slow page load
+    # Stats can be loaded via AJAX on expand/demand
     return render_template("superadmin/colleges.html",
                           context=context,
-                          colleges=colleges_with_stats)
+                          colleges=colleges_list)
 
 
 @superadmin_bp.route("/college/<int:college_id>")
@@ -179,16 +144,16 @@ def departments():
     context = _get_superadmin_context()
     all_departments = DataHelper.get_departments()
     
-    # Get detailed stats for each department
+    # Optimized: Use database queries instead of loading all data
     departments_with_stats = []
     for dept in all_departments:
-        dept_students = [s for s in DataHelper.get_students() if s.get('dept_id') == dept['dept_id']]
-        dept_faculty = [f for f in DataHelper.get_faculty_members() if f.get('dept_id') == dept['dept_id']]
+        dept_students_count = Student.query.filter_by(dept_id=dept['dept_id']).count()
+        dept_faculty_count = Faculty.query.filter_by(dept_id=dept['dept_id']).count()
         
         departments_with_stats.append({
             **dept,
-            'student_count': len(dept_students),
-            'faculty_count': len(dept_faculty)
+            'student_count': dept_students_count,
+            'faculty_count': dept_faculty_count
         })
     
     return render_template("superadmin/departments.html",
@@ -336,4 +301,15 @@ def reject_college(college_id):
         return jsonify({'success': False, 'message': 'College not found'}), 404
     except Exception as e:
         db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@superadmin_bp.route("/api/college/<int:college_id>/stats", methods=['GET'])
+@superadmin_required
+def get_college_stats_api(college_id):
+    """API endpoint to get college statistics on demand"""
+    try:
+        stats = DataHelper.get_college_statistics(college_id)
+        return jsonify({'success': True, 'stats': stats})
+    except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
