@@ -589,14 +589,14 @@ def approve_user(user_id):
 
 @college_bp.route("/reject/user/<int:user_id>", methods=['POST'])
 def reject_user(user_id):
-    \"\"\"Reject/Delete a user\"\"\"
+    """Reject/Delete a user"""
     try:
         user = User.query.get(user_id)
         if user:
             user_name = user.name
             db.session.delete(user)
             db.session.commit()
-            return jsonify({'success': True, 'message': f'User \"{user_name}\" rejected and removed'})
+            return jsonify({'success': True, 'message': f'User "{user_name}" rejected and removed'})
         return jsonify({'success': False, 'message': 'User not found'}), 404
     except Exception as e:
         db.session.rollback()
