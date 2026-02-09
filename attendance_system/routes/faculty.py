@@ -22,13 +22,16 @@ faculty_bp = Blueprint('faculty', __name__, url_prefix='/faculty')
 @faculty_required
 def fdashboard():
     """Faculty dashboard showing assigned subjects and classes"""
-    faculty_data = DataHelper.get_faculty()
+    from models.faculty import Faculty
+    from models.lecture import Lecture
+    from models.timetable import Timetable
+    from datetime import datetime as dt, date
     
-    # Handle case where get_faculty() returns a list or None
-    if isinstance(faculty_data, list):
-        faculty = faculty_data[0] if faculty_data else None
-    else:
-        faculty = faculty_data
+    # Get current faculty from session
+    faculty_user_id = session.get('user_id')
+    current_faculty = Faculty.query.filter_by(user_id=faculty_user_id).first()
+    faculty_data = DataHelper.get_faculty_member(user_id=faculty_user_id)
+    faculty = faculty_data if faculty_data else None
     
     subjects = DataHelper.get_subjects()
     lectures = DataHelper.get_lectures()
@@ -46,17 +49,64 @@ def fdashboard():
     attendance_percentages = [a.get('attendance_percentage', 0) for a in (attendance_data or [])]
     avg_attendance = round(DataHelper._np_mean(attendance_percentages), 2) if attendance_percentages else 0.0
     
+    # Get today's timetable for current faculty
+    today = date.today()
+    day_name = DataHelper.DAY_MAP.get(today.strftime('%a').upper(), today.strftime('%A'))
+    
+    timetable_entries = []
+    if faculty and faculty.get('faculty_id'):
+        # Get all timetable entries for this faculty
+        all_timetable_entries = Timetable.query.filter_by(faculty_id=faculty.get('faculty_id')).all()
+        
+        for timetable_entry in all_timetable_entries:
+            # Check if it's today's day
+            entry_day = DataHelper.DAY_MAP.get(timetable_entry.day_of_week, timetable_entry.day_of_week)
+            if entry_day == day_name:
+                # Check if lecture has been marked (completed)
+                lecture = Lecture.query.filter_by(
+                    timetable_id=timetable_entry.timetable_id,
+                    lecture_date=today
+                ).first()
+                
+                is_completed = False
+                if lecture:
+                    # Check if attendance has been marked
+                    attendance_count = lecture.get_attendance_count()
+                    is_completed = attendance_count > 0
+                
+                timetable_entries.append({
+                    'entry_id': timetable_entry.timetable_id,
+                    'lecture_id': lecture.lecture_id if lecture else None,
+                    'division_id': timetable_entry.division_id,
+                    'division_name': timetable_entry.division.division_name if timetable_entry.division else '',
+                    'start_time': DataHelper._format_time(timetable_entry.start_time),
+                    'end_time': DataHelper._format_time(timetable_entry.end_time),
+                    'subject_name': timetable_entry.subject.subject_name if timetable_entry.subject else '',
+                    'subject_code': timetable_entry.subject.subject_code if timetable_entry.subject else '',
+                    'subject_id': timetable_entry.subject_id,
+                    'room_no': timetable_entry.room_no or 'N/A',
+                    'is_completed': is_completed,
+                    'day': day_name
+                })
+        
+        # Sort by start time
+        timetable_entries.sort(key=lambda x: x['start_time'])
+    
     # Compute stats for dashboard
     stats = {
-        'total_lectures': len(lectures) if lectures else 0,
-        'remaining': max(0, (len(lectures) - 1) if lectures else 0),
+        'total_lectures': len(timetable_entries),
+        'completed': len([t for t in timetable_entries if t['is_completed']]),
+        'remaining': len([t for t in timetable_entries if not t['is_completed']]),
         'subjects': len(subjects) if subjects else 0,
-        'avg_attendance': avg_attendance
+        'avg_attendance': avg_attendance,
+        'proxy_pending': 0
     }
     
     # Calculate proxies taken and mentoring count from actual data
     proxy_requests = DataHelper.get_proxy_requests()
     proxy_taken = len([p for p in (proxy_requests or []) if p.get('faculty_id') == faculty.get('faculty_id')]) if faculty else 0
+    proxy_pending = len([p for p in (proxy_requests or []) if p.get('status', '').lower() == 'pending']) if proxy_requests else 0
+    stats['proxy_pending'] = proxy_pending
     
     # Count students mentored (based on available data)
     students = DataHelper.get_students()
@@ -70,14 +120,20 @@ def fdashboard():
         'mentoring_count': mentoring_count
     }
     
+    # Get proxy requests for display
+    proxies = proxy_requests if proxy_requests else []
+    
     return render_template("faculty/dashboard.html", 
                           faculty=faculty, 
                           subjects=subjects, 
                           lectures=lectures,
+                          timetable=timetable_entries,
+                          proxies=proxies,
                           stats=stats,
                           teaching_stats=teaching_stats,
                           department=department,
-                          datetime=datetime)
+                          datetime=dt)
+
 
 
 @faculty_bp.route("/attendance")
