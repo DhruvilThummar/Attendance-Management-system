@@ -26,6 +26,7 @@ SUBJECT_GROUPS = {
     "DE": ["DE"],
     "FSD1": ["FSD-1", "FSD1"],
     "PS": ["PS"],
+    "FCSP1": ["FCSP-1"],
 }
 
 WEEK_LABEL = "WEEK-12"
