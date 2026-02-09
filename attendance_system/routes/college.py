@@ -611,7 +611,7 @@ def approve_parent(user_id):
         from models.parent import Parent
         
         user = User.query.get(user_id)
-        if not user or user.role_id != 6:  # PARENT role
+        if not user or user.role_id != 41:  # PARENT=41
             return jsonify({'success': False, 'message': 'Parent user not found'}), 404
         
         # Verify parent has a valid student link
@@ -642,7 +642,7 @@ def reject_parent(user_id):
         from models.parent import Parent
         
         user = User.query.get(user_id)
-        if not user or user.role_id != 6:  # PARENT role
+        if not user or user.role_id != 41:  # PARENT=41
             return jsonify({'success': False, 'message': 'Parent user not found'}), 404
         
         user_name = user.name
