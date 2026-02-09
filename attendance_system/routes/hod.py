@@ -259,34 +259,8 @@ def hod_delete_subject(subject_id):
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-@hod_bp.route("/attendance")
-def hod_attendance():
-    """Division wise attendance analytics"""
-    context = _get_hod_context()
-    
-    # Fallback if no department
-    if not context['dept_id']:
-        return render_template(
-            "hod/attendance.html",
-            context=context,
-            attendance_summary={},
-            divisions=[],
-            subjects=[]
-        )
-
-    summary = DataHelper.get_division_attendance_summary(context['dept_id'])
-
-    return render_template(
-        "hod/attendance.html",
-        context=context,
-        attendance_summary=summary,
-        divisions=DataHelper.get_divisions(dept_id=context['dept_id']),
-        subjects=DataHelper.get_subjects(dept_id=context['dept_id'])
-    )
-
-
-@hod_bp.route("/attendance/data")
-def hod_attendance_data():
+@hod_bp.route("/analytics")
+def hod_analytics():
     """Provide filtered attendance data as JSON"""
     context = _get_hod_context()
     
