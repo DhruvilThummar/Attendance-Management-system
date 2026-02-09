@@ -4,16 +4,18 @@ HOD (Head of Department) routes - dashboard, management pages, and APIs
 import csv
 import io
 
-from flask import Blueprint, render_template, request, jsonify, abort, make_response
+from flask import Blueprint, render_template, request, jsonify, abort, make_response, send_file
 
 from models.user import db, User
 from services.data_helper import DataHelper
+from services.export_service import ExportService
 from attendance_system.utils.auth_decorators import login_required, hod_required
 from services.chart_helper import (
     generate_attendance_monthly_chart,
     generate_subject_attendance_chart,
     generate_class_strength_chart
 )
+from datetime import datetime
 
 hod_bp = Blueprint('hod', __name__, url_prefix='/hod')
 
@@ -725,3 +727,383 @@ def hod_compiled_attendance_export():
     response.headers['Content-Type'] = 'text/csv'
     response.headers['Content-Disposition'] = 'attachment; filename=compiled_attendance_report.csv'
     return response
+
+
+@hod_bp.route("/attendance")
+@hod_required
+def hod_attendance():
+    """Mark attendance for department divisions"""
+    from datetime import datetime as dt, timedelta
+    from models.timetable import Timetable
+    from models.subject import Subject
+    from models.academic_calendar import AcademicCalendar
+    
+    context = _get_hod_context()
+    
+    if not context['dept_id']:
+        return render_template("hod/attendance.html", divisions=[], error="Department not found")
+    
+    divisions = DataHelper.get_divisions(dept_id=context['dept_id'])
+    
+    # For each division, add subjects taught
+    for division in divisions:
+        division['subjects'] = []
+        
+        # Get unique subjects for this division
+        timetable_entries = Timetable.query.filter_by(
+            division_id=division['div_id']
+        ).all()
+        
+        subjects_data = []
+        for timetable in timetable_entries:
+            subject = timetable.subject
+            
+            # Find next scheduled lecture date
+            today = dt.now().date()
+            next_lecture = None
+            
+            for days_ahead in range(30):
+                check_date = today + timedelta(days=days_ahead)
+                day_name = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'][check_date.weekday()]
+                
+                if timetable.day_of_week == day_name:
+                    is_holiday = AcademicCalendar.query.filter_by(
+                        event_date=check_date,
+                        dept_id=context['dept_id']
+                    ).first()
+                    
+                    if not is_holiday:
+                        next_lecture = check_date
+                        break
+            
+            subjects_data.append({
+                'id': subject.subject_id,
+                'name': subject.subject_name,
+                'code': subject.subject_code,
+                'faculty': timetable.faculty.short_name if timetable.faculty else 'N/A',
+                'next_lecture': next_lecture.strftime('%Y-%m-%d') if next_lecture else 'No schedule'
+            })
+        
+        division['subjects'] = subjects_data
+    
+    divisions = [d for d in divisions if d.get('subjects')]
+    
+    return render_template("hod/attendance.html", divisions=divisions, datetime=dt)
+
+
+@hod_bp.route("/attendance/mark", methods=['POST'])
+@hod_required
+def hod_mark_attendance():
+    """Mark attendance for a lecture"""
+    try:
+        data = request.get_json()
+        division_id = data.get('division_id')
+        subject_id = data.get('subject_id')
+        lecture_date = data.get('lecture_date')
+        attendance_data = data.get('attendance')
+        
+        if not all([division_id, subject_id, lecture_date, attendance_data]):
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        from models.timetable import Timetable
+        from models.lecture import Lecture
+        from models.attendance import Attendance, AttendanceStatus
+        from models.academic_calendar import AcademicCalendar
+        from models.student import Student
+        from datetime import datetime as dt
+        
+        context = _get_hod_context()
+        
+        # Verify division belongs to HOD's department
+        division = Division.query.get(division_id)
+        if not division or division.dept_id != context['dept_id']:
+            return jsonify({'error': 'Unauthorized access'}), 403
+        
+        # Parse and validate date
+        try:
+            lecture_date_obj = dt.strptime(lecture_date, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'error': 'Invalid date format'}), 400
+        
+        # Check academic calendar
+        is_holiday = AcademicCalendar.query.filter_by(
+            event_date=lecture_date_obj,
+            dept_id=context['dept_id']
+        ).first()
+        
+        if is_holiday:
+            return jsonify({'error': f'Cannot mark attendance on {is_holiday.description or "holiday"}'}), 400
+        
+        # Get timetable
+        timetable = Timetable.query.filter_by(
+            subject_id=subject_id,
+            division_id=division_id
+        ).first()
+        
+        if not timetable:
+            return jsonify({'error': 'Timetable entry not found'}), 404
+        
+        # Verify day
+        day_of_week = lecture_date_obj.strftime('%A')
+        timetable_day_map = {'Monday': 'MON', 'Tuesday': 'TUE', 'Wednesday': 'WED', 'Thursday': 'THU', 'Friday': 'FRI', 'Saturday': 'SAT', 'Sunday': 'SUN'}
+        expected_day = timetable_day_map.get(day_of_week, '')
+        
+        if expected_day != timetable.day_of_week:
+            return jsonify({'error': f'No class scheduled on {day_of_week}'}), 400
+        
+        # Create or get lecture
+        lecture = Lecture.query.filter_by(
+            timetable_id=timetable.timetable_id,
+            lecture_date=lecture_date_obj
+        ).first()
+        
+        if not lecture:
+            lecture = Lecture(
+                timetable_id=timetable.timetable_id,
+                lecture_date=lecture_date_obj
+            )
+            db.session.add(lecture)
+            db.session.flush()
+        
+        # Get statuses
+        present_status = AttendanceStatus.query.filter_by(status_name='PRESENT').first()
+        absent_status = AttendanceStatus.query.filter_by(status_name='ABSENT').first()
+        
+        if not present_status or not absent_status:
+            return jsonify({'error': 'Attendance status not configured'}), 500
+        
+        # Mark attendance
+        marked_count = 0
+        for record in attendance_data:
+            student_id = record.get('student_id')
+            status = record.get('status', 'PRESENT')
+            
+            student = Student.query.get(student_id)
+            if not student or student.division_id != division_id:
+                continue
+            
+            existing = Attendance.query.filter_by(
+                student_id=student_id,
+                lecture_id=lecture.lecture_id
+            ).first()
+            
+            status_id = present_status.status_id if status == 'PRESENT' else absent_status.status_id
+            
+            if existing:
+                existing.status_id = status_id
+                existing.marked_at = dt.utcnow()
+            else:
+                new_attendance = Attendance(
+                    student_id=student_id,
+                    lecture_id=lecture.lecture_id,
+                    status_id=status_id,
+                    marked_at=dt.utcnow()
+                )
+                db.session.add(new_attendance)
+            
+            marked_count += 1
+        
+        db.session.commit()
+        return jsonify({'message': f'Attendance marked for {marked_count} students'})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@hod_bp.route("/analytics")
+@hod_required
+def hod_analytics():
+    """View department analytics"""
+    context = _get_hod_context()
+    
+    if not context['dept_id']:
+        return render_template("hod/analytics.html", context=context, charts={})
+    
+    # Get department data
+    attendance_data = DataHelper.get_attendance_records(dept_id=context['dept_id'])
+    
+    total_lectures = sum(r.get('total_lectures', 0) for r in attendance_data)
+    avg_attendance = DataHelper._np_mean([a.get('attendance_percentage', 0) for a in attendance_data]) if attendance_data else 0
+    
+    # Generate charts
+    from services.chart_helper import (
+        generate_subject_attendance_chart,
+        generate_attendance_monthly_chart,
+        generate_class_strength_chart
+    )
+    
+    charts = {}
+    
+    # Subject-wise attendance
+    subject_data = {}
+    for record in attendance_data:
+        subject_name = record.get('subject_name', 'Unknown')
+        if subject_name not in subject_data:
+            subject_data[subject_name] = []
+        subject_data[subject_name].append(record.get('attendance_percentage', 0))
+    
+    subject_stats = {name: round(DataHelper._np_mean(values), 2) for name, values in subject_data.items()}
+    if subject_stats:
+        charts['subject_attendance'] = generate_subject_attendance_chart(subject_stats)
+    
+    # Division-wise attendance
+    division_data = {}
+    for record in attendance_data:
+        division_name = record.get('division_name', 'Unknown')
+        if division_name not in division_data:
+            division_data[division_name] = []
+        division_data[division_name].append(record.get('attendance_percentage', 0))
+    
+    division_stats = {name: round(DataHelper._np_mean(values), 2) for name, values in division_data.items()}
+    if division_stats:
+        charts['class_strength'] = generate_class_strength_chart(division_stats)
+    
+    return render_template(
+        "hod/analytics.html",
+        context=context,
+        attendance_data=attendance_data,
+        total_lectures=total_lectures,
+        avg_attendance=round(avg_attendance, 2),
+        charts=charts
+    )
+
+
+@hod_bp.route("/reports")
+@hod_required
+def hod_reports():
+    """View department reports"""
+    context = _get_hod_context()
+    
+    if not context['dept_id']:
+        return render_template("hod/reports.html", context=context, students=[])
+    
+    # Get attendance for all students in department
+    attendance_data = DataHelper.get_attendance_records(dept_id=context['dept_id'])
+    students = DataHelper.get_students(dept_id=context['dept_id'])
+    
+    # Build report
+    student_reports = {}
+    for student in students:
+        student_id = student.get('student_id')
+        student_records = [r for r in attendance_data if r['student_id'] == student_id]
+        
+        student_reports[student_id] = {
+            'student_id': student_id,
+            'roll_no': student.get('roll_no', ''),
+            'name': student.get('name', ''),
+            'enrollment_no': student.get('enrollment_no', ''),
+            'division_name': student.get('division_name', ''),
+            'subjectwise_attendance': {},
+            'overall_attendance': 0,
+            'total_lectures': 0,
+            'attended_lectures': 0
+        }
+        
+        for record in student_records:
+            subject_name = record.get('subject_name', 'Unknown')
+            student_reports[student_id]['subjectwise_attendance'][subject_name] = {
+                'subject_code': record.get('subject_code', ''),
+                'attendance_percentage': round(record.get('attendance_percentage', 0), 2),
+                'total_lectures': record.get('total_lectures', 0),
+                'attended_lectures': record.get('attended_lectures', 0)
+            }
+        
+        if student_records:
+            percentages = [r.get('attendance_percentage', 0) for r in student_records]
+            student_reports[student_id]['overall_attendance'] = round(DataHelper._np_mean(percentages), 2)
+            student_reports[student_id]['total_lectures'] = sum(r.get('total_lectures', 0) for r in student_records)
+            student_reports[student_id]['attended_lectures'] = sum(r.get('attended_lectures', 0) for r in student_records)
+    
+    student_reports_list = sorted(student_reports.values(), key=lambda x: (x.get('division_name'), int(x.get('roll_no', 0) or 0)))
+    
+    return render_template(
+        "hod/reports.html",
+        context=context,
+        students=student_reports_list,
+        attendance_data=attendance_data
+    )
+
+
+@hod_bp.route("/approvals")
+@hod_required
+def hod_approvals():
+    """View pending approvals for faculty and students in department"""
+    context = _get_hod_context()
+    
+    pending_users = User.query.filter(
+        User.is_approved == False,
+        User.role_id.in_([3, 4, 5, 6])  # HOD, FACULTY, STUDENT, PARENT
+    ).all()
+    
+    return render_template(
+        "hod/approvals.html",
+        context=context,
+        pending_users=pending_users
+    )
+
+
+@hod_bp.route("/approve/user/<int:user_id>", methods=['POST'])
+@hod_required
+def hod_approve_user(user_id):
+    """Approve a user"""
+    try:
+        user = User.query.get(user_id)
+        if user and user.role_id in [3, 4, 5, 6]:
+            user.is_approved = True
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'User approved successfully'})
+        return jsonify({'success': False, 'message': 'User not found'}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@hod_bp.route("/reject/user/<int:user_id>", methods=['POST'])
+@hod_required
+def hod_reject_user(user_id):
+    """Reject a user"""
+    try:
+        user = User.query.get(user_id)
+        if user:
+            db.session.delete(user)
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'User rejected'})
+        return jsonify({'success': False, 'message': 'User not found'}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@hod_bp.route("/export/csv")
+@hod_required
+def export_attendance_csv():
+    """Export compiled attendance report as CSV"""
+    try:
+        csv_output = ExportService.export_csv()
+        return send_file(
+            io.BytesIO(csv_output.getvalue().encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'compiled_attendance_week12_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@hod_bp.route("/export/pdf")
+@hod_required
+def export_attendance_pdf():
+    """Export compiled attendance report as PDF"""
+    try:
+        pdf_output = ExportService.export_pdf()
+        return send_file(
+            pdf_output,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f'compiled_attendance_week12_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+        )
+    except RuntimeError as e:
+        return jsonify({'error': str(e), 'message': 'reportlab library required'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

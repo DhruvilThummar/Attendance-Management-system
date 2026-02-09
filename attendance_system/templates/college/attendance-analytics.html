@@ -31,9 +31,17 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="form-label">&nbsp;</label>
-                            <button class="btn btn-primary w-100" onclick="generateReport()">
-                                <i class="fas fa-file-export me-2"></i>Export Report
-                            </button>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-primary" onclick="generateReport()">
+                                    <i class="fas fa-file-export me-2"></i>Export Report
+                                </button>
+                                <button class="btn btn-success" onclick="location.href='/college/export/csv'">
+                                    <i class="fas fa-file-csv me-2"></i>Compiled Report CSV
+                                </button>
+                                <button class="btn btn-danger" onclick="location.href='/college/export/pdf'">
+                                    <i class="fas fa-file-pdf me-2"></i>Compiled Report PDF
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,7 +1,9 @@
 """Faculty routes - Attendance, Analytics, Reports, Timetable, Profile"""
 from flask import Blueprint, render_template, send_file, request, jsonify, session
 from models.user import db, User
+from models.division import Division
 from services.data_helper import DataHelper
+from services.export_service import ExportService
 from attendance_system.utils.auth_decorators import login_required, faculty_required
 from services.chart_helper import (
     generate_attendance_weekly_chart,
@@ -81,14 +83,20 @@ def fdashboard():
 @faculty_bp.route("/attendance")
 @faculty_required
 def fattendance():
-    """Record attendance for lectures"""
+    """Record attendance for lectures - only show lectures from timetable"""
+    from datetime import datetime as dt, timedelta
+    
     # Get faculty from session
     faculty_user_id = session.get('user_id')
     from models.faculty import Faculty
     from models.timetable import Timetable
     from models.subject import Subject
+    from models.academic_calendar import AcademicCalendar
     
     faculty = Faculty.query.filter_by(user_id=faculty_user_id).first()
+    
+    if not faculty:
+        return render_template("faculty/attendance.html", divisions=[], datetime=dt, error="Faculty not found")
     
     # Get divisions where this faculty teaches
     divisions = DataHelper.get_divisions()
@@ -98,33 +106,52 @@ def fattendance():
         # Initialize subjects array
         division['subjects'] = []
         
-        if faculty:
-            # Get subjects the faculty teaches for this division
-            timetable_entries = Timetable.query.filter_by(
-                faculty_id=faculty.faculty_id,
-                division_id=division['div_id']
-            ).all()
+        # Get subjects the faculty teaches for this division
+        timetable_entries = Timetable.query.filter_by(
+            faculty_id=faculty.faculty_id,
+            division_id=division['div_id']
+        ).all()
+        
+        # Get unique subjects with next lecture dates
+        subjects_data = []
+        for timetable in timetable_entries:
+            subject = timetable.subject
             
-            # Get unique subjects
-            subject_ids = list(set([t.subject_id for t in timetable_entries]))
-            subjects_for_div = Subject.query.filter(Subject.subject_id.in_(subject_ids)).all() if subject_ids else []
+            # Find next scheduled lecture date (based on timetable day of week)
+            today = dt.now().date()
+            next_lecture = None
             
-            # Add subjects array to division
-            division['subjects'] = [
-                {
-                    'id': s.subject_id,
-                    'name': s.subject_name,
-                    'code': s.subject_code
-                }
-                for s in subjects_for_div
-            ]
+            for days_ahead in range(30):  # Check next 30 days
+                check_date = today + timedelta(days=days_ahead)
+                day_name = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'][check_date.weekday()]
+                
+                # Check if this is a scheduled day and not a holiday
+                if timetable.day_of_week == day_name:
+                    # Check academic calendar for holidays
+                    is_holiday = AcademicCalendar.query.filter_by(
+                        event_date=check_date,
+                        dept_id=division['dept_id']
+                    ).first()
+                    
+                    if not is_holiday:
+                        next_lecture = check_date
+                        break
+            
+            subjects_data.append({
+                'id': subject.subject_id,
+                'name': subject.subject_name,
+                'code': subject.subject_code,
+                'next_lecture': next_lecture.strftime('%Y-%m-%d') if next_lecture else 'No schedule'
+            })
+        
+        division['subjects'] = subjects_data
     
     # Filter out divisions where faculty teaches no subjects
     divisions = [d for d in divisions if d.get('subjects')]
     
     return render_template("faculty/attendance.html", 
                           divisions=divisions, 
-                          datetime=datetime)
+                          datetime=dt)
 
 
 @faculty_bp.route("/attendance/students/<int:division_id>")
@@ -141,7 +168,7 @@ def get_students_by_division(division_id):
 @faculty_bp.route("/attendance/mark", methods=['POST'])
 @faculty_required
 def mark_attendance():
-    """Mark attendance for a lecture"""
+    """Mark attendance for a lecture - validates against academic calendar"""
     try:
         data = request.get_json()
         division_id = data.get('division_id')
@@ -155,6 +182,8 @@ def mark_attendance():
         from models.timetable import Timetable
         from models.lecture import Lecture
         from models.attendance import Attendance, AttendanceStatus
+        from models.academic_calendar import AcademicCalendar
+        from models.student import Student
         from datetime import datetime as dt
         
         # Get faculty from session
@@ -164,7 +193,27 @@ def mark_attendance():
         if not faculty:
             return jsonify({'error': 'Faculty not found'}), 404
         
-        # Find or create timetable entry
+        # Parse lecture date
+        try:
+            lecture_date_obj = dt.strptime(lecture_date, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'error': 'Invalid date format'}), 400
+        
+        # Get department ID from division
+        division = db.session.query(Division).get(division_id)
+        if not division:
+            return jsonify({'error': 'Division not found'}), 404
+        
+        # Check if this date is a holiday/on the academic calendar
+        is_holiday = AcademicCalendar.query.filter_by(
+            event_date=lecture_date_obj,
+            dept_id=division.dept_id
+        ).first()
+        
+        if is_holiday:
+            return jsonify({'error': f'Cannot mark attendance on {is_holiday.description or "holiday"}'}), 400
+        
+        # Check if it's a weekend or timetable doesn't have class
         timetable = Timetable.query.filter_by(
             subject_id=subject_id,
             faculty_id=faculty.faculty_id,
@@ -172,6 +221,78 @@ def mark_attendance():
         ).first()
         
         if not timetable:
+            return jsonify({'error': 'Timetable entry not found for this subject and division'}), 404
+        
+        # Verify the date matches the timetable day
+        day_of_week = lecture_date_obj.strftime('%A')
+        timetable_day_map = {'Monday': 'MON', 'Tuesday': 'TUE', 'Wednesday': 'WED', 'Thursday': 'THU', 'Friday': 'FRI', 'Saturday': 'SAT', 'Sunday': 'SUN'}
+        expected_day = timetable_day_map.get(day_of_week, '')
+        
+        if expected_day != timetable.day_of_week:
+            return jsonify({'error': f'No class scheduled on {day_of_week} for this subject'}), 400
+        
+        # Create lecture record if it doesn't exist
+        lecture = Lecture.query.filter_by(
+            timetable_id=timetable.timetable_id,
+            lecture_date=lecture_date_obj
+        ).first()
+        
+        if not lecture:
+            lecture = Lecture(
+                timetable_id=timetable.timetable_id,
+                lecture_date=lecture_date_obj
+            )
+            db.session.add(lecture)
+            db.session.flush()
+        
+        # Get status IDs
+        present_status = AttendanceStatus.query.filter_by(status_name='PRESENT').first()
+        absent_status = AttendanceStatus.query.filter_by(status_name='ABSENT').first()
+        
+        if not present_status or not absent_status:
+            return jsonify({'error': 'Attendance status not configured'}), 500
+        
+        # Mark attendance for each student (only if they exist in division)
+        marked_count = 0
+        for record in attendance_data:
+            student_id = record.get('student_id')
+            status = record.get('status', 'PRESENT')
+            
+            # Verify student belongs to this division
+            student = Student.query.get(student_id)
+            if not student or student.division_id != division_id:
+                continue
+            
+            # Check if attendance already exists
+            existing = Attendance.query.filter_by(
+                student_id=student_id,
+                lecture_id=lecture.lecture_id
+            ).first()
+            
+            status_id = present_status.status_id if status == 'PRESENT' else absent_status.status_id
+            
+            if existing:
+                # Update existing attendance
+                existing.status_id = status_id
+                existing.marked_at = dt.utcnow()
+            else:
+                # Create new attendance record
+                new_attendance = Attendance(
+                    student_id=student_id,
+                    lecture_id=lecture.lecture_id,
+                    status_id=status_id,
+                    marked_at=dt.utcnow()
+                )
+                db.session.add(new_attendance)
+            
+            marked_count += 1
+        
+        db.session.commit()
+        return jsonify({'message': f'Attendance marked successfully for {marked_count} students'})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
             # Create a timetable entry if it doesn't exist
             lecture_date_obj = dt.strptime(lecture_date, '%Y-%m-%d').date()
             day_of_week = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'][lecture_date_obj.weekday()]
@@ -737,3 +858,38 @@ def faculty_change_password():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Error changing password: {str(e)}'}), 500
+
+
+@faculty_bp.route("/export/csv")
+@faculty_required
+def export_attendance_csv():
+    """Export compiled attendance report as CSV"""
+    try:
+        csv_output = ExportService.export_csv()
+        return send_file(
+            io.BytesIO(csv_output.getvalue().encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'compiled_attendance_week12_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@faculty_bp.route("/export/pdf")
+@faculty_required
+def export_attendance_pdf():
+    """Export compiled attendance report as PDF"""
+    try:
+        pdf_output = ExportService.export_pdf()
+        return send_file(
+            pdf_output,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f'compiled_attendance_week12_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+        )
+    except RuntimeError as e:
+        return jsonify({'error': str(e), 'message': 'reportlab library required'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+

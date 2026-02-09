@@ -4,16 +4,18 @@ College Admin routes - Dashboard, Departments, Divisions, Faculty, Students, Ana
 import csv
 import io
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response, send_file
 from models.division import Division
 from models.user import db, User
 from services.data_helper import DataHelper
+from services.export_service import ExportService
 from attendance_system.utils.auth_decorators import login_required, college_admin_required
 from services.chart_helper import (
     generate_department_comparison_chart,
     generate_class_strength_chart,
     generate_attendance_monthly_chart
 )
+from datetime import datetime
 
 college_bp = Blueprint('college', __name__, url_prefix='/college')
 
@@ -555,3 +557,37 @@ def reject_user(user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@college_bp.route("/export/csv")
+@college_admin_required
+def export_attendance_csv():
+    """Export compiled attendance report as CSV"""
+    try:
+        csv_output = ExportService.export_csv()
+        return send_file(
+            io.BytesIO(csv_output.getvalue().encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'compiled_attendance_week12_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@college_bp.route("/export/pdf")
+@college_admin_required
+def export_attendance_pdf():
+    """Export compiled attendance report as PDF"""
+    try:
+        pdf_output = ExportService.export_pdf()
+        return send_file(
+            pdf_output,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f'compiled_attendance_week12_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+        )
+    except RuntimeError as e:
+        return jsonify({'error': str(e), 'message': 'reportlab library required'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
