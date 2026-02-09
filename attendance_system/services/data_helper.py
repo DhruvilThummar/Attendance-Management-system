@@ -264,6 +264,7 @@ class DataHelper:
             'faculty_id': faculty.faculty_id,
             'user_id': faculty.user_id,
             'dept_id': faculty.dept_id,
+            'college_id': faculty.department.college_id if faculty.department else None,
             'short_name': faculty.short_name,
             'full_name': user.name if user else '',
             'designation': DataHelper._safe_attr(faculty, 'designation', 'Faculty'),
@@ -284,10 +285,16 @@ class DataHelper:
             return None
         user = student.user
         semester_no = student.semester.semester_no if student.semester else None
+        
+        # Extract division short name (last character or full name if no pattern)
+        division_name = student.division.division_name if student.division else ''
+        division_short = division_name[-1] if division_name else ''  # Get last char as short name (A, B, C, etc.)
+        
         return {
             'student_id': student.student_id,
             'user_id': student.user_id,
             'dept_id': student.dept_id,
+            'college_id': student.department.college_id if student.department else None,
             'division_id': student.division_id,
             'div_id': student.division_id,  # Alias for compatibility
             'enrollment_no': student.enrollment_no,
@@ -301,6 +308,7 @@ class DataHelper:
             'phone': user.mobile if user else '',  # Alias for compatibility
             'dept_name': student.department.dept_name if student.department else '',
             'division_name': student.division.division_name if student.division else '',
+            'division_short': division_short,
             'semester': semester_no
         }
 
@@ -514,8 +522,8 @@ class DataHelper:
         return requests
 
     @staticmethod
-    def get_attendance_records(dept_id=None, division_id=None, subject_id=None):
-        """Get attendance records"""
+    def get_attendance_records(dept_id=None, division_id=None, subject_id=None, college_id=None):
+        """Get attendance records with college filtering"""
         total_case = func.count(Attendance.attendance_id)
         present_case = func.sum(case((Attendance.status_id == 1, 1), else_=0))
         last_updated = func.max(Attendance.marked_at)
@@ -525,11 +533,14 @@ class DataHelper:
             User.name.label('student_name'),
             Student.dept_id,
             Department.dept_name.label('dept_name'),
+            Department.college_id,
             Student.division_id,
             Division.division_name,
             Subject.subject_id,
             Subject.subject_name,
             Subject.subject_code,
+            Lecture.lecture_id,
+            Lecture.lecture_date,
             total_case.label('total_lectures'),
             present_case.label('attended_lectures'),
             last_updated.label('last_updated')
@@ -545,13 +556,18 @@ class DataHelper:
                 User.name,
                 Student.dept_id,
                 Department.dept_name,
+                Department.college_id,
                 Student.division_id,
                 Division.division_name,
                 Subject.subject_id,
                 Subject.subject_name,
-                Subject.subject_code
+                Subject.subject_code,
+                Lecture.lecture_id,
+                Lecture.lecture_date
             )
 
+        if college_id:
+            query = query.filter(Department.college_id == college_id)
         if dept_id:
             query = query.filter(Student.dept_id == dept_id)
         if division_id:
@@ -568,19 +584,23 @@ class DataHelper:
 
             records.append({
                 'record_id': idx,
+                'college_id': row.college_id,
                 'dept_id': row.dept_id,
                 'division_id': row.division_id,
                 'division_name': row.division_name,
                 'subject_id': row.subject_id,
                 'subject_name': row.subject_name,
                 'subject_code': row.subject_code,
+                'lecture_id': row.lecture_id,
+                'lecture_date': row.lecture_date,
                 'student_id': row.student_id,
                 'student_name': row.student_name,
                 'total_lectures': total_lectures,
                 'attended_lectures': attended_lectures,
                 'attendance_percentage': percentage,
                 'status': status,
-                'last_updated': row.last_updated
+                'last_updated': row.last_updated,
+                'date': row.lecture_date  # For compatibility with existing code
             })
         return records
 

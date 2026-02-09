@@ -366,8 +366,16 @@ def get_attendance():
 @faculty_bp.route("/analytics")
 def fanalytics():
     """View attendance analytics and statistics"""
+    # Get current faculty from session
+    faculty_user_id = session.get('user_id')
+    from models.faculty import Faculty
+    current_faculty = Faculty.query.filter_by(user_id=faculty_user_id).first()
+    
     faculty = DataHelper.get_faculty()
-    attendance_data = DataHelper.get_attendance_records()
+    
+    # Filter attendance records by current faculty's college
+    college_id = current_faculty.department.college_id if current_faculty and current_faculty.department else None
+    attendance_data = DataHelper.get_attendance_records(college_id=college_id)
 
     total_lectures = len(DataHelper.get_lectures())
     avg_attendance = DataHelper._np_mean([a.get('attendance_percentage', 0) for a in attendance_data])
@@ -399,7 +407,8 @@ def fanalytics():
                     pass
         # Calculate average for each day
         for day, percentages in day_attendance.items():
-            weekly_data[day] = round(float(np.mean(percentages)), 1) if percentages else 0.0
+            float_percentages = [float(p) for p in percentages]
+            weekly_data[day] = round(float(np.mean(float_percentages)), 1) if float_percentages else 0.0
     # Add missing days with zero
     for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']:
         if day not in weekly_data:
@@ -423,7 +432,8 @@ def fanalytics():
                     pass
         # Calculate average for each week
         for week, percentages in sorted(week_attendance.items()):
-            monthly_data[week] = round(float(np.mean(percentages)), 1) if percentages else 0.0
+            float_percentages = [float(p) for p in percentages]
+            monthly_data[week] = round(float(np.mean(float_percentages)), 1) if float_percentages else 0.0
     # Add default weeks if needed
     if not monthly_data:
         for i in range(1, 5):
@@ -440,7 +450,8 @@ def fanalytics():
             subject_records = [a for a in attendance_data if a.get('subject_id') == subject_id]
             if subject_records:
                 percentages = [a.get('attendance_percentage', 0) for a in subject_records]
-                subject_data[subject_name] = round(float(np.mean(percentages)), 1) if percentages else 0.0
+                float_percentages = [float(p) for p in percentages]
+                subject_data[subject_name] = round(float(np.mean(float_percentages)), 1) if float_percentages else 0.0
             else:
                 subject_data[subject_name] = 0.0
     else:
@@ -467,28 +478,48 @@ def fanalytics():
 
 
 @faculty_bp.route("/reports")
+@faculty_bp.route("/reports")
 def freports():
     """View and manage attendance reports with detailed subjectwise attendance"""
     from models.lecture import Lecture
     from models.timetable import Timetable
+    from models.faculty import Faculty
     
-    faculty = DataHelper.get_faculty()
-    subjects = DataHelper.get_subjects()
+    # Get current faculty and their college
+    faculty_user_id = session.get('user_id')
+    current_faculty = Faculty.query.filter_by(user_id=faculty_user_id).first()
+    faculty_college_id = current_faculty.department.college_id if current_faculty and current_faculty.department else None
+    faculty_dept_id = current_faculty.dept_id if current_faculty else None
+    
+    # Get faculty data (filtered by college if needed)
+    faculty = DataHelper.get_faculty(dept_id=faculty_dept_id)
+    
+    # Get students and attendance data for current college only
     students = DataHelper.get_students()
-    attendance_data = DataHelper.get_attendance_records()
+    attendance_data = DataHelper.get_attendance_records(college_id=faculty_college_id)
+    subjects = DataHelper.get_subjects()
+    
+    # Filter students to only those in the same college
+    filtered_students = [
+        s for s in students 
+        if s.get('college_id') == faculty_college_id
+    ] if students else []
     
     # Build comprehensive attendance report with numpy calculations
     student_reports = {}
     
-    if students:
-        for student in students:
+    if filtered_students:
+        for student in filtered_students:
             student_id = student.get('student_id')
             mentor_name = None
+            mentor_short_name = None
             
-            # Get mentor name if assigned
+            # Get mentor name and short name if assigned
             if student.get('mentor_id'):
                 mentor = DataHelper.get_faculty_member(faculty_id=student.get('mentor_id'))
-                mentor_name = mentor.get('short_name') if mentor else 'N/A'
+                if mentor:
+                    mentor_name = mentor.get('name', 'N/A')
+                    mentor_short_name = mentor.get('short_name', 'N/A')
             
             student_reports[student_id] = {
                 'student_id': student_id,
@@ -496,8 +527,11 @@ def freports():
                 'name': student.get('name', ''),
                 'enrollment_no': student.get('enrollment_no', ''),
                 'division_name': student.get('division_name', ''),
+                'division_short': student.get('division_short', ''),
                 'dept_name': student.get('dept_name', ''),
+                'college_id': student.get('college_id'),
                 'mentor_name': mentor_name or 'N/A',
+                'mentor_short_name': mentor_short_name or 'N/A',
                 'subjectwise_attendance': {},
                 'overall_attendance': 0,
                 'total_lectures': 0,
@@ -517,10 +551,10 @@ def freports():
             if student_id in student_reports:
                 student_reports[student_id]['subjectwise_attendance'][subject_name] = {
                     'subject_code': subject_code,
-                    'attendance_percentage': round(attendance_pct, 2),
+                    'attendance_percentage': round(float(attendance_pct), 2),
                     'total_lectures': total_lectures,
                     'attended_lectures': attended_lectures,
-                    'status': 'PASS' if attendance_pct >= 75 else 'FAIL'
+                    'status': 'PASS' if float(attendance_pct) >= 75 else 'FAIL'
                 }
     
     # Calculate overall attendance using numpy
@@ -567,7 +601,9 @@ def freports():
                           subjects=unique_subjects,
                           students=student_reports_list,
                           attendance_data=attendance_data,
+                          college_id=faculty_college_id,
                           datetime=datetime)
+
 
 
 @faculty_bp.route("/timetable")
