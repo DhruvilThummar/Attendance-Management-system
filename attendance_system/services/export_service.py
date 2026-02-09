@@ -224,10 +224,10 @@ class ExportService:
         """Generate PDF content for attendance report"""
         try:
             from reportlab.lib import colors
-            from reportlab.lib.pagesizes import A4
-            from reportlab.lib.units import inch
+            from reportlab.lib.pagesizes import A4, landscape
+            from reportlab.lib.units import inch, cm
             from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-            from reportlab.lib.styles import getSampleStyleSheet
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         except ImportError as exc:
             raise RuntimeError(
                 "reportlab is required for PDF export. Install it with: pip install reportlab"
@@ -238,26 +238,60 @@ class ExportService:
         output = io.BytesIO()
         
         styles = getSampleStyleSheet()
+        
+        # Create custom styles for smaller text
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Title'],
+            fontSize=12,
+            spaceAfter=6
+        )
+        
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading3'],
+            fontSize=9,
+            spaceAfter=4
+        )
+        
+        subheading_style = ParagraphStyle(
+            'CustomSubheading',
+            parent=styles['Heading4'],
+            fontSize=8,
+            spaceAfter=4
+        )
+        
         story: List[object] = []
 
-        story.append(Paragraph(ExportService._get_semester_header(), styles["Title"]))
-        story.append(Paragraph(f"Compiled Attendance of {WEEK_LABEL}", styles["Heading3"]))
-        story.append(Paragraph(f"Subjectwise Compiled Attendance upto {WEEK_LABEL}", styles["Heading4"]))
-        story.append(Spacer(1, 0.2 * inch))
+        story.append(Paragraph(ExportService._get_semester_header(), title_style))
+        story.append(Paragraph(f"Compiled Attendance of {WEEK_LABEL}", heading_style))
+        story.append(Paragraph(f"Subjectwise Compiled Attendance upto {WEEK_LABEL}", subheading_style))
+        story.append(Spacer(1, 0.1 * inch))
 
         table_data = [header] + rows
 
-        table = Table(table_data, repeatRows=1)
+        # Calculate column widths with landscape A4
+        landscape_width = landscape(A4)[0]
+        usable_width = landscape_width - (0.3 * inch * 2)  # Account for margins
+        num_cols = len(header)
+        col_width = usable_width / num_cols
+
+        table = Table(table_data, colWidths=[col_width] * num_cols, repeatRows=1)
         table.setStyle(
             TableStyle(
                 [
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-                    ("GRID", (0, 0), (-1, -1), 0.25, colors.black),
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#D3D3D3")),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
                     ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 0), (-1, -1), 7),
+                    ("FONTSIZE", (0, 0), (-1, 0), 5.5),  # Header smaller
+                    ("FONTSIZE", (0, 1), (-1, -1), 5),   # Data rows smaller
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                    ("TOPPADDING", (0, 0), (-1, -1), 1),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 1),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F5F5F5")]),
                 ]
             )
         )
@@ -266,11 +300,11 @@ class ExportService:
 
         doc = SimpleDocTemplate(
             output,
-            pagesize=A4,
-            leftMargin=0.4 * inch,
-            rightMargin=0.4 * inch,
-            topMargin=0.4 * inch,
-            bottomMargin=0.4 * inch,
+            pagesize=landscape(A4),
+            leftMargin=0.3 * inch,
+            rightMargin=0.3 * inch,
+            topMargin=0.3 * inch,
+            bottomMargin=0.3 * inch,
         )
         doc.build(story)
         
