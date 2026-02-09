@@ -183,7 +183,7 @@ def register():
             db.session.flush()  # Get the user_id
             
             # Handle parent-specific linking
-            if int(role_id) == 6:  # PARENT role
+            if int(role_id) == 41:  # PARENT role
                 student_enrollment = request.form.get('student_enrollment_number', '').strip()
                 
                 if not student_enrollment:
