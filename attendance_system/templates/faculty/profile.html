@@ -108,11 +108,7 @@
                     <span class="info-value">{{ department.dept_name if department else 'N/A' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label"><i class="fas fa-book"></i>Subjects Teaching</span>
-                    <span class="info-value">{{ teaching_stats.total_subjects or 0 }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label"><i class="fas fa-users"></i>Mentoring Students</span>
+                    <span class="info-label"><i class="fas fa-users"></i>Mentoring Students : </span>
                     <span class="info-value">{{ teaching_stats.mentoring_count or 0 }}</span>
                 </div>
             </div>
