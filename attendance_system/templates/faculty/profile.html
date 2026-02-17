@@ -100,15 +100,15 @@
                     <i class="fas fa-graduation-cap me-2"></i>Academic Information
                 </h2>
                 <div class="info-row">
-                    <span class="info-label"><i class="fas fa-university"></i>College</span>
+                    <span class="info-label"><i class="fas fa-university"></i>College :</span>
                     <span class="info-value">{{ college.college_name if college else 'N/A' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label"><i class="fas fa-building"></i>Department</span>
+                    <span class="info-label"><i class="fas fa-building"></i>Department :</span>
                     <span class="info-value">{{ department.dept_name if department else 'N/A' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label"><i class="fas fa-users"></i>Mentoring Students : </span>
+                    <span class="info-label"><i class="fas fa-users"></i>Mentoring Students :</span>
                     <span class="info-value">{{ teaching_stats.mentoring_count or 0 }}</span>
                 </div>
             </div>
